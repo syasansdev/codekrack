@@ -1,0 +1,77 @@
+name: Scrape Student Platform Data
+
+# Scrapes LeetCode / GitHub / Codeforces / AtCoder and writes straight to
+# Supabase Postgres. Nothing here talks to the Express server: the writes trip a
+# pg_notify trigger, Express's LISTEN connection picks it up, and connected
+# admins get an SSE invalidate. The leaderboard updates itself while this runs.
+#
+# REQUIRED REPOSITORY SECRETS (Settings -> Secrets and variables -> Actions):
+#
+#   DATABASE_URL   Supabase -> Settings -> Database -> Connection string -> URI
+#                  MUST be the Session pooler (port 5432, *.pooler.supabase.com).
+#                  The direct db.<ref>.supabase.co host is IPv6-only and will not
+#                  resolve from a GitHub runner.
+#
+#   GH_API_TOKEN   A GitHub PAT. No scopes needed — public profile data only.
+#                  Raises the GitHub API limit from 60/hr to 5000/hr; without it
+#                  a run of more than ~60 students starts failing partway.
+#
+# The old FIREBASE_PROJECT_ID / FIREBASE_PRIVATE_KEY / FIREBASE_CLIENT_EMAIL
+# secrets are no longer read and can be deleted.
+
+on:
+  schedule:
+    - cron: '0 */3 * * *' # every 3 hours
+  workflow_dispatch: # manual run from the Actions tab
+    inputs:
+      mode:
+        description: 'What to scrape'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all # every platform row that has a URL
+          - pending # only rows an admin queued with "Sync"
+      limit:
+        description: 'Max rows (blank = no cap)'
+        required: false
+        type: string
+
+# Two overlapping runs would scrape the same students twice and double the API
+# load for nothing. Queue instead — and do NOT cancel a run mid-flight, or rows
+# are left stranded in 'in_progress'.
+concurrency:
+  group: scrape
+  cancel-in-progress: false
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    # ~200 students at ~1.5s each, plus the periodic rate-limit breaks. The
+    # default 360min would let a hung run burn six hours of Actions minutes.
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # global fetch is built in; node-fetch is gone
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        run: npm ci
+        working-directory: backend
+
+      - name: Run scraper
+        working-directory: backend
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          GH_API_TOKEN: ${{ secrets.GH_API_TOKEN }}
+        run: |
+          node scripts/scrape.js \
+            ${{ github.event.inputs.mode == 'pending' && '--pending' || '' }} \
+            ${{ github.event.inputs.limit && format('--limit {0}', github.event.inputs.limit) || '' }}
