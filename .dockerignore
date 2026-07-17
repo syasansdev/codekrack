@@ -1,1 +1,75 @@
+<<<<<<< HEAD
 fly.toml
+=======
+# .dockerignore — CodeKrack API
+#
+# Controls two different things, and the second one is the important one:
+#   1. what `fly deploy` uploads to the remote builder
+#   2. what actually ends up INSIDE the image, via `COPY backend/ ./`
+#
+# The build context is the REPO ROOT (fly.toml -> build.dockerfile =
+# backend/Dockerfile), so every path below is relative to the repo root, not to
+# backend/.
+#
+# These patterns are deliberately conservative. Nothing here relies on `!`
+# re-inclusion, and no pattern can accidentally match backend/package.json or
+# backend/package-lock.json, which the deps stage needs. Small root config files
+# (vite.config.js, index.html, fly.toml...) are left in the context on purpose —
+# they total a few KB, and excluding them would risk breaking the build to save
+# nothing.
+
+# ---- Secrets ----------------------------------------------------------------
+# THIS IS THE PART THAT IS NOT OPTIONAL.
+#
+# `COPY backend/ ./` copies dotfiles. Without the line below, backend/.env is
+# baked into an image layer: SUPABASE_SERVICE_ROLE_KEY (bypasses RLS on every
+# table), DATABASE_URL, EMAIL_PASS, GH_API_TOKEN. Layers are permanent and
+# readable by anyone who can pull the image; deleting the file in a later layer
+# does not remove it from the earlier one.
+#
+# It would also break the deploy *silently*. server.js calls dotenv.config(), and
+# dotenv does not override real env vars — so Fly secrets still win where they are
+# set. The danger is the ones you FORGET to set: backend/.env carries
+# FRONTEND_URL=http://localhost:5173, which SATISFIES the production boot guard at
+# server.js:42 instead of tripping it.
+#
+# Verified locally (NODE_ENV=production, no FRONTEND_URL in env, .env present):
+#   Server running on port 5099                                    <- guard passed
+#   https://codekrack.vercel.app  -> no Access-Control-Allow-Origin <- site blocked
+#   http://localhost:5173         -> Access-Control-Allow-Origin: http://localhost:5173
+# The API boots clean, logs nothing wrong, refuses your own frontend, and mails
+# students invite links pointing at localhost.
+**/.env
+**/.env.*
+**/serviceAccountKey.json
+**/*.pem
+**/*.key
+backend/RENDER_ENV_VARS.txt
+
+# ---- node_modules -----------------------------------------------------------
+# ~315MB of pointless upload, but the real damage is ordering. In the Dockerfile,
+# `COPY backend/ ./` runs AFTER `COPY --from=deps /app/node_modules ./node_modules`,
+# and Docker MERGES directories rather than replacing them. So the host tree (503
+# packages — jest, eslint, nodemon, husky, supertest...) would overlay the clean
+# `npm ci --omit=dev` tree (153 packages) and make --omit=dev decorative. Host
+# modules are also resolved for this machine, not for node:20-alpine.
+**/node_modules
+
+# ---- Frontend — Vercel builds this; the API image never serves it ------------
+src
+public
+dist
+dist-ssr
+
+# ---- Generated / dev-only ---------------------------------------------------
+# docs/ is gitignored, but `fly deploy` uploads the local directory, not a git
+# checkout — so gitignored files are still in the context unless named here.
+docs
+backend/tests
+backend/logs
+**/*.log
+.git
+.github
+.vscode
+.idea
+>>>>>>> 686b449 (Add Fly deployment configuration)

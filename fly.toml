@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # fly.toml app configuration file generated for codekrack on 2026-07-17T11:33:53Z
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
@@ -21,3 +22,110 @@ primary_region = 'lhr'
   cpu_kind = 'shared'
   cpus = 1
   memory_mb = 1024
+=======
+# fly.toml — CodeKrack API
+#
+# Deploy from the repo root:  fly deploy
+#
+# WHY MUMBAI: your Supabase project is ap-south-1 (Mumbai), and EVERY API request
+# makes two round trips to it — auth.getUser() to verify the token, then a SELECT
+# on profiles to resolve the role. From Singapore that's ~150ms of pure network
+# per request; from Mumbai it's ~10ms. Co-locating is the single cheapest
+# performance decision available here.
+#
+# ---------------------------------------------------------------------------
+# THE TWO SETTINGS BELOW THAT ARE NOT COSMETIC
+#
+#   auto_stop_machines = false
+#   min_machines_running = 1
+#
+# Fly's default is to stop machines when idle. That default breaks this app in
+# two ways that produce NO error message:
+#
+#   1. The weekly contest email is in-process node-cron ('0 9 * * 1'). A stopped
+#      machine runs no cron. At 09:00 Monday nothing happens, nothing logs, and
+#      you find out when a student mentions they never got an email.
+#   2. SSE + the Postgres LISTEN connection both need a live process. A stopped
+#      machine drops every open stream and the leaderboard silently stops being
+#      live.
+#
+# A scale-to-zero backend is fine for a request/response API. This is not one.
+# ---------------------------------------------------------------------------
+
+app = "codekrack-api"
+primary_region = "bom"   # Mumbai — same region as Supabase ap-south-1
+
+[build]
+  dockerfile = "backend/Dockerfile"
+
+[env]
+  NODE_ENV = "production"
+  PORT = "5001"
+  # FRONTEND_URL is NOT set here — it is not a secret, but it IS deploy-specific,
+  # and server.js refuses to boot in production without it. Set it explicitly:
+  #   fly secrets set FRONTEND_URL=https://your-app.vercel.app
+  # (Better a loud failure at deploy than a server that silently CORS-blocks your
+  # own site and mails students links to localhost.)
+
+[http_service]
+  internal_port = 5001
+  force_https = true
+
+  # See the block above. Do not "optimise" these.
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+  processes = ["app"]
+
+  [http_service.concurrency]
+    type = "requests"
+    # SSE connections are long-lived and mostly idle — one per open admin tab,
+    # held for hours. Fly counts them against concurrency, so the defaults (~25)
+    # would have a handful of open dashboards look like a machine at capacity and
+    # trigger pointless scaling. Raised because these connections cost almost
+    # nothing while parked.
+    soft_limit = 200
+    hard_limit = 250
+
+  [[http_service.checks]]
+    grace_period = "15s"
+    interval = "30s"
+    method = "GET"
+    timeout = "5s"
+    path = "/health"
+
+[[vm]]
+  # 512MB is comfortable: one Node process, a pg pool of 10, plus the LISTEN
+  # connection. Start here; `fly scale memory 1024` if you ever see OOM kills.
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1
+
+# ---------------------------------------------------------------------------
+# DEPLOY CHECKLIST
+#
+#   fly launch --no-deploy --copy-config     (creates the app, keeps this file)
+#
+#   fly secrets set \
+#     SUPABASE_URL="https://<ref>.supabase.co" \
+#     SUPABASE_SERVICE_ROLE_KEY="<service_role key>" \
+#     DATABASE_URL="postgresql://postgres.<ref>:<pw>@aws-1-ap-south-1.pooler.supabase.com:5432/postgres" \
+#     EMAIL_USER="you@gmail.com" \
+#     EMAIL_PASS="<gmail app password>" \
+#     GH_API_TOKEN="<github pat>" \
+#     FRONTEND_URL="https://your-app.vercel.app"
+#
+#   fly deploy
+#
+# DO NOT set SMTP_ALLOW_SELF_SIGNED. It disables TLS verification for outgoing
+# mail — and an invite link IS a credential. mailer.js ignores it when
+# NODE_ENV=production, but it should not be there at all.
+#
+# VERIFY AFTER DEPLOY:
+#   fly logs        -> expect "Server running", "SSE: listening on Postgres
+#                      channel", and "Mail transport ready". If mail is silent or
+#                      erroring, students will not receive invites.
+#   curl https://codekrack-api.fly.dev/health
+# ---------------------------------------------------------------------------
+>>>>>>> 686b449 (Add Fly deployment configuration)
