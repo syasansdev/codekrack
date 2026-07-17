@@ -92,7 +92,7 @@ try {
   r.status === 400 ? ok('duplicate institution code -> 400 (DB unique index)') : no('dupe code -> ' + r.status);
 
   r = await call('POST', '/api/institutions', suTok, {
-    name: `${TAG} Weak`, adminEmail: `${TAG}-w@codekrack.invalid`, adminPassword: 'short',
+    name: `${TAG} Weak`, code: 'ZZWEAK', adminEmail: `${TAG}-w@codekrack.invalid`, adminPassword: 'short',
   });
   r.status === 400 ? ok('weak admin password -> 400') : no('weak pw -> ' + r.status);
 
@@ -254,15 +254,79 @@ try {
     ? ok('AUTH USER ALSO GONE — no orphaned login (the current app leaves these behind)')
     : no('*** auth user orphaned ***');
 
-  console.log('\n=== DELETE INSTITUTION: students survive, unlinked ===');
+  // ===========================================================================
+  // ARCHIVE + RESTORE (migration 007)
+  //
+  // This block used to assert the OPPOSITE — "student record SURVIVED with
+  // institution_id=null" — and it was right about the code at the time. That
+  // behaviour is the bug: `delete from institutions` let the FK null every
+  // student's link, and nothing on a profile records which institution it was
+  // in, so a re-added college could never reclaim them. It orphaned all 3
+  // students on the production database.
+  //
+  // The assertion below is now the inverse and is the regression guard: if
+  // anyone makes DELETE destructive again, `institution_id` goes null and this
+  // fails loudly instead of quietly stranding students.
+  // ===========================================================================
+  console.log('\n=== ARCHIVE INSTITUTION: students KEEP their link ===');
   r = await call('DELETE', `/api/institutions/${instA}`, suTok);
-  r.status === 200 ? ok(`delete institution A -> 200 (unlinked ${r.body.unlinkedStudents} student(s))`) : no('del inst -> ' + r.status);
+  r.status === 200 && r.body.archived
+    ? ok(`archive institution A -> 200 (${r.body.retainedStudents} student(s) retained)`)
+    : no('archive inst -> ' + r.status + ' ' + JSON.stringify(r.body));
+
+  const archivedRow = await many('select id, deleted_at from public.institutions where id=$1', [instA]);
+  archivedRow.length === 1 && archivedRow[0].deleted_at !== null
+    ? ok('institution ROW KEPT with deleted_at set — the FK never fires')
+    : no('institution was hard-deleted: ' + JSON.stringify(archivedRow));
+
   const survivor = await many('select id, institution_id from public.profiles where id=$1', [s1]);
-  survivor.length === 1 && survivor[0].institution_id === null
-    ? ok('student record SURVIVED with institution_id=null (ON DELETE SET NULL, not a client batch)')
-    : no('student not unlinked properly: ' + JSON.stringify(survivor));
+  survivor.length === 1 && survivor[0].institution_id === instA
+    ? ok('student KEPT institution_id through the archive (nothing to re-map later)')
+    : no('STUDENT WAS UNLINKED — this is the orphan bug: ' + JSON.stringify(survivor));
+
+  r = await call('GET', '/api/institutions', suTok);
+  !(r.body.institutions || []).some((i) => i.id === instA)
+    ? ok('archived institution is hidden from the list')
+    : no('archived institution still appears in the list');
+
   const adminGone = await many(`select id from public.profiles where email = '${TAG}-alpha@codekrack.invalid'`);
   adminGone.length === 0 ? ok("A's admin login removed with the institution") : no('admin login survived');
+
+  console.log('\n=== RE-ADD THE SAME CODE: restores it, students come back ===');
+  r = await call('POST', '/api/institutions', suTok, {
+    name: `${TAG} Alpha College Reborn`, code: 'ZZALPHA',
+    adminEmail: `${TAG}-alpha2@codekrack.invalid`,
+    adminPassword: 'ZzAlpha#Admin2', adminName: 'Alpha Admin 2',
+  });
+  r.status === 201 && r.body.restored
+    ? ok(`re-adding code ZZALPHA RESTORED it (${r.body.reclaimedStudents} student(s) reclaimed)`)
+    : no('re-add did not restore -> ' + r.status + ' ' + JSON.stringify(r.body));
+  r.body?.id === instA
+    ? ok('restored the SAME uuid — which is why its students are still attached')
+    : no(`minted a NEW uuid (${r.body?.id} vs ${instA}) — students would stay orphaned`);
+
+  const reclaimed = await many('select institution_id from public.profiles where id=$1', [s1]);
+  reclaimed[0]?.institution_id === instA
+    ? ok('student is back in the institution, with no re-mapping step')
+    : no('student not reclaimed: ' + JSON.stringify(reclaimed));
+
+  const relisted = await call('GET', '/api/institutions', suTok);
+  (relisted.body.institutions || []).some((i) => i.id === instA && i.name.includes('Reborn'))
+    ? ok('institution is live again, renamed as typed on re-add')
+    : no('restored institution missing from the list');
+
+  console.log('\n=== the code is mandatory (it IS the identity) ===');
+  r = await call('POST', '/api/institutions', suTok, {
+    name: `${TAG} No Code College`, adminEmail: `${TAG}-nocode@codekrack.invalid`,
+    adminPassword: 'ZzNoCode#Admin1',
+  });
+  r.status === 400 ? ok('creating an institution with no code -> 400') : no('no-code create -> ' + r.status);
+
+  r = await call('POST', '/api/institutions', suTok, {
+    name: `${TAG} Dupe College`, code: 'ZZBETA',
+    adminEmail: `${TAG}-dupe@codekrack.invalid`, adminPassword: 'ZzDupe#Admin1',
+  });
+  r.status === 400 ? ok("reusing a LIVE institution's code -> 400") : no('dupe code -> ' + r.status);
 
 } catch (e) {
   no('threw: ' + e.message + '\n' + e.stack?.split('\n')[1]);

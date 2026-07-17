@@ -158,6 +158,28 @@ export const checkRole = (allowedRoles) => async (req, res, next) => {
 };
 
 /**
+ * The sentinel for "this caller belongs to no institution", i.e. match nothing.
+ *
+ * It MUST be a syntactically valid uuid, because it is compared against
+ * profiles.institution_id (type uuid) in SQL. The previous value was the string
+ * '__no_institution__', which Postgres cannot cast:
+ *
+ *     invalid input syntax for type uuid: "__no_institution__"   (SQLSTATE 22P02)
+ *
+ * So instead of returning an empty result, every scoped query threw and the
+ * endpoint 500'd. That is the opposite of fail-closed — a user with no
+ * institution got an error page where they should have got an empty list.
+ * Verified against the live database; it is why the student leaderboard was
+ * dead for every unlinked student.
+ *
+ * The all-zero uuid is safe as a "matches nothing" value: gen_random_uuid()
+ * cannot produce it, so no real institution can ever collide with it.
+ * institutionRoutes.js already used exactly this constant — the two sentinels
+ * had simply drifted apart.
+ */
+export const NO_INSTITUTION = '00000000-0000-0000-0000-000000000000';
+
+/**
  * The institution a request is allowed to touch.
  *   super-admin      -> the one they asked for, or null meaning "all"
  *   institution admin -> ALWAYS their own; the client's value is ignored
@@ -166,7 +188,7 @@ export const checkRole = (allowedRoles) => async (req, res, next) => {
  */
 export const scopeFor = (req, requestedInstitutionId = null) => {
   if (req.user.isSuperAdmin) return requestedInstitutionId || null;
-  return req.user.institutionId || '__no_institution__';
+  return req.user.institutionId || NO_INSTITUTION;
 };
 
 export const isAdmin = verifyAdmin;

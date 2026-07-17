@@ -13,6 +13,7 @@ import dashboardRoutes from "./routes/dashboardRoutes.js";
 import eventsRoutes from "./routes/eventsRoutes.js";
 import schedulerService from "./services/schedulerService.js";
 import { startRealtime, stopRealtime } from "./services/realtime.js";
+import { verifyMailer } from "./services/mailer.js";
 
 import errorHandler from "./middleware/errorHandler.js";
 import { apiLimiter } from "./middleware/rateLimiter.js";
@@ -33,20 +34,56 @@ const PORT = process.env.PORT || 5001;
 // honest traffic while ignoring the abuse it exists to stop.
 app.set("trust proxy", 1);
 
-// CORS. FRONTEND_URL is read from the environment so a deploy doesn't need a
-// code change — the hard-coded list still had the old hope-portal-stjosephs
-// domain in it, and no way to add the real one without editing this file.
+// CORS. FRONTEND_URL comes from the environment so a deploy needs no code change
+// — the hard-coded list used to carry the old hope-portal-stjosephs domain with
+// no way to add the real one without editing this file.
+const isProd = process.env.NODE_ENV === "production";
+
+if (isProd && !process.env.FRONTEND_URL) {
+  // Refuse to boot rather than start a server your own site cannot call. Without
+  // this the allow-list silently degrades to localhost only, every browser
+  // request fails CORS, and the app looks broken for reasons nothing logs.
+  throw new Error(
+    "FRONTEND_URL must be set in production. Without it, CORS allows only " +
+      "localhost and your deployed frontend cannot reach this API."
+  );
+}
+
+// A browser's Origin header NEVER has a trailing slash or a path — it is exactly
+// scheme://host[:port]. So `FRONTEND_URL=https://www.codekrack.in/` would not
+// match `Origin: https://www.codekrack.in`, and every request from your own site
+// would be blocked. That mistake is nearly invisible: inviteService.js strips the
+// slash before building links, so invite emails would keep working perfectly
+// while the whole app failed CORS — the two would disagree about the same value.
+//
+// Normalising here means the env var can be pasted with or without a slash.
+const FRONTEND_ORIGIN = (() => {
+  const raw = process.env.FRONTEND_URL;
+  if (!raw) return null;
+  try {
+    // new URL().origin drops any trailing slash, path, query and fragment, which
+    // is precisely the normalisation the Origin header does.
+    return new URL(raw).origin;
+  } catch {
+    throw new Error(
+      `FRONTEND_URL is not a valid URL: "${raw}". It must be an absolute origin, ` +
+        'e.g. https://www.codekrack.in — scheme included, no trailing path.'
+    );
+  }
+})();
+
 const corsOptions = {
   origin: [
-    process.env.FRONTEND_URL,
-    'http://localhost:5173',
-    'http://localhost:3000',
+    FRONTEND_ORIGIN,
+    // Dev origins only. In production these are dead weight at best, and at
+    // worst let a page served from someone's localhost call your live API.
+    ...(isProd ? [] : ["http://localhost:5173", "http://localhost:3000"]),
   ].filter(Boolean),
   credentials: true,
-  // PATCH matters now: students and institutions are both updated with it, and
-  // omitting it here makes the browser preflight fail before the request lands.
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  // PATCH matters: students and institutions are both updated with it, and
+  // omitting it makes the browser preflight fail before the request lands.
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 };
 
 // Middleware
@@ -92,6 +129,29 @@ app.get("/health", (req, res) => {
   res.status(200).json({ status: "ok", timestamp: new Date() });
 });
 
+// The API root says what it is.
+//
+// This container holds NO html, css or js — the frontend is a separate Vercel
+// deployment, and this image is `npm ci --omit=dev` + server.js. Opening this
+// host in a browser used to return a bare {"message":"Route not found"} from the
+// catch-all below, which reads like a broken deploy rather than "you are at the
+// wrong address". Saying so plainly here turns a confusing hunt into one glance.
+//
+// This is NOT an SPA fallback and must not become one. If you want index.html
+// served from here, that is a deliberate architecture change (static middleware
+// + the frontend built into the image + VITE_* as build args) — not a route.
+app.get("/", (req, res) => {
+  res.status(200).json({
+    service: "codekrack-api",
+    status: "ok",
+    message:
+      "This is the CodeKrack JSON API. It serves no HTML or static assets — " +
+      "the web app is deployed separately and calls this API over CORS.",
+    app: process.env.FRONTEND_URL || null,
+    endpoints: { health: "/health", api: "/api/*", events: "/api/events (SSE)" },
+  });
+});
+
 // Error handling
 app.use(errorHandler);
 
@@ -106,6 +166,12 @@ const server = app.listen(PORT, () => {
 
   // Open the dedicated Postgres LISTEN connection that drives SSE.
   startRealtime();
+
+  // Check SMTP at boot. Mail failures are otherwise INVISIBLE: the send throws
+  // inside a request, the admin sees a toast at most, and the first real signal
+  // is a student saying they never got their invite. This surfaces a broken mail
+  // setup in the startup log, where someone will actually see it.
+  verifyMailer();
 
   // Start the weekly email scheduler
   setTimeout(() => {

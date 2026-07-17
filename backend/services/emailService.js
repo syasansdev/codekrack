@@ -1,15 +1,14 @@
-import nodemailer from 'nodemailer';
+import { transporter, MAIL_FROM } from './mailer.js';
 import { many } from '../config/db.js';
 
 class EmailService {
   constructor() {
-    this.transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      }
-    });
+    // THE shared transport (services/mailer.js). This class used to build its
+    // own, which is how it ended up without the TLS workaround that
+    // inviteService had — invites sent, contest notifications failed silently
+    // with "unable to verify the first certificate", same account, same
+    // credentials. Two transports could disagree; one cannot.
+    this.transporter = transporter;
   }
 
   /**

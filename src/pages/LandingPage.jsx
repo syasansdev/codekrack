@@ -42,6 +42,23 @@ const LandingPage = () => {
   // Auth modal state
   const [isSignInModalOpen, setIsSignInModalOpen] = useState(false);
 
+  // The page scrollbar belongs to <html>, which the `theme-light` wrapper below
+  // cannot reach — so with the app set to dark, this page rendered white with a
+  // dark scrollbar down the side. color-scheme is what browsers use to paint
+  // native chrome (scrollbars, form controls, the caret), and it has to be set
+  // on the root element to affect them.
+  //
+  // Set as an inline style so it beats the class-driven rule in index.css, and
+  // removed on unmount so the rest of the app goes back to following the theme.
+  useEffect(() => {
+    const root = document.documentElement;
+    const previous = root.style.colorScheme;
+    root.style.colorScheme = 'light';
+    return () => {
+      root.style.colorScheme = previous;
+    };
+  }, []);
+
   useEffect(() => {
     fetchContests();
 
@@ -237,182 +254,99 @@ const socialLinks = [
     return resultDate;
   };
 
-  const generatePlaceholderContests = () => {
-    const now = new Date();
+  // The public, genuinely recurring contest series.
+  //
+  // WHAT THIS REPLACED: generatePlaceholderContests() also invented two SPECIFIC
+  // Codeforces contests —
+  //     name: "Codeforces Round #835 (Div. 2)",  2 days from now
+  //     name: "Codeforces Educational Round #146", 5 days from now
+  // — with fabricated dates, on the public landing page. Those are real past
+  // contest numbers presented as upcoming. A visitor could plan their week around
+  // a contest that does not exist. Codeforces publishes a free contest.list API
+  // (used below), so there was never a reason to invent them.
+  //
+  // These four are different in kind: they are the real, published, recurring
+  // schedules of each platform, and the date is COMPUTED as the next occurrence
+  // rather than made up. They are marked `recurring: true` so the UI can say so
+  // instead of implying it fetched a specific event.
+  const getRecurringSchedules = () => [
+    {
+      id: 'lc-weekly',
+      name: 'LeetCode Weekly Contest',
+      platform: 'LeetCode',
+      recurring: 'Every Sunday',
+      ...formatContestDate(getNextDayOfWeek(0, 8, 0)),
+      duration: '1h 30m',
+      url: 'https://leetcode.com/contest/',
+      startTime: getNextDayOfWeek(0, 8, 0).getTime(),
+    },
+    {
+      id: 'ac-abc',
+      name: 'AtCoder Beginner Contest',
+      platform: 'AtCoder',
+      recurring: 'Every Saturday',
+      ...formatContestDate(getNextDayOfWeek(6, 17, 30)),
+      duration: '1h 40m',
+      url: 'https://atcoder.jp/contests/',
+      startTime: getNextDayOfWeek(6, 17, 30).getTime(),
+    },
+    {
+      id: 'cc-starters',
+      name: 'CodeChef Starters',
+      platform: 'CodeChef',
+      recurring: 'Every Wednesday',
+      ...formatContestDate(getNextDayOfWeek(3, 20, 0)),
+      duration: '3h 0m',
+      url: 'https://www.codechef.com/contests',
+      startTime: getNextDayOfWeek(3, 20, 0).getTime(),
+    },
+  ];
 
-    // LeetCode Weekly: Every Sunday at 08:00 AM IST (02:30 UTC)
-    const leetcodeDate = getNextDayOfWeek(0, 8, 0);
-
-    // AtCoder Beginner: Every Saturday at 05:30 PM IST (12:00 UTC)
-    const atcoderDate = getNextDayOfWeek(6, 17, 30);
-
-    // CodeChef Starters: Every Wednesday at 08:00 PM IST (14:30 UTC)
-    const codechefDate = getNextDayOfWeek(3, 20, 0);
-
-    // HackerRank Challenge: Every Friday at 07:00 PM IST (13:30 UTC)
-    const hackerrankDate = getNextDayOfWeek(5, 19, 0);
-
-    // Add some future Codeforces contests (placeholder)
-    const cfDate1 = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000); // 2 days from now
-    cfDate1.setHours(20, 35, 0, 0); // 8:35 PM local time
-
-    const cfDate2 = new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000); // 5 days from now
-    cfDate2.setHours(17, 35, 0, 0); // 5:35 PM local time
-
-    return [
-      {
-        id: "cf-placeholder-1",
-        name: "Codeforces Round #835 (Div. 2)",
-        platform: "Codeforces",
-        date: new Intl.DateTimeFormat("en-GB").format(cfDate1),
-        time: new Intl.DateTimeFormat("en-US", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        }).format(cfDate1),
-        duration: "2h 15m",
-        url: "https://codeforces.com/contests",
-        startTime: cfDate1.getTime(),
-      },
-      {
-        id: "cf-placeholder-2",
-        name: "Codeforces Educational Round #146",
-        platform: "Codeforces",
-        date: new Intl.DateTimeFormat("en-GB").format(cfDate2),
-        time: new Intl.DateTimeFormat("en-US", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        }).format(cfDate2),
-        duration: "2h 0m",
-        url: "https://codeforces.com/contests",
-        startTime: cfDate2.getTime(),
-      },
-      {
-        id: "lc-placeholder",
-        name: "LeetCode Weekly Contest",
-        platform: "LeetCode",
-        date: new Intl.DateTimeFormat("en-GB").format(leetcodeDate),
-        time: new Intl.DateTimeFormat("en-US", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        }).format(leetcodeDate),
-        duration: "1h 30m",
-        url: "https://leetcode.com/contest/",
-        startTime: leetcodeDate.getTime(),
-      },
-      {
-        id: "ac-placeholder",
-        name: "AtCoder Beginner Contest",
-        platform: "AtCoder",
-        date: new Intl.DateTimeFormat("en-GB").format(atcoderDate),
-        time: new Intl.DateTimeFormat("en-US", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        }).format(atcoderDate),
-        duration: "1h 40m",
-        url: "https://atcoder.jp/contests/",
-        startTime: atcoderDate.getTime(),
-      },
-      {
-        id: "cc-placeholder",
-        name: "CodeChef Starters",
-        platform: "CodeChef",
-        date: new Intl.DateTimeFormat("en-GB").format(codechefDate),
-        time: new Intl.DateTimeFormat("en-US", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        }).format(codechefDate),
-        duration: "3h 0m",
-        url: "https://www.codechef.com/contests",
-        startTime: codechefDate.getTime(),
-      },
-      {
-        id: "hr-placeholder",
-        name: "HackerRank Weekly Challenge",
-        platform: "HackerRank",
-        date: new Intl.DateTimeFormat("en-GB").format(hackerrankDate),
-        time: new Intl.DateTimeFormat("en-US", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        }).format(hackerrankDate),
-        duration: "48h 0m",
-        url: "https://www.hackerrank.com/contests",
-        startTime: hackerrankDate.getTime(),
-      },
-    ];
-  };
+  const formatContestDate = (d) => ({
+    date: new Intl.DateTimeFormat('en-GB').format(d),
+    time: new Intl.DateTimeFormat('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }).format(d),
+  });
 
   const fetchContests = async () => {
+    // Real Codeforces contests first — they are the only ones we can actually
+    // fetch. The recurring schedules fill in alongside; nothing is invented.
+    const recurring = getRecurringSchedules();
+
     try {
-      // Always start with placeholder contests to ensure something shows
-      const placeholderContests = generatePlaceholderContests();
-      setUpcomingContests(placeholderContests.slice(0, 8));
-      setLoading(false);
+      const res = await fetch('https://codeforces.com/api/contest.list');
+      let cfContests = [];
 
-      // Try to fetch from Codeforces API in the background
-      try {
-        const codeforcesResponse = await fetch(
-          "https://codeforces.com/api/contest.list"
-        );
-
-        if (codeforcesResponse.ok) {
-          const data = await codeforcesResponse.json();
-          if (data.status === "OK") {
-            const now = Date.now();
-            const cfContests = data.result
-              .filter(
-                (contest) =>
-                  contest.phase === "BEFORE" &&
-                  contest.startTimeSeconds * 1000 > now
-              )
-              .slice(0, 4)
-              .map((contest) => {
-                const startTime = new Date(contest.startTimeSeconds * 1000);
-                return {
-                  id: `cf-${contest.id}`,
-                  name: contest.name,
-                  platform: "Codeforces",
-                  date: new Intl.DateTimeFormat("en-GB").format(startTime),
-                  time: new Intl.DateTimeFormat("en-US", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    hour12: true,
-                  }).format(startTime),
-                  duration: `${Math.floor(
-                    contest.durationSeconds / 3600
-                  )}h ${Math.floor((contest.durationSeconds % 3600) / 60)}m`,
-                  url: `https://codeforces.com/contest/${contest.id}`,
-                  startTime: contest.startTimeSeconds * 1000,
-                };
-              });
-
-            if (cfContests.length > 0) {
-              const nonCfPlaceholders = placeholderContests.filter(
-                (c) => c.platform !== "Codeforces"
-              );
-              let contests = [...cfContests, ...nonCfPlaceholders];
-              contests.sort((a, b) => a.startTime - b.startTime);
-              setUpcomingContests(contests.slice(0, 8));
-            }
-          }
+      if (res.ok) {
+        const data = await res.json();
+        if (data.status === 'OK') {
+          const now = Date.now();
+          cfContests = data.result
+            .filter((c) => c.phase === 'BEFORE' && c.startTimeSeconds * 1000 > now)
+            .slice(0, 4)
+            .map((c) => {
+              const startTime = new Date(c.startTimeSeconds * 1000);
+              return {
+                id: `cf-${c.id}`,
+                name: c.name,
+                platform: 'Codeforces',
+                ...formatContestDate(startTime),
+                duration: `${Math.floor(c.durationSeconds / 3600)}h ${Math.floor((c.durationSeconds % 3600) / 60)}m`,
+                url: `https://codeforces.com/contest/${c.id}`,
+                startTime: c.startTimeSeconds * 1000,
+              };
+            });
         }
-      } catch (apiError) {
-        console.log(
-          "Could not fetch from Codeforces API, using placeholder data:",
-          apiError
-        );
-        // Placeholders are already set, no action needed
       }
+
+      const contests = [...cfContests, ...recurring].sort((a, b) => a.startTime - b.startTime);
+      setUpcomingContests(contests.slice(0, 8));
     } catch (error) {
-      console.error("Error in contests logic:", error);
-      // Ensure we always show something
-      const fallbackContests = generatePlaceholderContests();
-      setUpcomingContests(fallbackContests.slice(0, 6));
+      // Codeforces unreachable. Show the recurring schedules, which are true
+      // regardless — and NOT a fabricated Codeforces round, which is what this
+      // used to fall back to.
+      console.warn('Codeforces contest.list unreachable; showing recurring schedules only:', error.message);
+      setUpcomingContests(recurring.slice(0, 8));
+    } finally {
       setLoading(false);
     }
   };
@@ -603,7 +537,17 @@ const socialLinks = [
 
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-white overflow-hidden">
+      {/* `theme-light` pins this page to the light palette regardless of the
+          user's theme — the marketing page is always light by design.
+          index.css declares the light tokens on `.theme-light` as well as
+          :root, so re-declaring them here overrides the inherited `.dark`
+          values for this subtree only. The app behind the login still themes
+          normally, and the toggle keeps whatever it was set to.
+
+          bg-surface (not bg-canvas) because the body's canvas is still dark
+          underneath: this element has to paint its own opaque background or the
+          dark page shows through around the content. */}
+      <div className="theme-light min-h-screen bg-surface overflow-hidden">
         <style>
           {`
             @keyframes float {
@@ -630,28 +574,25 @@ const socialLinks = [
               animation: pulse 4s ease-in-out infinite;
             }
             
-            .gradient-text {
-              background: linear-gradient(90deg, #3B82F6, #8B5CF6);
-              -webkit-background-clip: text;
-              background-clip: text;
-              color: transparent;
-            }
-            
+            /* .gradient-text was redefined here as #3B82F6 -> #8B5CF6 — a
+               blue-to-PURPLE ramp. Purple is not in the CodeKrack palette at
+               all, and because this block is injected at runtime it silently
+               beat the real .gradient-text in index.css (brand blue -> brand
+               orange). The headline word on the landing page — the most-seen
+               text in the product — was rendering in a colour the brand does
+               not contain. Removed so the shared definition applies. */
+
+            /* Brand blue (#3b66f6) -> brand orange (#ff6a13), matching
+               bg-brand-gradient in tailwind.config.js. */
             .gradient-bg {
-              background: linear-gradient(135deg, #3B82F6, #8B5CF6, #3B82F6);
+              background: linear-gradient(135deg, #3b66f6, #ff6a13, #3b66f6);
               background-size: 200% 200%;
               animation: gradientBG 15s ease infinite;
             }
-            
-            .glow {
-              box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
-            }
-            
-            .backdrop-blur {
-              backdrop-filter: blur(8px);
-              -webkit-backdrop-filter: blur(8px);
-            }
-            
+
+            /* .glow and .backdrop-blur are removed: zero uses between them, and
+               `.backdrop-blur` shadowed Tailwind's own backdrop-blur utility. */
+
             .carousel-container {
               perspective: 1000px;
             }
@@ -672,7 +613,7 @@ const socialLinks = [
         {/* Navigation */}
         <motion.nav
           className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 backdrop-blur ${
-            scrolled ? "bg-white/90 shadow-md" : "bg-white/80"
+            scrolled ? "bg-surface/90 shadow-md" : "bg-surface/80"
           }`}
           initial={{ y: -100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -685,10 +626,14 @@ const socialLinks = [
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16 sm:h-20">
               <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-500 rounded-lg flex items-center justify-center text-white font-bold text-sm sm:text-base shadow-md">
-                  CT
+                {/* CK, not CT — a leftover from the CodeTrack -> CodeKrack
+                    rename that was sitting directly beside the wordmark, so the
+                    logo and the name disagreed on the top-left of the public
+                    landing page. Same fix in the footer mark below. */}
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-brand-gradient rounded-lg flex items-center justify-center text-white font-bold text-sm sm:text-base shadow-glow-blue">
+                  CK
                 </div>
-                <span className="text-lg sm:text-xl font-bold text-gray-900">
+                <span className="text-lg sm:text-xl font-bold text-fg">
                   Code<span className="text-orange-500">Krack</span>
                 </span>
               </div>
@@ -697,19 +642,19 @@ const socialLinks = [
               <div className="hidden md:flex items-center space-x-10">
                 <a
                   href="#features"
-                  className="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-300"
+                  className="text-fg-muted hover:text-blue-600 font-medium transition-colors duration-300"
                 >
                   Features
                 </a>
                 <a
                   href="#contests"
-                  className="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-300"
+                  className="text-fg-muted hover:text-blue-600 font-medium transition-colors duration-300"
                 >
                   Contests
                 </a>
                 <a
                   href="#testimonials"
-                  className="text-gray-700 hover:text-blue-600 font-medium transition-colors duration-300"
+                  className="text-fg-muted hover:text-blue-600 font-medium transition-colors duration-300"
                 >
                   Testimonials
                 </a>
@@ -732,7 +677,7 @@ const socialLinks = [
               <div className="md:hidden flex items-center">
                 <button
                   onClick={toggleMobileMenu}
-                  className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-blue-600 hover:bg-gray-100 focus:outline-none"
+                  className="inline-flex items-center justify-center p-2 rounded-md text-fg-muted hover:text-blue-600 hover:bg-surface-3 focus:outline-none"
                 >
                   <span className="sr-only">Open main menu</span>
                   {!mobileMenuOpen ? (
@@ -777,7 +722,7 @@ const socialLinks = [
           <AnimatePresence>
             {mobileMenuOpen && (
               <motion.div
-                className="md:hidden bg-white shadow-lg"
+                className="md:hidden bg-surface shadow-lg"
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
@@ -786,24 +731,24 @@ const socialLinks = [
                 <div className="px-4 py-4 space-y-1">
                   <a
                     href="#features"
-                    className="block px-3 py-3 rounded-md text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50"
+                    className="block px-3 py-3 rounded-md text-base font-medium text-fg-muted hover:text-blue-600 hover:bg-blue-50"
                   >
                     Features
                   </a>
                   <a
                     href="#contests"
-                    className="block px-3 py-3 rounded-md text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50"
+                    className="block px-3 py-3 rounded-md text-base font-medium text-fg-muted hover:text-blue-600 hover:bg-blue-50"
                   >
                     Contests
                   </a>
                   <a
                     href="#testimonials"
-                    className="block px-3 py-3 rounded-md text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50"
+                    className="block px-3 py-3 rounded-md text-base font-medium text-fg-muted hover:text-blue-600 hover:bg-blue-50"
                   >
                     Testimonials
                   </a>
                   <div className="pt-2 pb-1">
-                    <div className="border-t border-gray-200 pt-4 flex flex-col space-y-3">
+                    <div className="border-t border-edge pt-4 flex flex-col space-y-3">
                       
                       <a
                         onClick={openSignInModal}
@@ -869,7 +814,7 @@ const socialLinks = [
               </motion.div>
 
               <motion.h1
-                className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-ink-950 mb-4 sm:mb-6 leading-tight px-2"
+                className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-fg mb-4 sm:mb-6 leading-tight px-2"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7 }}
@@ -878,7 +823,7 @@ const socialLinks = [
                 <span className="gradient-text">Precision</span>
               </motion.h1>
               <motion.p
-                className="text-base sm:text-lg md:text-xl text-gray-600 mb-6 sm:mb-8 leading-relaxed px-4 sm:px-6 max-w-3xl mx-auto"
+                className="text-base sm:text-lg md:text-xl text-fg-muted mb-6 sm:mb-8 leading-relaxed px-4 sm:px-6 max-w-3xl mx-auto"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 0.2 }}
@@ -932,7 +877,7 @@ const socialLinks = [
                   {platforms.map((platform, i) => (
                     <motion.span
                       key={i}
-                      className="px-3 sm:px-5 py-2 sm:py-2.5 bg-white text-ink-700 rounded-full text-xs sm:text-sm font-medium border border-ink-200 shadow-elite whitespace-nowrap"
+                      className="px-3 sm:px-5 py-2 sm:py-2.5 bg-surface text-fg-muted rounded-full text-xs sm:text-sm font-medium border border-edge-strong shadow-elite whitespace-nowrap"
                       whileHover={{
                         y: -3,
                         borderColor: "#fdba8c",
@@ -951,7 +896,7 @@ const socialLinks = [
           {/* Features Section */}
           <motion.div
             id="features"
-            className="py-16 sm:py-20 md:py-24 px-4 sm:px-6 bg-gray-50"
+            className="py-16 sm:py-20 md:py-24 px-4 sm:px-6 bg-surface-2"
             variants={fadeInUpVariants}
             initial="hidden"
             whileInView="visible"
@@ -960,14 +905,14 @@ const socialLinks = [
             <div className="max-w-7xl mx-auto">
               <div className="text-center mb-10 sm:mb-16">
                 <motion.h2
-                  className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3 sm:mb-4"
+                  className="text-2xl sm:text-3xl md:text-4xl font-bold text-fg mb-3 sm:mb-4"
                   variants={fadeInUpVariants}
                 >
                   Powerful Features for{" "}
                   <span className="text-blue-600">Coding Professionals</span>
                 </motion.h2>
                 <motion.p
-                  className="text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl mx-auto px-2"
+                  className="text-base sm:text-lg md:text-xl text-fg-muted max-w-3xl mx-auto px-2"
                   variants={fadeInUpVariants}
                 >
                   Everything you need to track and grow your coding career, all
@@ -984,14 +929,14 @@ const socialLinks = [
                 {features.map((feature, i) => (
                   <motion.div
                     key={i}
-                    className="bg-white p-5 sm:p-6 md:p-8 rounded-xl border border-gray-200 hover:border-blue-300 shadow-sm hover:shadow-xl transition-all duration-300"
+                    className="bg-surface p-5 sm:p-6 md:p-8 rounded-xl border border-edge hover:border-blue-300 shadow-sm hover:shadow-xl transition-all duration-300"
                     variants={itemVariants}
                     whileHover={cardVariants.hover}
                   >
-                    <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2 sm:mb-3">
+                    <h3 className="text-lg sm:text-xl font-bold text-fg mb-2 sm:mb-3">
                       {feature.title}
                     </h3>
-                    <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
+                    <p className="text-sm sm:text-base text-fg-muted leading-relaxed">
                       {feature.description}
                     </p>
                   </motion.div>
@@ -1007,7 +952,7 @@ const socialLinks = [
           {/* Contests Section - Circular Carousel */}
           <motion.div
             id="contests"
-            className="py-16 sm:py-20 md:py-24 px-4 sm:px-6 bg-gray-50"
+            className="py-16 sm:py-20 md:py-24 px-4 sm:px-6 bg-surface-2"
             variants={containerVariants}
             initial="hidden"
             whileInView="visible"
@@ -1016,13 +961,13 @@ const socialLinks = [
             <div className="max-w-7xl mx-auto">
               <div className="text-center mb-8 sm:mb-12">
                 <motion.h2
-                  className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2 sm:mb-3"
+                  className="text-2xl sm:text-3xl md:text-4xl font-bold text-fg mb-2 sm:mb-3"
                   variants={fadeInUpVariants}
                 >
                   Upcoming Coding Contests
                 </motion.h2>
                 <motion.p
-                  className="text-base sm:text-lg md:text-xl text-gray-600"
+                  className="text-base sm:text-lg md:text-xl text-fg-muted"
                   variants={fadeInUpVariants}
                 >
                   Never miss another competitive programming opportunity
@@ -1039,7 +984,7 @@ const socialLinks = [
                     className={`px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-medium transition-all duration-300 text-xs sm:text-sm md:text-base ${
                       activeTab === "all"
                         ? "bg-blue-500 text-white shadow-md"
-                        : "bg-white text-gray-700 border border-gray-300 hover:border-blue-600 hover:text-blue-600"
+                        : "bg-surface text-fg-muted border border-edge-strong hover:border-blue-600 hover:text-blue-600"
                     }`}
                     whileHover={{ y: -3 }}
                     whileTap={{ y: 0 }}
@@ -1059,7 +1004,7 @@ const socialLinks = [
                       className={`px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-medium transition-all duration-300 text-xs sm:text-sm md:text-base ${
                         activeTab.toLowerCase() === platform.toLowerCase()
                           ? "bg-blue-500 text-white shadow-md"
-                          : "bg-white text-gray-700 border border-gray-300 hover:border-blue-600 hover:text-blue-600"
+                          : "bg-surface text-fg-muted border border-edge-strong hover:border-blue-600 hover:text-blue-600"
                       }`}
                       whileHover={{ y: -3 }}
                       whileTap={{ y: 0 }}
@@ -1081,7 +1026,7 @@ const socialLinks = [
                       repeat: Infinity,
                     }}
                   ></motion.div>
-                  <p className="mt-4 sm:mt-6 text-base sm:text-lg text-gray-600">
+                  <p className="mt-4 sm:mt-6 text-base sm:text-lg text-fg-muted">
                     Loading upcoming contests...
                   </p>
                 </div>
@@ -1106,19 +1051,34 @@ const socialLinks = [
                         >
                           {/* Contest Card */}
                           <div className="flex justify-center">
-                            <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 md:p-10 border-2 border-gray-200 w-full max-w-3xl relative overflow-hidden">
+                            <div className="bg-surface rounded-2xl shadow-xl p-4 sm:p-6 md:p-10 border-2 border-edge w-full max-w-3xl relative overflow-hidden">
                               <div className="absolute top-0 left-0 w-full h-2 gradient-bg"></div>
 
                               {filteredContests.length > 0 &&
                               currentContestIndex < filteredContests.length ? (
                                 <>
                                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-3">
-                                    <h3 className="text-xl sm:text-2xl font-bold text-gray-900 pr-0 sm:pr-4 break-words">
-                                      {
-                                        filteredContests[currentContestIndex]
-                                          .name
-                                      }
-                                    </h3>
+                                    <div className="pr-0 sm:pr-4">
+                                      <h3 className="text-xl sm:text-2xl font-bold text-fg break-words">
+                                        {
+                                          filteredContests[currentContestIndex]
+                                            .name
+                                        }
+                                      </h3>
+                                      {/* Say which of the two this is. A Codeforces
+                                          entry is a specific contest fetched from
+                                          their API; the others are the platform's
+                                          published recurring series with the next
+                                          occurrence computed. Presenting both
+                                          identically is what made the old
+                                          fabricated rounds so plausible. */}
+                                      {filteredContests[currentContestIndex].recurring && (
+                                        <p className="mt-1 text-xs sm:text-sm text-fg-subtle">
+                                          Recurring ·{' '}
+                                          {filteredContests[currentContestIndex].recurring}
+                                        </p>
+                                      )}
+                                    </div>
                                     <span
                                       className={`px-3 sm:px-5 py-1.5 sm:py-2 text-white text-xs sm:text-sm font-bold rounded-full whitespace-nowrap ${getPlatformColor(
                                         filteredContests[currentContestIndex]
@@ -1148,10 +1108,10 @@ const socialLinks = [
                                           </svg>
                                         </div>
                                         <div>
-                                          <p className="text-xs sm:text-sm text-gray-500">
+                                          <p className="text-xs sm:text-sm text-fg-subtle">
                                             Date
                                           </p>
-                                          <p className="font-semibold text-gray-800 text-sm sm:text-base">
+                                          <p className="font-semibold text-fg text-sm sm:text-base">
                                             {
                                               filteredContests[
                                                 currentContestIndex
@@ -1175,10 +1135,10 @@ const socialLinks = [
                                           </svg>
                                         </div>
                                         <div>
-                                          <p className="text-xs sm:text-sm text-gray-500">
+                                          <p className="text-xs sm:text-sm text-fg-subtle">
                                             Time
                                           </p>
-                                          <p className="font-semibold text-gray-800 text-sm sm:text-base">
+                                          <p className="font-semibold text-fg text-sm sm:text-base">
                                             {
                                               filteredContests[
                                                 currentContestIndex
@@ -1204,10 +1164,10 @@ const socialLinks = [
                                           </svg>
                                         </div>
                                         <div>
-                                          <p className="text-xs sm:text-sm text-gray-500">
+                                          <p className="text-xs sm:text-sm text-fg-subtle">
                                             Duration
                                           </p>
-                                          <p className="font-semibold text-gray-800 text-sm sm:text-base">
+                                          <p className="font-semibold text-fg text-sm sm:text-base">
                                             {
                                               filteredContests[
                                                 currentContestIndex
@@ -1231,12 +1191,12 @@ const socialLinks = [
                                           </svg>
                                         </div>
                                         <div>
-                                          <p className="text-xs sm:text-sm text-gray-500">
+                                          <p className="text-xs sm:text-sm text-fg-subtle">
                                             Status
                                           </p>
                                           <div className="flex items-center">
                                             <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                                            <p className="font-semibold text-gray-800 text-sm sm:text-base">
+                                            <p className="font-semibold text-fg text-sm sm:text-base">
                                               Upcoming
                                             </p>
                                           </div>
@@ -1301,7 +1261,7 @@ const socialLinks = [
                                   </div>
                                 </>
                               ) : (
-                                <div className="py-12 text-center text-gray-500">
+                                <div className="py-12 text-center text-fg-subtle">
                                   <p>Loading contest information...</p>
                                 </div>
                               )}
@@ -1314,7 +1274,7 @@ const socialLinks = [
                       {filteredContests.length > 1 && (
                         <>
                           <motion.button
-                            className="absolute left-1 sm:left-4 md:left-8 transform -translate-y-1/2 top-1/2 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-white shadow-lg flex items-center justify-center border border-gray-200 z-10"
+                            className="absolute left-1 sm:left-4 md:left-8 transform -translate-y-1/2 top-1/2 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-surface shadow-lg flex items-center justify-center border border-edge z-10"
                             onClick={handlePrevContest}
                             whileHover={{
                               scale: 1.1,
@@ -1328,14 +1288,14 @@ const socialLinks = [
                               height="18"
                               viewBox="0 0 24 24"
                               fill="currentColor"
-                              className="text-gray-700"
+                              className="text-fg-muted"
                             >
                               <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
                             </svg>
                           </motion.button>
 
                           <motion.button
-                            className="absolute right-1 sm:right-4 md:right-8 transform -translate-y-1/2 top-1/2 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-white shadow-lg flex items-center justify-center border border-gray-200 z-10"
+                            className="absolute right-1 sm:right-4 md:right-8 transform -translate-y-1/2 top-1/2 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-surface shadow-lg flex items-center justify-center border border-edge z-10"
                             onClick={handleNextContest}
                             whileHover={{
                               scale: 1.1,
@@ -1349,7 +1309,7 @@ const socialLinks = [
                               height="18"
                               viewBox="0 0 24 24"
                               fill="currentColor"
-                              className="text-gray-700"
+                              className="text-fg-muted"
                             >
                               <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" />
                             </svg>
@@ -1359,11 +1319,11 @@ const socialLinks = [
                     </div>
                   ) : (
                     <motion.div
-                      className="text-center py-12 sm:py-16 text-gray-600 bg-white rounded-xl border border-gray-200"
+                      className="text-center py-12 sm:py-16 text-fg-muted bg-surface rounded-xl border border-edge"
                       variants={fadeInUpVariants}
                     >
                       <svg
-                        className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 text-gray-400"
+                        className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 text-fg-subtle"
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 24 24"
                         fill="currentColor"
@@ -1390,7 +1350,7 @@ const socialLinks = [
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5 }}
                 >
-                  <p className="text-sm sm:text-base text-gray-600 px-4 mt-14">
+                  <p className="text-sm sm:text-base text-fg-muted px-4 mt-14">
                     Stay ahead of the competition by setting up personalized
                     reminders for your favorite platforms.
                   </p>
@@ -1409,7 +1369,7 @@ const socialLinks = [
           {/* Testimonials Section */}
           <motion.div
             id="testimonials"
-            className="py-16 sm:py-20 md:py-24 px-4 sm:px-6 bg-white"
+            className="py-16 sm:py-20 md:py-24 px-4 sm:px-6 bg-surface"
             variants={containerVariants}
             initial="hidden"
             whileInView="visible"
@@ -1418,13 +1378,13 @@ const socialLinks = [
             <div className="max-w-7xl mx-auto">
               <div className="text-center mb-10 sm:mb-16">
                 <motion.h2
-                  className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3 sm:mb-4"
+                  className="text-2xl sm:text-3xl md:text-4xl font-bold text-fg mb-3 sm:mb-4"
                   variants={fadeInUpVariants}
                 >
                   What Developers Are Saying
                 </motion.h2>
                 <motion.p
-                  className="text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl mx-auto"
+                  className="text-base sm:text-lg md:text-xl text-fg-muted max-w-3xl mx-auto"
                   variants={fadeInUpVariants}
                 >
                   Join thousands of developers who have transformed their coding
@@ -1437,7 +1397,7 @@ const socialLinks = [
                 variants={containerVariants}
               >
                 <motion.div
-                  className="bg-white p-6 sm:p-8 rounded-xl shadow-md border border-gray-200"
+                  className="bg-surface p-6 sm:p-8 rounded-xl shadow-md border border-edge"
                   variants={itemVariants}
                   whileHover={cardVariants.hover}
                 >
@@ -1446,15 +1406,15 @@ const socialLinks = [
                       BR
                     </div>
                     <div>
-                      <div className="font-bold text-gray-900 text-sm sm:text-base">
+                      <div className="font-bold text-fg text-sm sm:text-base">
                         Balaji 
                       </div>
-                      <div className="text-xs sm:text-sm text-gray-600">
+                      <div className="text-xs sm:text-sm text-fg-muted">
                         Software Engineer at Zoho
                       </div>
                     </div>
                   </div>
-                  <p className="text-sm sm:text-base text-gray-700 mb-4">
+                  <p className="text-sm sm:text-base text-fg-muted mb-4">
                     "CodeKrack completely transformed my competitive
                     programming journey. The unified dashboard saves me hours
                     each week, and the analytics helped me identify weaknesses I
@@ -1477,7 +1437,7 @@ const socialLinks = [
                 </motion.div>
 
                 <motion.div
-                  className="bg-white p-6 sm:p-8 rounded-xl shadow-md border border-gray-200"
+                  className="bg-surface p-6 sm:p-8 rounded-xl shadow-md border border-edge"
                   variants={itemVariants}
                   whileHover={cardVariants.hover}
                 >
@@ -1486,15 +1446,15 @@ const socialLinks = [
                       PM
                     </div>
                     <div>
-                      <div className="font-bold text-gray-900 text-sm sm:text-base">
+                      <div className="font-bold text-fg text-sm sm:text-base">
                         Praveen Mohan
                       </div>
-                      <div className="text-xs sm:text-sm text-gray-600">
+                      <div className="text-xs sm:text-sm text-fg-muted">
                         CS Student at Stanford
                       </div>
                     </div>
                   </div>
-                  <p className="text-sm sm:text-base text-gray-700 mb-4">
+                  <p className="text-sm sm:text-base text-fg-muted mb-4">
                     "The AI profile summary feature helped me showcase my coding
                     achievements to recruiters in a way that stood out. I
                     received interview calls from 3 FAANG companies within a
@@ -1517,7 +1477,7 @@ const socialLinks = [
                 </motion.div>
 
                 <motion.div
-                  className="bg-white p-6 sm:p-8 rounded-xl shadow-md border border-gray-200 sm:col-span-2 md:col-span-1"
+                  className="bg-surface p-6 sm:p-8 rounded-xl shadow-md border border-edge sm:col-span-2 md:col-span-1"
                   variants={itemVariants}
                   whileHover={cardVariants.hover}
                 >
@@ -1526,15 +1486,15 @@ const socialLinks = [
                       H
                     </div>
                     <div>
-                      <div className="font-bold text-gray-900 text-sm sm:text-base">
+                      <div className="font-bold text-fg text-sm sm:text-base">
                         Harish
                       </div>
-                      <div className="text-xs sm:text-sm text-gray-600">
+                      <div className="text-xs sm:text-sm text-fg-muted">
                         Senior Developer at MindTree
                       </div>
                     </div>
                   </div>
-                  <p className="text-sm sm:text-base text-gray-700 mb-4">
+                  <p className="text-sm sm:text-base text-fg-muted mb-4">
                     "I love the contest calendar and reminders. I've
                     participated in twice as many competitions this year and
                     climbed from Pupil to Candidate Master on Codeforces. The
@@ -1561,7 +1521,7 @@ const socialLinks = [
 
           {/* CTA Section */}
           <motion.div
-            className="py-16 sm:py-20 md:py-24 px-4 sm:px-6 bg-gray-50"
+            className="py-16 sm:py-20 md:py-24 px-4 sm:px-6 bg-surface-2"
             variants={fadeInUpVariants}
             initial="hidden"
             whileInView="visible"
@@ -1600,7 +1560,7 @@ Learning Data Structures and Algorithms (DSA) strengthens problem-solving skills
 
         {/* Footer */}
        <motion.footer
-      className="border-t border-gray-200 py-12 sm:py-16 px-4 sm:px-6 bg-white relative overflow-hidden"
+      className="border-t border-edge py-12 sm:py-16 px-4 sm:px-6 bg-surface relative overflow-hidden"
       variants={footerVariants}
       initial="hidden"
       whileInView="show" // Animation triggers when the footer is in view
@@ -1631,13 +1591,13 @@ Learning Data Structures and Algorithms (DSA) strengthens problem-solving skills
                 whileHover={{ scale: 1.1, rotate: -10 }}
                 transition={{ type: 'spring', stiffness: 300 }}
               >
-                CT
+                CK
               </motion.div>
-              <span className="text-lg sm:text-xl font-bold text-gray-900">
+              <span className="text-lg sm:text-xl font-bold text-fg">
                 Code<span className="text-orange-500">Krack</span>
               </span>
             </div>
-            <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">
+            <p className="text-sm sm:text-base text-fg-muted mb-4 sm:mb-6">
               Empowering developers to track and grow their coding careers
               through unified analytics and insights.
             </p>
@@ -1649,7 +1609,7 @@ Learning Data Structures and Algorithms (DSA) strengthens problem-solving skills
                 <motion.a
                   key={social.name}
                   href={social.href}
-                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-blue-100 hover:text-blue-600 transition-colors"
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-surface-2 flex items-center justify-center text-fg-muted hover:bg-blue-100 hover:text-blue-600 transition-colors"
                   whileHover={{ y: -4, scale: 1.1, rotate: 5 }}
                   whileTap={{ scale: 0.95 }}
                   variants={socialIconVariants}
@@ -1663,11 +1623,11 @@ Learning Data Structures and Algorithms (DSA) strengthens problem-solving skills
 
           {/* Product Column */}
           <motion.div variants={columnVariants}>
-            <h4 className="font-bold text-gray-900 mb-3 sm:mb-5 text-base sm:text-lg">
+            <h4 className="font-bold text-fg mb-3 sm:mb-5 text-base sm:text-lg">
               For Students
             </h4>
             <motion.ul
-              className="space-y-2 sm:space-y-3 text-sm sm:text-base text-gray-600"
+              className="space-y-2 sm:space-y-3 text-sm sm:text-base text-fg-muted"
               variants={linkListVariants}
             >
               {[ "Dashboard", "LeaderBoard", "Messenger", "Activity"].map((link) => (
@@ -1683,11 +1643,11 @@ Learning Data Structures and Algorithms (DSA) strengthens problem-solving skills
 
           {/* Company Column */}
           <motion.div variants={columnVariants}>
-            <h4 className="font-bold text-gray-900 mb-3 sm:mb-5 text-base sm:text-lg">
+            <h4 className="font-bold text-fg mb-3 sm:mb-5 text-base sm:text-lg">
               For Admin
             </h4>
             <motion.ul
-              className="space-y-2 sm:space-y-3 text-sm sm:text-base text-gray-600"
+              className="space-y-2 sm:space-y-3 text-sm sm:text-base text-fg-muted"
               variants={linkListVariants}
             >
               {["Portal", "Chat Management", "User Analytics", "Scraping Status"].map((link) => (
@@ -1703,11 +1663,11 @@ Learning Data Structures and Algorithms (DSA) strengthens problem-solving skills
 
           {/* Resources Column */}
           <motion.div variants={columnVariants}>
-            <h4 className="font-bold text-gray-900 mb-3 sm:mb-5 text-base sm:text-lg">
+            <h4 className="font-bold text-fg mb-3 sm:mb-5 text-base sm:text-lg">
               Resources
             </h4>
             <motion.ul
-              className="space-y-2 sm:space-y-3 text-sm sm:text-base text-gray-600"
+              className="space-y-2 sm:space-y-3 text-sm sm:text-base text-fg-muted"
               variants={linkListVariants}
             >
               {["Documentation", "Help Center", "Community", "Contact"].map((link) => (
@@ -1724,7 +1684,7 @@ Learning Data Structures and Algorithms (DSA) strengthens problem-solving skills
 
         {/* Bottom Bar */}
         <motion.div
-          className="border-t border-gray-200 pt-6 sm:pt-8 flex flex-col md:flex-row justify-between items-center text-xs sm:text-sm text-gray-600"
+          className="border-t border-edge pt-6 sm:pt-8 flex flex-col md:flex-row justify-between items-center text-xs sm:text-sm text-fg-muted"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}

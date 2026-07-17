@@ -7,9 +7,7 @@ import { useRescrapeStudent } from '../hooks/queries/useStudents';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-toastify';
 import StudentViewDetails from './StudentViewDetails';
-import { motion, AnimatePresence } from 'framer-motion';
-import BackButton from './BackButton';
-
+import { motion, AnimatePresence } from 'framer-motion';
 const AdminLeaderboard = () => {
   // students / loading / lastScraped are derived from the query below — server
   // state has one home, and it isn't useState.
@@ -244,7 +242,7 @@ const AdminLeaderboard = () => {
       default:
         return { 
           label: 'Not Started',
-          className: 'bg-gray-100 text-gray-800 border-gray-200'
+          className: 'bg-surface-2 text-fg border-edge'
         };
     }
   };
@@ -314,9 +312,7 @@ const AdminLeaderboard = () => {
   };
 
   return (
-    <>
-      <BackButton to="/admin/dashboard" />
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-8">
+    <>      <div>
       <div className="max-w-7xl mx-auto" ref={containerRef}>
         {/* Header Section */}
         <motion.div
@@ -325,10 +321,10 @@ const AdminLeaderboard = () => {
           transition={{ type: "spring", stiffness: 100 }}
           className="mb-12 text-center"
         >
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-4 bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+          <h1 className="text-4xl md:text-6xl font-bold text-fg mb-4 bg-gradient-to-r from-fg to-fg-muted bg-clip-text text-transparent">
             Leaderboards
           </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="text-lg text-fg-muted max-w-2xl mx-auto">
             Real-time tracking of student performance across competitive programming platforms
           </p>
         </motion.div>
@@ -371,12 +367,12 @@ const AdminLeaderboard = () => {
               key={stat.label}
               variants={itemVariants}
               whileHover={{ scale: 1.05 }}
-              className="bg-white rounded-2xl shadow-lg p-6 border border-gray-200 relative overflow-hidden group"
+              className="bg-surface rounded-2xl shadow-lg p-6 border border-edge relative overflow-hidden group"
             >
               <div className={`absolute inset-0 bg-gradient-to-br ${stat.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
-              <p className="text-sm font-semibold text-gray-600 mb-2">{stat.label}</p>
-              <p className="text-3xl font-bold text-gray-900">{stat.value.toLocaleString()}</p>
-              <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-gray-200 to-gray-300" />
+              <p className="text-sm font-semibold text-fg-muted mb-2">{stat.label}</p>
+              <p className="text-3xl font-bold text-fg">{stat.value.toLocaleString()}</p>
+              <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-edge to-edge-strong" />
             </motion.div>
           ))}
         </motion.div>
@@ -388,22 +384,22 @@ const AdminLeaderboard = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-white rounded-2xl shadow-lg p-8 mb-8 border border-gray-200"
+          className="bg-surface rounded-2xl shadow-lg p-8 mb-8 border border-edge"
         >
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-8">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Platform Selection</h2>
-              <p className="text-gray-600">Choose a platform to view rankings</p>
+              <h2 className="text-2xl font-bold text-fg mb-2">Platform Selection</h2>
+              <p className="text-fg-muted">Choose a platform to view rankings</p>
             </div>
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex items-center gap-4">
-                <label className="text-sm font-semibold text-gray-700 whitespace-nowrap">
+                <label className="text-sm font-semibold text-fg-muted whitespace-nowrap">
                   Department:
                 </label>
                 <select
                   value={departmentFilter}
                   onChange={(e) => setDepartmentFilter(e.target.value)}
-                  className="px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm"
+                  className="px-4 py-3 border border-edge-strong rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-surface shadow-sm"
                 >
                   {departments.map(dept => (
                     <option key={dept} value={dept}>
@@ -413,13 +409,13 @@ const AdminLeaderboard = () => {
                 </select>
               </div>
               <div className="flex items-center gap-4">
-                <label className="text-sm font-semibold text-gray-700 whitespace-nowrap">
+                <label className="text-sm font-semibold text-fg-muted whitespace-nowrap">
                   College:
                 </label>
                 <select
                   value={collegeFilter}
                   onChange={(e) => setCollegeFilter(e.target.value)}
-                  className="px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm"
+                  className="px-4 py-3 border border-edge-strong rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-surface shadow-sm"
                 >
                   {collegeOptions.map(college => (
                     <option key={college.id} value={college.id}>
@@ -444,12 +440,12 @@ const AdminLeaderboard = () => {
                 className={`p-6 rounded-xl border-2 transition-all duration-300 text-left group ${
                   activeBoard === board.id
                     ? 'border-blue-500 bg-blue-50 shadow-md'
-                    : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
+                    : 'border-edge bg-surface hover:border-edge-strong hover:shadow-sm'
                 }`}
               >
                 <div className="flex items-center justify-between mb-3">
                   <span className={`text-lg font-bold transition-colors ${
-                    activeBoard === board.id ? 'text-blue-700' : 'text-gray-700'
+                    activeBoard === board.id ? 'text-blue-700' : 'text-fg-muted'
                   }`}>
                     {board.name}
                   </span>
@@ -457,10 +453,10 @@ const AdminLeaderboard = () => {
                     activeBoard === board.id ? 'bg-blue-500' : 'bg-gray-300'
                   }`} />
                 </div>
-                <div className="text-sm text-gray-500 mb-2">
+                <div className="text-sm text-fg-subtle mb-2">
                   {board.metricLabel}
                 </div>
-                <div className="text-xs text-gray-400">
+                <div className="text-xs text-fg-subtle">
                   {students.filter(s => getScrapingStatus(s, board.id) === 'completed').length} students
                 </div>
               </motion.button>
@@ -474,15 +470,15 @@ const AdminLeaderboard = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
-          className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200"
+          className="bg-surface rounded-2xl shadow-lg overflow-hidden border border-edge"
         >
-          <div className="p-8 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
+          <div className="p-8 border-b border-edge bg-gradient-to-r from-surface-2 to-surface-3">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                <h2 className="text-2xl font-bold text-fg mb-2">
                   {currentBoard.name} Rankings
                 </h2>
-                <p className="text-gray-600">
+                <p className="text-fg-muted">
                   {platformStats.activeStudents} active students • 
                   Average score: {platformStats.averageMetric.toLocaleString()} • 
                   {collegeFilter === 'all' ? ' All Colleges' : ` ${collegeOptions.find(c => c.id === collegeFilter)?.name}`}
@@ -504,8 +500,8 @@ const AdminLeaderboard = () => {
                 exit={{ opacity: 0 }}
                 className="p-16 text-center"
               >
-                <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-blue-600 mb-4"></div>
-                <p className="text-gray-600 font-semibold text-lg">Loading leaderboard data...</p>
+                <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-edge border-t-blue-600 mb-4"></div>
+                <p className="text-fg-muted font-semibold text-lg">Loading leaderboard data...</p>
               </motion.div>
             ) : platformStats.activeStudents === 0 ? (
               <motion.div
@@ -514,13 +510,13 @@ const AdminLeaderboard = () => {
                 exit={{ opacity: 0, scale: 0.9 }}
                 className="p-16 text-center"
               >
-                <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-24 h-24 bg-surface-2 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <svg className="w-12 h-12 text-fg-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                   </svg>
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-3">No Data Available</h3>
-                <p className="text-gray-600 mb-4">
+                <h3 className="text-2xl font-bold text-fg mb-3">No Data Available</h3>
+                <p className="text-fg-muted mb-4">
                   No students found for the selected filters on {currentBoard.name}.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -535,7 +531,7 @@ const AdminLeaderboard = () => {
                   </button>
                   <Link
                     to="/admin/students"
-                    className="px-6 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition-colors font-semibold"
+                    className="px-6 py-3 bg-ink-600 text-white rounded-xl hover:bg-ink-700 transition-colors font-semibold"
                   >
                     Manage Students
                   </Link>
@@ -544,9 +540,9 @@ const AdminLeaderboard = () => {
             ) : (
               <>
                 {/* Pagination Controls - Top */}
-                <div className="flex flex-col sm:flex-row justify-between items-center p-6 border-b border-gray-200 bg-gray-50">
+                <div className="flex flex-col sm:flex-row justify-between items-center p-6 border-b border-edge bg-surface-2">
                   <div className="flex items-center gap-4 mb-4 sm:mb-0">
-                    <span className="text-sm text-gray-700 font-medium">
+                    <span className="text-sm text-fg-muted font-medium">
                       Showing {startIndex + 1}-{Math.min(endIndex, activeStudents.length)} of {activeStudents.length} students
                     </span>
                     <select
@@ -555,7 +551,7 @@ const AdminLeaderboard = () => {
                         setItemsPerPage(Number(e.target.value));
                         setCurrentPage(1);
                       }}
-                      className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-sm"
+                      className="px-3 py-2 border border-edge-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-surface text-sm"
                     >
                       {itemsPerPageOptions.map(option => (
                         <option key={option} value={option}>
@@ -571,8 +567,8 @@ const AdminLeaderboard = () => {
                       disabled={currentPage === 1}
                       className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
                         currentPage === 1
-                          ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
-                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
+                          ? 'bg-surface-2 text-fg-subtle border-edge cursor-not-allowed'
+                          : 'bg-surface text-fg-muted border-edge-strong hover:bg-surface-2 hover:border-edge-strong'
                       }`}
                     >
                       Previous
@@ -598,7 +594,7 @@ const AdminLeaderboard = () => {
                             className={`w-10 h-10 rounded-lg border text-sm font-medium transition-colors ${
                               currentPage === pageNum
                                 ? 'bg-blue-600 text-white border-blue-600'
-                                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                : 'bg-surface text-fg-muted border-edge-strong hover:bg-surface-2'
                             }`}
                           >
                             {pageNum}
@@ -608,10 +604,10 @@ const AdminLeaderboard = () => {
                       
                       {totalPages > 5 && currentPage < totalPages - 2 && (
                         <>
-                          <span className="px-2 text-gray-500">...</span>
+                          <span className="px-2 text-fg-subtle">...</span>
                           <button
                             onClick={() => goToPage(totalPages)}
-                            className="w-10 h-10 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50"
+                            className="w-10 h-10 rounded-lg border border-edge-strong bg-surface text-fg-muted text-sm font-medium hover:bg-surface-2"
                           >
                             {totalPages}
                           </button>
@@ -624,8 +620,8 @@ const AdminLeaderboard = () => {
                       disabled={currentPage === totalPages}
                       className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
                         currentPage === totalPages
-                          ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
-                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
+                          ? 'bg-surface-2 text-fg-subtle border-edge cursor-not-allowed'
+                          : 'bg-surface text-fg-muted border-edge-strong hover:bg-surface-2 hover:border-edge-strong'
                       }`}
                     >
                       Next
@@ -642,29 +638,29 @@ const AdminLeaderboard = () => {
                   className="overflow-x-auto relative"
                 >
                   <table className="w-full">
-                    <thead className="sticky top-0 bg-gray-50 z-10">
-                      <tr className="border-b border-gray-200">
-                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider bg-gray-50">
+                    <thead className="sticky top-0 bg-surface-2 z-10">
+                      <tr className="border-b border-edge">
+                        <th className="px-6 py-4 text-left text-xs font-bold text-fg-muted uppercase tracking-wider bg-surface-2">
                           Rank
                         </th>
-                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider bg-gray-50">
+                        <th className="px-6 py-4 text-left text-xs font-bold text-fg-muted uppercase tracking-wider bg-surface-2">
                           Student
                         </th>
-                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider bg-gray-50 hidden lg:table-cell">
+                        <th className="px-6 py-4 text-left text-xs font-bold text-fg-muted uppercase tracking-wider bg-surface-2 hidden lg:table-cell">
                           Department
                         </th>
-                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider bg-gray-50 hidden md:table-cell">
+                        <th className="px-6 py-4 text-left text-xs font-bold text-fg-muted uppercase tracking-wider bg-surface-2 hidden md:table-cell">
                           College
                         </th>
-                        <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider bg-gray-50">
+                        <th className="px-6 py-4 text-right text-xs font-bold text-fg-muted uppercase tracking-wider bg-surface-2">
                           {currentBoard.metricLabel}
                         </th>
-                        <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider bg-gray-50">
+                        <th className="px-6 py-4 text-right text-xs font-bold text-fg-muted uppercase tracking-wider bg-surface-2">
                           Actions
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-200 bg-white">
+                    <tbody className="divide-y divide-edge bg-surface">
                       <AnimatePresence>
                         {currentStudents.map((student, index) => {
                           const globalRank = startIndex + index + 1;
@@ -686,7 +682,7 @@ const AdminLeaderboard = () => {
                               onHoverStart={() => setHoveredStudent(student.id)}
                               onHoverEnd={() => setHoveredStudent(null)}
                               className={`relative transition-all duration-300 ${
-                                isTopThree ? 'bg-gradient-to-r from-gray-50 to-white' : ''
+                                isTopThree ? 'bg-gradient-to-r from-surface-2 to-surface' : ''
                               }`}
                             >
                               <td className="px-6 py-4 whitespace-nowrap">
@@ -695,7 +691,7 @@ const AdminLeaderboard = () => {
                                   className={`flex items-center justify-center w-10 h-10 rounded-xl border-2 font-bold text-sm ${
                                     isTopThree 
                                       ? 'border-yellow-400 bg-yellow-50 text-yellow-700 shadow-sm' 
-                                      : 'border-gray-200 bg-white text-gray-700'
+                                      : 'border-edge bg-surface text-fg-muted'
                                   }`}
                                 >
                                   {globalRank}
@@ -722,13 +718,13 @@ const AdminLeaderboard = () => {
                                     )}
                                   </motion.div>
                                   <div className="min-w-0 flex-1">
-                                    <div className="text-base font-bold text-gray-900 truncate">
+                                    <div className="text-base font-bold text-fg truncate">
                                       {student.name}
                                     </div>
-                                    <div className="text-sm text-gray-500 truncate">
+                                    <div className="text-sm text-fg-subtle truncate">
                                       {student.email}
                                     </div>
-                                    <div className="text-xs text-gray-400 lg:hidden">
+                                    <div className="text-xs text-fg-subtle lg:hidden">
                                       {student.department} • {student.college}
                                     </div>
                                   </div>
@@ -736,10 +732,10 @@ const AdminLeaderboard = () => {
                               </td>
                               
                               <td className="px-6 py-4 hidden lg:table-cell">
-                                <div className="text-sm font-semibold text-gray-900">
+                                <div className="text-sm font-semibold text-fg">
                                   {student.department || 'N/A'}
                                 </div>
-                                <div className="text-xs text-gray-500">
+                                <div className="text-xs text-fg-subtle">
                                   Year {student.year || 'N/A'}
                                 </div>
                               </td>
@@ -758,7 +754,7 @@ const AdminLeaderboard = () => {
                                 <motion.div
                                   initial={{ scale: 0.8 }}
                                   animate={{ scale: 1 }}
-                                  className="text-xl font-bold text-gray-900"
+                                  className="text-xl font-bold text-fg"
                                 >
                                   {student.metricValue.toLocaleString()}
                                 </motion.div>
@@ -795,8 +791,8 @@ const AdminLeaderboard = () => {
                 </motion.div>
 
                 {/* Pagination Controls - Bottom */}
-                <div className="flex flex-col sm:flex-row justify-between items-center p-6 border-t border-gray-200 bg-gray-50">
-                  <div className="text-sm text-gray-700 mb-4 sm:mb-0">
+                <div className="flex flex-col sm:flex-row justify-between items-center p-6 border-t border-edge bg-surface-2">
+                  <div className="text-sm text-fg-muted mb-4 sm:mb-0">
                     Showing {startIndex + 1}-{Math.min(endIndex, activeStudents.length)} of {activeStudents.length} students
                   </div>
                   
@@ -806,8 +802,8 @@ const AdminLeaderboard = () => {
                       disabled={currentPage === 1}
                       className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
                         currentPage === 1
-                          ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
-                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
+                          ? 'bg-surface-2 text-fg-subtle border-edge cursor-not-allowed'
+                          : 'bg-surface text-fg-muted border-edge-strong hover:bg-surface-2 hover:border-edge-strong'
                       }`}
                     >
                       Previous
@@ -833,7 +829,7 @@ const AdminLeaderboard = () => {
                             className={`w-10 h-10 rounded-lg border text-sm font-medium transition-colors ${
                               currentPage === pageNum
                                 ? 'bg-blue-600 text-white border-blue-600'
-                                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                : 'bg-surface text-fg-muted border-edge-strong hover:bg-surface-2'
                             }`}
                           >
                             {pageNum}
@@ -843,10 +839,10 @@ const AdminLeaderboard = () => {
                       
                       {totalPages > 5 && currentPage < totalPages - 2 && (
                         <>
-                          <span className="px-2 text-gray-500">...</span>
+                          <span className="px-2 text-fg-subtle">...</span>
                           <button
                             onClick={() => goToPage(totalPages)}
-                            className="w-10 h-10 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50"
+                            className="w-10 h-10 rounded-lg border border-edge-strong bg-surface text-fg-muted text-sm font-medium hover:bg-surface-2"
                           >
                             {totalPages}
                           </button>
@@ -859,8 +855,8 @@ const AdminLeaderboard = () => {
                       disabled={currentPage === totalPages}
                       className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
                         currentPage === totalPages
-                          ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
-                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
+                          ? 'bg-surface-2 text-fg-subtle border-edge cursor-not-allowed'
+                          : 'bg-surface text-fg-muted border-edge-strong hover:bg-surface-2 hover:border-edge-strong'
                       }`}
                     >
                       Next
@@ -878,17 +874,17 @@ const AdminLeaderboard = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8 }}
-            className="mt-12 bg-white rounded-2xl shadow-lg p-8 border border-gray-200"
+            className="mt-12 bg-surface rounded-2xl shadow-lg p-8 border border-edge"
           >
             <div className="flex items-center justify-between mb-8">
               <div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">Top Performers</h3>
-                <p className="text-gray-600">
+                <h3 className="text-2xl font-bold text-fg mb-2">Top Performers</h3>
+                <p className="text-fg-muted">
                   Celebrating excellence in {currentBoard.name} • 
                   {collegeFilter === 'all' ? ' All Colleges' : ` ${collegeOptions.find(c => c.id === collegeFilter)?.name}`}
                 </p>
               </div>
-              <div className="text-sm text-gray-500 bg-gray-100 px-4 py-2 rounded-full">
+              <div className="text-sm text-fg-subtle bg-surface-2 px-4 py-2 rounded-full">
                 {departmentFilter === 'all' ? 'All Departments' : departmentFilter}
               </div>
             </div>
@@ -911,7 +907,7 @@ const AdminLeaderboard = () => {
                         rank === 1 
                           ? 'border-yellow-400 bg-gradient-to-br from-yellow-50 to-yellow-100 shadow-xl' 
                           : rank === 2
-                          ? 'border-gray-300 bg-gradient-to-br from-gray-50 to-gray-100 shadow-lg'
+                          ? 'border-edge-strong bg-gradient-to-br from-surface-2 to-surface-3 shadow-lg'
                           : 'border-orange-200 bg-gradient-to-br from-orange-50 to-orange-100 shadow-md'
                       }`}
                     >
@@ -930,13 +926,13 @@ const AdminLeaderboard = () => {
                       </motion.div>
                       
                       {/* Student Info */}
-                      <h4 className="text-xl font-bold text-gray-900 mb-2 truncate">
+                      <h4 className="text-xl font-bold text-fg mb-2 truncate">
                         {student.name}
                       </h4>
-                      <p className="text-sm text-gray-600 mb-1 truncate">
+                      <p className="text-sm text-fg-muted mb-1 truncate">
                         {student.department}
                       </p>
-                      <p className="text-xs text-gray-500 mb-4">
+                      <p className="text-xs text-fg-subtle mb-4">
                         {student.college} • Year {student.year}
                       </p>
                       
@@ -955,13 +951,13 @@ const AdminLeaderboard = () => {
                         transition={{ delay: 0.5 + index * 0.1 }}
                         className={`text-4xl font-bold mb-2 ${
                           rank === 1 ? 'text-yellow-600' :
-                          rank === 2 ? 'text-gray-600' :
+                          rank === 2 ? 'text-fg-muted' :
                           'text-orange-600'
                         }`}
                       >
                         {student.metricValue.toLocaleString()}
                       </motion.div>
-                      <p className="text-sm text-gray-500 mb-6">
+                      <p className="text-sm text-fg-subtle mb-6">
                         {currentBoard.metricLabel.toLowerCase()}
                       </p>
                       
@@ -970,7 +966,7 @@ const AdminLeaderboard = () => {
                         whileHover={{ scale: 1.05, y: -2 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => setSelectedStudent(student)}
-                        className="w-full px-6 py-3 bg-white text-gray-700 border border-gray-300 rounded-xl hover:border-blue-500 hover:text-blue-600 transition-all font-semibold shadow-sm hover:shadow-md"
+                        className="w-full px-6 py-3 bg-surface text-fg-muted border border-edge-strong rounded-xl hover:border-blue-500 hover:text-blue-600 transition-all font-semibold shadow-sm hover:shadow-md"
                       >
                         View Full Profile
                       </motion.button>
@@ -991,10 +987,10 @@ const AdminLeaderboard = () => {
           >
             <motion.div
               whileHover={{ scale: 1.02, y: -5 }}
-              className="bg-white rounded-2xl shadow-lg p-8 border border-gray-200 text-center group cursor-pointer"
+              className="bg-surface rounded-2xl shadow-lg p-8 border border-edge text-center group cursor-pointer"
             >
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Manage Students</h3>
-              <p className="text-gray-600 mb-6">View and edit all student profiles and data</p>
+              <h3 className="text-xl font-bold text-fg mb-3">Manage Students</h3>
+              <p className="text-fg-muted mb-6">View and edit all student profiles and data</p>
               <Link
                 to="/admin/students"
                 className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-semibold shadow-lg hover:shadow-xl"
@@ -1008,10 +1004,10 @@ const AdminLeaderboard = () => {
 
             <motion.div
               whileHover={{ scale: 1.02, y: -5 }}
-              className="bg-white rounded-2xl shadow-lg p-8 border border-gray-200 text-center group cursor-pointer"
+              className="bg-surface rounded-2xl shadow-lg p-8 border border-edge text-center group cursor-pointer"
             >
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Add Student</h3>
-              <p className="text-gray-600 mb-6">Register new students to the platform</p>
+              <h3 className="text-xl font-bold text-fg mb-3">Add Student</h3>
+              <p className="text-fg-muted mb-6">Register new students to the platform</p>
               <Link
                 to="/admin/add-student"
                 className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-semibold shadow-lg hover:shadow-xl"
@@ -1025,10 +1021,10 @@ const AdminLeaderboard = () => {
 
             <motion.div
               whileHover={{ scale: 1.02, y: -5 }}
-              className="bg-white rounded-2xl shadow-lg p-8 border border-gray-200 text-center group cursor-pointer"
+              className="bg-surface rounded-2xl shadow-lg p-8 border border-edge text-center group cursor-pointer"
             >
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Refresh Data</h3>
-              <p className="text-gray-600 mb-6">Update all platform data with latest scraping</p>
+              <h3 className="text-xl font-bold text-fg mb-3">Refresh Data</h3>
+              <p className="text-fg-muted mb-6">Update all platform data with latest scraping</p>
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}

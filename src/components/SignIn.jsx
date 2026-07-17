@@ -80,7 +80,7 @@ const SignIn = ({ isOpen, onClose }) => {
       exit={{ opacity: 0 }}
     >
       <motion.div
-        className="bg-white rounded-xl p-6 sm:p-8 w-full max-w-md shadow-elite-lg relative"
+        className="bg-surface rounded-xl p-6 sm:p-8 w-full max-w-md shadow-elite-lg relative"
         initial={{ scale: 0.9, y: 20, opacity: 0 }}
         animate={{ scale: 1, y: 0, opacity: 1 }}
         exit={{ scale: 0.9, y: 20, opacity: 0 }}
@@ -88,7 +88,7 @@ const SignIn = ({ isOpen, onClose }) => {
       >
         <button
           onClick={handleClose}
-          className="absolute top-4 right-4 text-ink-400 hover:text-ink-600"
+          className="absolute top-4 right-4 text-fg-subtle hover:text-fg-muted"
           aria-label="Close"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -97,13 +97,13 @@ const SignIn = ({ isOpen, onClose }) => {
         </button>
 
         <div className="text-center mb-6">
-          <h2 className="font-display text-2xl font-bold text-ink-900 mb-1">Sign In</h2>
-          <p className="text-ink-500">Welcome back to CodeKrack!</p>
+          <h2 className="font-display text-2xl font-bold text-fg mb-1">Sign In</h2>
+          <p className="text-fg-subtle">Welcome back to CodeKrack!</p>
         </div>
 
         <form onSubmit={handleEmailSignIn} className="space-y-4">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-ink-700 mb-1">
+            <label htmlFor="email" className="block text-sm font-medium text-fg-muted mb-1">
               Email address
             </label>
             <input
@@ -111,14 +111,14 @@ const SignIn = ({ isOpen, onClose }) => {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 border border-ink-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition"
+              className="w-full px-3 py-2 border border-edge-strong rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition"
               placeholder="Enter your email"
               autoComplete="email"
             />
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-ink-700 mb-1">
+            <label htmlFor="password" className="block text-sm font-medium text-fg-muted mb-1">
               Password
             </label>
             <input
@@ -126,7 +126,7 @@ const SignIn = ({ isOpen, onClose }) => {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-ink-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition"
+              className="w-full px-3 py-2 border border-edge-strong rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition"
               placeholder="Enter your password"
               autoComplete="current-password"
             />
@@ -154,7 +154,7 @@ const SignIn = ({ isOpen, onClose }) => {
         </form>
 
         <div className="text-center mt-4">
-          <p className="text-sm text-ink-500">
+          <p className="text-sm text-fg-subtle">
             Don&apos;t have an account? Please contact your administrator.
           </p>
         </div>

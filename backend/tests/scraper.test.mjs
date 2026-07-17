@@ -54,7 +54,7 @@ try {
   let r = await fetch(`${API}/api/institutions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${suTok}` },
-    body: JSON.stringify({ name: `${TAG} College`, adminEmail: `${TAG}-a@codekrack.invalid`, adminPassword: 'ZzScrape#Ad1' }),
+    body: JSON.stringify({ name: `${TAG} College`, code: 'ZZSCRAPE', adminEmail: `${TAG}-a@codekrack.invalid`, adminPassword: 'ZzScrape#Ad1' }),
   });
   const instId = (await r.json()).id;
   const aTok = await signIn(`${TAG}-a@codekrack.invalid`, 'ZzScrape#Ad1');

@@ -3,11 +3,148 @@
 @tailwind utilities;
 
 /* =============================================================================
-   CodeKrack — elite orange + blue theme
-   Brand colours live in tailwind.config.js, where the default blue and orange
-   palettes are overridden. That means every existing blue or orange utility
-   class across the app picks up the brand colours automatically.
+   CodeKrack — design tokens
+   A product of Syasans.
+
+   Two layers, and the split matters:
+
+   1. BRAND colours live in tailwind.config.js (blue/orange override Tailwind's
+      defaults, so every bg-blue-600 in the app is already brand blue). These are
+      fixed — brand blue is brand blue in both themes.
+
+   2. SEMANTIC tokens live here, as CSS variables on :root and .dark. They answer
+      "what role does this colour play" (page, card, hairline, muted text) rather
+      than "which grey is it". Tailwind maps them to utilities in the config, so
+      `bg-surface` / `text-fg` / `border-edge` are already right in both themes
+      and need no `dark:` variant at the call site.
+
+   Why variables instead of `dark:` utilities: the app carries ~1,100 colour
+   classes across ~35 files. Writing `dark:` on each would double every class
+   list and leave two values per call site to keep in sync by hand forever. One
+   variable flip does it in one place.
+
+   Channels are space-separated RGB triplets (not hex, not rgb()) so Tailwind's
+   `<alpha-value>` works — that is what makes `bg-surface/50` compose.
    ========================================================================== */
+
+/* -----------------------------------------------------------------------------
+   THESE TWO BLOCKS ARE DELIBERATELY OUTSIDE `@layer base`. Do not move them in.
+
+   Tailwind tree-shakes custom CSS written inside `@layer` against the scanned
+   content, and `.dark` is applied at RUNTIME by JavaScript — it appears in no
+   markup at build time. Inside a layer, the whole dark theme is silently
+   dropped from the bundle unless the literal string "dark" happens to survive
+   somewhere Tailwind scans. Verified: a probe without the string emitted only
+   `--surface: 255 255 255`; the `.dark` block was gone, and dark mode would
+   have failed with no error anywhere.
+
+   Plain CSS at the top level is passed through untouched, so the theme cannot
+   be purged by an unrelated refactor.
+   -------------------------------------------------------------------------- */
+
+/* `.theme-light` shares this block so any subtree can opt OUT of dark mode by
+   re-declaring the light tokens on itself.
+
+   This works because custom properties inherit from the nearest ancestor that
+   sets them: `.dark` sits on <html>, `.theme-light` sits on a div below it, and
+   for that div and its children the closer declaration wins. It is NOT a
+   specificity fight — the two selectors match different elements — so no
+   !important and no ordering trickery is needed.
+
+   Used by the marketing landing page, which is always light by design. */
+:root,
+.theme-light {
+  /* ── Light ───────────────────────────────────────────────────────────── */
+  --canvas: 247 248 250; /* page — off-white on purpose; pure white gives cards nothing to sit on */
+  --surface: 255 255 255; /* cards, panels, sidebar */
+  --surface-2: 246 247 249; /* table heads, stat tiles, inputs */
+  --surface-3: 236 238 242; /* hover / pressed */
+
+  --fg: 14 18 32; /* headings, primary copy   (ink-950) */
+  --fg-muted: 67 78 99; /* secondary copy, labels   (ink-700) */
+  --fg-subtle: 102 118 148; /* captions, placeholders   (ink-500) */
+
+  --edge: 236 238 242; /* hairlines, dividers      (ink-100) */
+  --edge-strong: 213 218 227; /* input borders            (ink-200) */
+
+  /* Elevation. Cool near-black at low alpha reads as a soft shadow on white. */
+  --shadow: 16 24 40;
+  --shadow-a1: 0.04;
+  --shadow-a2: 0.1;
+  --shadow-a3: 0.18;
+
+  /* Badge fills + the text colour that belongs on each. */
+  --tint-brand: 238 244 255;
+  --on-brand: 29 53 216;
+  --tint-accent: 255 248 241;
+  --on-accent: 199 58 6;
+  --tint-success: 236 253 245;
+  --on-success: 4 120 87;
+  --tint-warn: 255 251 235;
+  --on-warn: 180 83 9;
+  --tint-danger: 254 242 242;
+  --on-danger: 185 28 28;
+
+  /* Surface washes (bg-brand-gradient-soft, bg-brand-mesh). */
+  --wash-a: 238 244 255;
+  --wash-b: 255 248 241;
+  --mesh-a: 59 102 246;
+  --mesh-b: 255 106 19;
+  --mesh-o: 0.14;
+
+  /* Tells the browser to render native scrollbars, form controls and the caret
+     light. Without it, a dark page still gets a white <select> popup. */
+  color-scheme: light;
+}
+
+.dark {
+  /* ── Dark ────────────────────────────────────────────────────────────── */
+  /* Near-black with a blue cast, never #000. True black against bright brand
+     blue vibrates at the edges and reads cheap; a slight hue keeps the whole
+     UI feeling like one surface. */
+  --canvas: 8 11 20;
+  --surface: 15 20 34; /* ABOVE canvas — in dark, cards catch light */
+  --surface-2: 22 28 45;
+  --surface-3: 30 38 58;
+
+  /* Not pure white. #fff on near-black haloes; ink-100 holds contrast without
+     the glare over long sessions. */
+  --fg: 236 238 242;
+  --fg-muted: 152 165 187;
+  --fg-subtle: 107 122 150;
+
+  --edge: 30 38 58;
+  --edge-strong: 45 55 80;
+
+  /* True black, far higher alpha. The light-mode values would be invisible
+     here — dark elevation comes mostly from --surface stepping up, with the
+     shadow only deepening the gap. */
+  --shadow: 0 0 0;
+  --shadow-a1: 0.3;
+  --shadow-a2: 0.45;
+  --shadow-a3: 0.6;
+
+  /* Tints invert: a pale wash becomes a deep, desaturated one, and the text on
+     it goes light. bg-brand-50 kept literal would be a headlight here. */
+  --tint-brand: 22 32 78;
+  --on-brand: 147 180 253;
+  --tint-accent: 62 26 8;
+  --on-accent: 253 186 140;
+  --tint-success: 6 44 34;
+  --on-success: 110 231 183;
+  --tint-warn: 56 38 6;
+  --on-warn: 252 211 77;
+  --tint-danger: 63 20 20;
+  --on-danger: 252 165 165;
+
+  --wash-a: 20 27 55;
+  --wash-b: 45 19 8;
+  --mesh-a: 59 102 246;
+  --mesh-b: 255 106 19;
+  --mesh-o: 0.1;
+
+  color-scheme: dark;
+}
 
 @layer base {
   html {
@@ -18,10 +155,13 @@
   }
 
   body {
-    @apply bg-white text-ink-900;
+    @apply bg-canvas text-fg;
   }
 
-  h1, h2, h3, h4 {
+  h1,
+  h2,
+  h3,
+  h4 {
     font-family: 'Sora', 'Inter', system-ui, sans-serif;
     @apply tracking-tightest;
   }
@@ -31,10 +171,10 @@
     color: #ffffff;
   }
 
-  /* Brand scrollbar */
+  /* Brand scrollbar — token-driven, so it doesn't stay pale blue on a dark page. */
   * {
     scrollbar-width: thin;
-    scrollbar-color: #bfd3fe transparent;
+    scrollbar-color: rgb(var(--edge-strong)) transparent;
   }
   *::-webkit-scrollbar {
     width: 10px;
@@ -44,25 +184,41 @@
     background: transparent;
   }
   *::-webkit-scrollbar-thumb {
-    background-color: #bfd3fe;
+    background-color: rgb(var(--edge-strong));
     border-radius: 9999px;
     border: 3px solid transparent;
     background-clip: content-box;
   }
   *::-webkit-scrollbar-thumb:hover {
-    background-color: #608cfa;
+    background-color: rgb(var(--fg-subtle));
     background-clip: content-box;
   }
 
-  /* Consistent brand focus ring */
+  /* Consistent brand focus ring. Kept chromatic so it is visible on both. */
   :focus-visible {
     outline: 2px solid #3b66f6;
     outline-offset: 2px;
+  }
+
+  /* Respect the OS setting for people who ask for less motion. The app leans
+     hard on framer-motion, and this is the one global lever that covers it.
+     (Salvaged from App.css, which was dead Vite starter code and is deleted.) */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
 @layer components {
   /* ── Buttons ─────────────────────────────────────────────────────────── */
+  /* text-white here is intentional and must NOT become a token: the fill is
+     saturated brand colour in both themes, so the label stays white in both. */
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl
            bg-brand-600 text-white font-semibold shadow-elite
@@ -79,19 +235,19 @@
 
   .btn-ghost {
     @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl
-           bg-white text-ink-700 font-semibold border border-ink-200
-           transition-all duration-200 hover:border-brand-300 hover:text-brand-700
-           active:scale-[0.98];
+           bg-surface text-fg-muted font-semibold border border-edge-strong
+           transition-all duration-200 hover:border-brand-300 hover:text-brand-500
+           active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed;
   }
 
   /* ── Surfaces ────────────────────────────────────────────────────────── */
   .card-elite {
-    @apply bg-white rounded-2xl border border-ink-100 shadow-elite
+    @apply bg-surface rounded-2xl border border-edge shadow-elite
            transition-shadow duration-300 hover:shadow-elite-lg;
   }
 
   .surface-mesh {
-    @apply bg-white bg-brand-mesh;
+    @apply bg-surface bg-brand-mesh;
   }
 
   /* ── Text ────────────────────────────────────────────────────────────── */
@@ -101,25 +257,61 @@
 
   .eyebrow {
     @apply inline-flex items-center gap-2 px-3 py-1 rounded-full
-           bg-accent-50 text-accent-700 text-xs font-semibold uppercase tracking-wide
-           border border-accent-200;
+           bg-tint-accent text-on-accent text-xs font-semibold uppercase tracking-wide
+           border border-accent-500/20;
+  }
+
+  /* ── Forms ───────────────────────────────────────────────────────────── */
+  /* The app hand-rolls this class list on nearly every input; centralising it
+     means the theme flip lands on all of them at once. */
+  .input-elite {
+    @apply w-full px-4 py-2.5 rounded-xl bg-surface-2 text-fg
+           border border-edge-strong placeholder:text-fg-subtle
+           transition-colors duration-200
+           focus:border-brand-500 focus:bg-surface focus:outline-none
+           disabled:opacity-60 disabled:cursor-not-allowed;
+  }
+
+  .label-elite {
+    @apply block text-sm font-medium text-fg-muted mb-1.5;
   }
 
   /* ── Data table ──────────────────────────────────────────────────────── */
   .data-table {
-    @apply w-full border-collapse bg-white rounded-xl shadow-elite overflow-hidden;
+    @apply w-full border-collapse bg-surface rounded-xl shadow-elite overflow-hidden;
   }
 
   .data-table th {
-    @apply bg-ink-50 px-4 py-3 text-left text-xs font-semibold text-ink-500
-           uppercase tracking-wider border-b border-ink-100;
+    @apply bg-surface-2 px-4 py-3 text-left text-xs font-semibold text-fg-subtle
+           uppercase tracking-wider border-b border-edge;
   }
 
   .data-table td {
-    @apply px-4 py-3 text-sm text-ink-900 border-b border-ink-100;
+    @apply px-4 py-3 text-sm text-fg border-b border-edge;
   }
 
   .data-table tr:hover {
-    @apply bg-brand-50/50;
+    @apply bg-surface-3;
+  }
+
+  /* ── Badges ──────────────────────────────────────────────────────────── */
+  .badge {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full
+           text-xs font-semibold border;
+  }
+  .badge-brand {
+    @apply badge bg-tint-brand text-on-brand border-brand-500/20;
+  }
+  .badge-success {
+    @apply badge bg-tint-success text-on-success border-emerald-500/20;
+  }
+  .badge-warn {
+    @apply badge bg-tint-warn text-on-warn border-amber-500/20;
+  }
+  .badge-danger {
+    @apply badge bg-tint-danger text-on-danger border-red-500/20;
+  }
+  .badge-neutral {
+    @apply badge bg-surface-2 text-fg-muted border-edge-strong;
   }
 }

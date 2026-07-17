@@ -28,7 +28,7 @@ const ProtectedRoute = ({ children, hideFooter = false }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="min-h-screen flex items-center justify-center bg-surface">
         <div className="h-10 w-10 rounded-full border-[3px] border-blue-100 border-t-orange-500 animate-spin" />
       </div>
     );

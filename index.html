@@ -9,6 +9,37 @@
       name="description"
       content="CodeKrack — track student coding progress across LeetCode, Codeforces, AtCoder and GitHub. A product of Syasans."
     />
+
+    <!-- Theme bootstrap. Must stay HERE: in <head>, inline, and render-blocking.
+         Do not move it to a module, add defer/async, or fold it into main.jsx.
+
+         React mounts after first paint, so a theme applied in a component runs
+         one frame too late: a dark-mode user gets a full-screen white flash on
+         every single page load and navigation. That flash is the single most
+         obvious tell of a bolted-on dark mode, and it cannot be fixed from
+         inside React — only by setting the class before the browser paints.
+
+         Kept tiny and dependency-free because it blocks paint. The storage key
+         is duplicated in src/contexts/ThemeContext.jsx (STORAGE_KEY) — this
+         script cannot import it, so the two must be changed together. -->
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('codekrack-theme');
+          // No stored choice means "follow the OS", which is also the default
+          // for a first-time visitor.
+          var dark =
+            stored === 'dark' ||
+            (stored !== 'light' &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.classList.toggle('dark', dark);
+        } catch (e) {
+          // Storage can throw in private mode or with cookies blocked. Falling
+          // back to light is fine; failing to boot the app is not.
+        }
+      })();
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

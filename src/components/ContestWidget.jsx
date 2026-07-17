@@ -33,7 +33,7 @@ const ContestWidget = () => {
       'AtCoder': { bg: 'bg-blue-500', text: 'text-blue-600', border: 'border-blue-200' },
       'HackerRank': { bg: 'bg-purple-500', text: 'text-purple-600', border: 'border-purple-200' }
     };
-    return colors[platform] || { bg: 'bg-gray-500', text: 'text-gray-600', border: 'border-gray-200' };
+    return colors[platform] || { bg: 'bg-gray-500', text: 'text-fg-muted', border: 'border-edge' };
   };
 
   const getDaysInMonth = (date) => {
@@ -72,7 +72,7 @@ const ContestWidget = () => {
     // Empty cells for days before the first day of the month
     for (let i = 0; i < firstDay; i++) {
       days.push(
-        <div key={`empty-${i}`} className="h-16 border border-gray-100"></div>
+        <div key={`empty-${i}`} className="h-16 border border-edge"></div>
       );
     }
 
@@ -84,13 +84,13 @@ const ContestWidget = () => {
       days.push(
         <motion.div
           key={day}
-          className={`h-16 border border-gray-100 p-1 relative overflow-hidden cursor-pointer ${
-            isToday ? 'bg-blue-50 border-blue-200' : 'hover:bg-gray-50'
+          className={`h-16 border border-edge p-1 relative overflow-hidden cursor-pointer ${
+            isToday ? 'bg-blue-50 border-blue-200' : 'hover:bg-surface-2'
           }`}
           whileHover={{ scale: 1.02 }}
           transition={{ duration: 0.2 }}
         >
-          <div className={`text-xs font-medium mb-1 ${isToday ? 'text-blue-600' : 'text-gray-700'}`}>
+          <div className={`text-xs font-medium mb-1 ${isToday ? 'text-blue-600' : 'text-fg-muted'}`}>
             {day}
           </div>
           
@@ -111,7 +111,7 @@ const ContestWidget = () => {
             })}
             
             {dayContests.length > 1 && (
-              <div className="text-xs text-gray-500 font-medium">
+              <div className="text-xs text-fg-subtle font-medium">
                 +{dayContests.length - 1}
               </div>
             )}
@@ -125,7 +125,7 @@ const ContestWidget = () => {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-md">
+      <div className="bg-surface rounded-xl border border-edge p-4 shadow-md">
         <div className="flex justify-center items-center h-32">
           <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
         </div>
@@ -137,14 +137,14 @@ const ContestWidget = () => {
     <>
       {/* Contest Widget */}
       <motion.div 
-        className="bg-white rounded-xl border border-gray-200 shadow-md overflow-hidden"
+        className="bg-surface rounded-xl border border-edge shadow-md overflow-hidden"
         whileHover={{ boxShadow: "0px 15px 25px -5px rgba(0,0,0,0.15)" }}
       >
-        <div className="p-4 border-b border-gray-100">
+        <div className="p-4 border-b border-edge">
           <div className="flex justify-between items-center">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">Upcoming Contests</h3>
-              <p className="text-sm text-gray-600">{contests.length} contests this month</p>
+              <h3 className="text-lg font-semibold text-fg">Upcoming Contests</h3>
+              <p className="text-sm text-fg-muted">{contests.length} contests this month</p>
             </div>
             <motion.button
               onClick={() => setShowCalendar(true)}
@@ -165,17 +165,17 @@ const ContestWidget = () => {
             return (
               <motion.div
                 key={index}
-                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                className="flex items-center justify-between p-3 bg-surface-2 rounded-lg hover:bg-surface-3 transition-colors cursor-pointer"
                 whileHover={{ x: 5 }}
                 onClick={() => setSelectedContest(contest)}
               >
                 <div className="flex-1">
-                  <h4 className="font-medium text-gray-900 text-sm truncate">{contest.name}</h4>
+                  <h4 className="font-medium text-fg text-sm truncate">{contest.name}</h4>
                   <div className="flex items-center gap-2 mt-1">
                     <span className={`px-2 py-0.5 text-xs font-medium rounded ${colors.bg} text-white`}>
                       {contest.platform}
                     </span>
-                    <span className="text-xs text-gray-600">{contest.date} • {contest.time}</span>
+                    <span className="text-xs text-fg-muted">{contest.date} • {contest.time}</span>
                   </div>
                 </div>
               </motion.div>
@@ -208,43 +208,43 @@ const ContestWidget = () => {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-auto"
+              className="bg-surface rounded-xl max-w-4xl w-full max-h-[90vh] overflow-auto"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-6">
                 {/* Calendar Header */}
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold text-gray-800">Contest Calendar</h2>
+                  <h2 className="text-2xl font-bold text-fg">Contest Calendar</h2>
                   <div className="flex items-center gap-4">
                     <motion.button
                       onClick={() => navigateMonth(-1)}
-                      className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                      className="p-2 rounded-lg hover:bg-surface-3 transition-colors"
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
                     >
-                      <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 text-fg-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                       </svg>
                     </motion.button>
                     
-                    <h3 className="text-xl font-semibold text-gray-800 min-w-[200px] text-center">
+                    <h3 className="text-xl font-semibold text-fg min-w-[200px] text-center">
                       {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
                     </h3>
                     
                     <motion.button
                       onClick={() => navigateMonth(1)}
-                      className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                      className="p-2 rounded-lg hover:bg-surface-3 transition-colors"
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
                     >
-                      <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 text-fg-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                       </svg>
                     </motion.button>
                     
                     <button
                       onClick={() => setShowCalendar(false)}
-                      className="p-2 text-gray-400 hover:text-gray-600"
+                      className="p-2 text-fg-subtle hover:text-fg-muted"
                     >
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -254,10 +254,10 @@ const ContestWidget = () => {
                 </div>
 
                 {/* Calendar Grid */}
-                <div className="grid grid-cols-7 gap-0 border border-gray-200 rounded-lg overflow-hidden mb-4">
+                <div className="grid grid-cols-7 gap-0 border border-edge rounded-lg overflow-hidden mb-4">
                   {/* Day Headers */}
                   {dayNames.map(day => (
-                    <div key={day} className="bg-gray-50 p-2 text-center font-semibold text-gray-700 border-b border-gray-200 text-sm">
+                    <div key={day} className="bg-surface-2 p-2 text-center font-semibold text-fg-muted border-b border-edge text-sm">
                       {day}
                     </div>
                   ))}
@@ -268,13 +268,13 @@ const ContestWidget = () => {
 
                 {/* Legend */}
                 <div className="flex flex-wrap gap-4">
-                  <h4 className="text-sm font-semibold text-gray-700 w-full">Platforms:</h4>
+                  <h4 className="text-sm font-semibold text-fg-muted w-full">Platforms:</h4>
                   {['Codeforces', 'LeetCode', 'CodeChef', 'AtCoder', 'HackerRank'].map(platform => {
                     const colors = getPlatformColor(platform);
                     return (
                       <div key={platform} className="flex items-center gap-2">
                         <div className={`w-3 h-3 rounded ${colors.bg}`}></div>
-                        <span className="text-sm text-gray-600">{platform}</span>
+                        <span className="text-sm text-fg-muted">{platform}</span>
                       </div>
                     );
                   })}
@@ -299,14 +299,14 @@ const ContestWidget = () => {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white rounded-xl p-6 max-w-md w-full"
+              className="bg-surface rounded-xl p-6 max-w-md w-full"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex justify-between items-start mb-4">
-                <h3 className="text-xl font-bold text-gray-800">{selectedContest.name}</h3>
+                <h3 className="text-xl font-bold text-fg">{selectedContest.name}</h3>
                 <button
                   onClick={() => setSelectedContest(null)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-fg-subtle hover:text-fg-muted"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -323,19 +323,19 @@ const ContestWidget = () => {
                 
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="text-gray-500">Date:</span>
+                    <span className="text-fg-subtle">Date:</span>
                     <p className="font-medium">{selectedContest.date}</p>
                   </div>
                   <div>
-                    <span className="text-gray-500">Time:</span>
+                    <span className="text-fg-subtle">Time:</span>
                     <p className="font-medium">{selectedContest.time}</p>
                   </div>
                   <div>
-                    <span className="text-gray-500">Duration:</span>
+                    <span className="text-fg-subtle">Duration:</span>
                     <p className="font-medium">{selectedContest.duration}</p>
                   </div>
                   <div>
-                    <span className="text-gray-500">Status:</span>
+                    <span className="text-fg-subtle">Status:</span>
                     <p className="font-medium text-green-600">Upcoming</p>
                   </div>
                 </div>

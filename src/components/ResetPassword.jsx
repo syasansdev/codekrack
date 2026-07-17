@@ -93,7 +93,7 @@ const ResetPassword = () => {
 
   if (phase === 'checking') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="min-h-screen flex items-center justify-center bg-surface">
         <div className="h-10 w-10 rounded-full border-[3px] border-blue-100 border-t-orange-500 animate-spin" />
       </div>
     );
@@ -102,10 +102,10 @@ const ResetPassword = () => {
   if (phase === 'invalid') {
     return (
       <Shell title="This link has expired">
-        <p className="text-sm text-ink-500 leading-relaxed">
+        <p className="text-sm text-fg-subtle leading-relaxed">
           Set-password links can only be used once, and expire an hour after they&apos;re sent.
         </p>
-        <p className="mt-3 text-sm text-ink-500 leading-relaxed">
+        <p className="mt-3 text-sm text-fg-subtle leading-relaxed">
           Ask your administrator to send you a new one from the Student Access screen.
         </p>
         <button onClick={() => navigate('/signin')} className="btn-ghost w-full justify-center mt-6">
@@ -118,7 +118,7 @@ const ResetPassword = () => {
   if (phase === 'done') {
     return (
       <Shell title="Password set">
-        <p className="text-sm text-ink-500 leading-relaxed">
+        <p className="text-sm text-fg-subtle leading-relaxed">
           Your password is ready. Sign in with it to get started.
         </p>
         <button onClick={() => navigate('/signin')} className="btn-accent w-full justify-center mt-6">
@@ -131,13 +131,13 @@ const ResetPassword = () => {
   return (
     <Shell title="Choose your password">
       {email && (
-        <p className="text-sm text-ink-500 mb-5">
-          for <span className="font-medium text-ink-700">{email}</span>
+        <p className="text-sm text-fg-subtle mb-5">
+          for <span className="font-medium text-fg-muted">{email}</span>
         </p>
       )}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="pw" className="block text-sm font-medium text-ink-700 mb-1">
+          <label htmlFor="pw" className="block text-sm font-medium text-fg-muted mb-1">
             New password
           </label>
           <input
@@ -147,12 +147,12 @@ const ResetPassword = () => {
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="new-password"
             autoFocus
-            className="w-full px-3 py-2 border border-ink-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition"
+            className="w-full px-3 py-2 border border-edge-strong rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition"
             placeholder={`At least ${MIN_LENGTH} characters`}
           />
         </div>
         <div>
-          <label htmlFor="pw2" className="block text-sm font-medium text-ink-700 mb-1">
+          <label htmlFor="pw2" className="block text-sm font-medium text-fg-muted mb-1">
             Confirm password
           </label>
           <input
@@ -161,7 +161,7 @@ const ResetPassword = () => {
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
             autoComplete="new-password"
-            className="w-full px-3 py-2 border border-ink-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition"
+            className="w-full px-3 py-2 border border-edge-strong rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition"
             placeholder="Type it again"
           />
         </div>
@@ -185,11 +185,11 @@ const Shell = ({ title, children }) => (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-xl p-7 sm:p-8 w-full max-w-md shadow-elite-lg"
+      className="bg-surface rounded-xl p-7 sm:p-8 w-full max-w-md shadow-elite-lg"
     >
       <div className="mb-5">
         <div className="font-display text-lg font-bold gradient-text mb-4">CodeKrack</div>
-        <h1 className="font-display text-2xl font-bold text-ink-900">{title}</h1>
+        <h1 className="font-display text-2xl font-bold text-fg">{title}</h1>
       </div>
       {children}
     </motion.div>

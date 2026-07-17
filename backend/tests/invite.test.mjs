@@ -78,7 +78,7 @@ try {
   await query(`insert into public.profiles (id,email,name,display_name,role) values ($1,$2,'ZZ','ZZ','superadmin')`, [su.user.id, suEmail]);
   const suTok = await signIn(suEmail, 'ZzInvite#Su1');
   let r = await call('POST', '/api/institutions', suTok, {
-    name: `${TAG} College`, adminEmail: `${TAG}-a@codekrack.invalid`, adminPassword: 'ZzInvite#Ad1',
+    name: `${TAG} College`, code: 'ZZINVITE', adminEmail: `${TAG}-a@codekrack.invalid`, adminPassword: 'ZzInvite#Ad1',
   });
   const instId = r.body.id;
   const aTok = await signIn(`${TAG}-a@codekrack.invalid`, 'ZzInvite#Ad1');
@@ -200,7 +200,12 @@ try {
   const { data: su2 } = await supabaseAdmin.auth.admin.createUser({
     email: `${TAG}-b@codekrack.invalid`, password: 'ZzInvite#B1', email_confirm: true,
   });
-  const inst2 = await one(`insert into public.institutions (name) values ('${TAG} Other') returning id`);
+  // `code` is non-empty by CHECK constraint as of migration 007 — it is the key a
+  // re-add matches to restore an archived institution, so a row without one could
+  // never be restored.
+  const inst2 = await one(
+    `insert into public.institutions (name, code) values ('${TAG} Other', 'ZZOTHER') returning id`
+  );
   await query(`insert into public.profiles (id,email,name,display_name,role,institution_id) values ($1,$2,'B','B','admin',$3)`, [su2.user.id, `${TAG}-b@codekrack.invalid`, inst2.id]);
   const bTok = await signIn(`${TAG}-b@codekrack.invalid`, 'ZzInvite#B1');
   r = await call('POST', `/api/students/${sid}/send-invite`, bTok);

@@ -9,7 +9,6 @@ import { useScrapingStatus } from '../hooks/queries/useDashboard';
 import { useRescrapeStudent } from '../hooks/queries/useStudents';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-toastify';
-import BackButton from './BackButton';
 
 const ScrapingStatus = () => {
   // students / loading / lastSyncTime are derived from the query below.
@@ -133,7 +132,7 @@ const ScrapingStatus = () => {
       case 'pending': return 'text-blue-700';
       case 'scraping': return 'text-yellow-700';
       case 'in_progress': return 'text-yellow-700';
-      default: return 'text-gray-700';
+      default: return 'text-fg-muted';
     }
   };
 
@@ -222,15 +221,14 @@ const ScrapingStatus = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <BackButton to="/admin/dashboard" />
         {/* Header */}
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Scraping Status</h1>
-              <p className="mt-2 text-sm text-gray-600">
+              <h1 className="text-3xl font-bold text-fg">Scraping Status</h1>
+              <p className="mt-2 text-sm text-fg-muted">
                 Monitor and manage data synchronization from coding platforms
               </p>
             </div>
@@ -241,7 +239,7 @@ const ScrapingStatus = () => {
                 disabled={isSyncing}
                 className={`px-4 py-2 rounded-md font-medium text-sm flex items-center space-x-2 ${
                   isSyncing
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    ? 'bg-gray-300 text-fg-subtle cursor-not-allowed'
                     : 'bg-blue-600 text-white hover:bg-blue-700'
                 }`}
               >
@@ -263,7 +261,7 @@ const ScrapingStatus = () => {
               <button
                 onClick={() => refetch()}
                 disabled={isSyncing}
-                className="px-4 py-2 bg-white border border-gray-300 rounded-md font-medium text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 flex items-center space-x-2"
+                className="px-4 py-2 bg-surface border border-edge-strong rounded-md font-medium text-sm text-fg-muted hover:bg-surface-2 disabled:opacity-50 flex items-center space-x-2"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -305,25 +303,25 @@ const ScrapingStatus = () => {
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
           {[
-            { label: 'Total Platforms', value: stats.total, color: 'bg-gray-100', textColor: 'text-gray-800', border: 'border-gray-300', filter: 'all' },
+            { label: 'Total Platforms', value: stats.total, color: 'bg-surface-2', textColor: 'text-fg', border: 'border-edge-strong', filter: 'all' },
             { label: 'Completed', value: stats.completed, color: 'bg-green-100', textColor: 'text-green-800', border: 'border-green-300', filter: 'completed' },
             { label: 'In Progress', value: stats.inProgress, color: 'bg-yellow-100', textColor: 'text-yellow-800', border: 'border-yellow-300', filter: 'in_progress' },
             { label: 'Failed', value: stats.failed, color: 'bg-red-100', textColor: 'text-red-800', border: 'border-red-300', filter: 'failed' },
-            { label: 'Not Started', value: stats.notStarted, color: 'bg-gray-100', textColor: 'text-gray-800', border: 'border-gray-300', filter: 'not_started' },
+            { label: 'Not Started', value: stats.notStarted, color: 'bg-surface-2', textColor: 'text-fg', border: 'border-edge-strong', filter: 'not_started' },
           ].map((stat) => (
             <div
               key={stat.label}
               className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
                 filterStatus === stat.filter 
                   ? `${stat.border} ${stat.color} shadow-md` 
-                  : 'bg-white border-gray-200 hover:shadow-sm'
+                  : 'bg-surface border-edge hover:shadow-sm'
               }`}
               onClick={() => setFilterStatus(stat.filter)}
             >
               <div className={`text-2xl font-bold ${stat.textColor}`}>
                 {stat.value}
               </div>
-              <div className="text-sm font-medium text-gray-600 mt-1">
+              <div className="text-sm font-medium text-fg-muted mt-1">
                 {stat.label}
               </div>
             </div>
@@ -331,12 +329,12 @@ const ScrapingStatus = () => {
         </div>
 
         {/* Students Table */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="px-6 py-4 border-b border-gray-200">
+        <div className="bg-surface rounded-lg shadow-sm border border-edge">
+          <div className="px-6 py-4 border-b border-edge">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">Student Scraping Status</h2>
-                <p className="text-sm text-gray-500 mt-1">
+                <h2 className="text-lg font-semibold text-fg">Student Scraping Status</h2>
+                <p className="text-sm text-fg-subtle mt-1">
                   {filteredStudents.length} of {students.length} students
                   {filterStatus !== 'all' && ` (filtered by ${filterStatus.replace('_', ' ')})`}
                 </p>
@@ -356,13 +354,13 @@ const ScrapingStatus = () => {
           {loading ? (
             <div className="p-12 text-center">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-              <p className="mt-3 text-gray-500">Loading scraping status...</p>
+              <p className="mt-3 text-fg-subtle">Loading scraping status...</p>
             </div>
           ) : filteredStudents.length === 0 ? (
             <div className="p-12 text-center">
-              <div className="text-gray-400 text-6xl mb-4">📊</div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No students found</h3>
-              <p className="text-gray-500">
+              <div className="text-fg-subtle text-6xl mb-4">📊</div>
+              <h3 className="text-lg font-medium text-fg mb-2">No students found</h3>
+              <p className="text-fg-subtle">
                 {students.length === 0 
                   ? "No students with platform URLs found." 
                   : "No students match the current filter."
@@ -371,26 +369,26 @@ const ScrapingStatus = () => {
             </div>
           ) : (
             <div className="overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-edge">
+                <thead className="bg-surface-2">
                   <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-fg-subtle uppercase tracking-wider">
                       Student
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-fg-subtle uppercase tracking-wider">
                       Platforms & Status
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-fg-subtle uppercase tracking-wider">
                       Last Sync
                     </th>
-                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-fg-subtle uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-surface divide-y divide-edge">
                   {filteredStudents.map((student) => (
-                    <tr key={student.id} className="hover:bg-gray-50">
+                    <tr key={student.id} className="hover:bg-surface-2">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
@@ -399,10 +397,10 @@ const ScrapingStatus = () => {
                             </span>
                           </div>
                           <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
+                            <div className="text-sm font-medium text-fg">
                               {student.name || 'Unknown Student'}
                             </div>
-                            <div className="text-sm text-gray-500">
+                            <div className="text-sm text-fg-subtle">
                               {student.email || 'No email'}
                             </div>
                           </div>
@@ -420,7 +418,7 @@ const ScrapingStatus = () => {
                               return (
                                 <div key={platform} className="flex items-center justify-between">
                                   <div className="flex items-center space-x-3">
-                                    <span className="text-xs font-medium text-gray-700 capitalize min-w-20">
+                                    <span className="text-xs font-medium text-fg-muted capitalize min-w-20">
                                       {platform}
                                     </span>
                                     <div className="flex items-center space-x-2">
@@ -432,7 +430,7 @@ const ScrapingStatus = () => {
                                   </div>
                                   
                                   {stats && (
-                                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                                    <span className="text-xs text-fg-subtle bg-surface-2 px-2 py-1 rounded">
                                       {stats}
                                     </span>
                                   )}
@@ -443,11 +441,11 @@ const ScrapingStatus = () => {
                       </td>
                       
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
+                        <div className="text-sm text-fg">
                           {formatLastSync(student.lastUpdated)}
                         </div>
                         {student.lastAutoSync && (
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs text-fg-subtle">
                             Auto: {formatLastSync(student.lastAutoSync)}
                           </div>
                         )}
@@ -477,10 +475,10 @@ const ScrapingStatus = () => {
 
         {/* Footer Information */}
         <div className="mt-6 text-center">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-fg-subtle">
             Click "Sync Now" to manually update student data from coding platforms
           </p>
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="text-xs text-fg-subtle mt-1">
             Note: Syncing all students may take several minutes due to API rate limits
           </p>
         </div>

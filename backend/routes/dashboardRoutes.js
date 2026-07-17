@@ -7,7 +7,7 @@
 // round trip, so the wire carries the answer instead of the raw data.
 import express from 'express';
 import { one, many } from '../config/db.js';
-import { verifyAdmin, verifyToken, scopeFor } from '../middleware/supabaseAuth.js';
+import { verifyAdmin, verifyToken, scopeFor, NO_INSTITUTION } from '../middleware/supabaseAuth.js';
 import { PLATFORMS } from '../utils/serialize.js';
 import logger from '../utils/logger.js';
 
@@ -80,7 +80,7 @@ router.get('/stats', verifyAdmin, async (req, res) => {
     );
 
     const institutionCount = req.user.isSuperAdmin
-      ? (await one('select count(*)::int as n from public.institutions')).n
+      ? (await one('select count(*)::int as n from public.institutions where deleted_at is null')).n
       : 1;
 
     res.json({
@@ -202,9 +202,12 @@ router.get('/leaderboard/student', verifyToken, async (req, res) => {
     const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 100, 1), 500);
 
     // Super-admins aside, everyone is pinned to their own institution.
+    // NO_INSTITUTION is a valid uuid that matches nothing — the string sentinel
+    // this used to carry made Postgres reject the whole query (22P02), so a
+    // student with no institution got a 500 instead of an empty board.
     const institutionId = req.user.isSuperAdmin
       ? null
-      : req.user.institutionId || '__no_institution__';
+      : req.user.institutionId || NO_INSTITUTION;
 
     const rows = await leaderboardQuery(platform, institutionId, limit);
     res.json({

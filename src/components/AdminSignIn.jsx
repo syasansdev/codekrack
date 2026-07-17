@@ -185,9 +185,17 @@ const AdminSignIn = ({ isOpen = true, onClose = () => {} }) => {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
       >
-        {/* Enhanced Background with Gradient */}
+        {/* Modal scrim.
+            Was `bg-white-100/10` — not a real Tailwind class (`white` has no
+            numeric scale), so it compiled to nothing and this element rendered
+            with blur but no dim at all. Verified against a real Tailwind build:
+            `.bg-white-100` is absent from the generated CSS.
+
+            A scrim stays dark in BOTH themes on purpose — its job is to push the
+            page back behind the dialog, and a light scrim over a light page does
+            not do that. This is why it is ink-950 rather than a surface token. */}
         <motion.div
-          className="absolute inset-0 bg-white-100/10 backdrop-blur-md"
+          className="absolute inset-0 bg-ink-950/50 backdrop-blur-md"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -228,7 +236,7 @@ const AdminSignIn = ({ isOpen = true, onClose = () => {} }) => {
           exit="exit"
         >
           <motion.div
-            className="bg-gradient-to-br from-white to-gray-50/95 border border-white/20 rounded-2xl p-8 shadow-2xl backdrop-blur-sm relative overflow-hidden"
+            className="bg-gradient-to-br from-surface to-surface-2/95 border border-white/20 rounded-2xl p-8 shadow-2xl backdrop-blur-sm relative overflow-hidden"
             variants={itemVariants}
             whileHover={{ 
               scale: 1.01,
@@ -250,7 +258,7 @@ const AdminSignIn = ({ isOpen = true, onClose = () => {} }) => {
             
             <button
               onClick={handleClose}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl font-light z-10 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100/50 transition-colors"
+              className="absolute top-4 right-4 text-fg-subtle hover:text-fg-muted text-2xl font-light z-10 w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-3/50 transition-colors"
               aria-label="Close"
             >
               <motion.span
@@ -280,7 +288,7 @@ const AdminSignIn = ({ isOpen = true, onClose = () => {} }) => {
                 Admin Sign In
               </motion.h2>
               <motion.p 
-                className="text-gray-500 text-sm"
+                className="text-fg-subtle text-sm"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.4 }}
@@ -295,7 +303,7 @@ const AdminSignIn = ({ isOpen = true, onClose = () => {} }) => {
             >
               <form onSubmit={handleEmailSignIn} className="space-y-6">
                 <motion.div variants={itemVariants}>
-                  <label htmlFor="admin-email" className="block text-sm font-semibold text-gray-700 mb-2 ml-1">
+                  <label htmlFor="admin-email" className="block text-sm font-semibold text-fg-muted mb-2 ml-1">
                     Email Address
                   </label>
                   <motion.input
@@ -305,7 +313,7 @@ const AdminSignIn = ({ isOpen = true, onClose = () => {} }) => {
                     onChange={(e) => setEmail(e.target.value)}
                     onFocus={() => setIsFocused(prev => ({ ...prev, email: true }))}
                     onBlur={() => setIsFocused(prev => ({ ...prev, email: false }))}
-                    className="w-full px-4 py-3 bg-white/80 border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none backdrop-blur-sm"
+                    className="w-full px-4 py-3 bg-surface/80 border border-edge rounded-xl text-fg placeholder-fg-subtle focus:outline-none backdrop-blur-sm"
                     placeholder="admin@example.com"
                     autoComplete="email"
                     variants={inputVariants}
@@ -314,7 +322,7 @@ const AdminSignIn = ({ isOpen = true, onClose = () => {} }) => {
                 </motion.div>
                 
                 <motion.div variants={itemVariants}>
-                  <label htmlFor="admin-password" className="block text-sm font-semibold text-gray-700 mb-2 ml-1">
+                  <label htmlFor="admin-password" className="block text-sm font-semibold text-fg-muted mb-2 ml-1">
                     Password
                   </label>
                   <motion.input
@@ -324,7 +332,7 @@ const AdminSignIn = ({ isOpen = true, onClose = () => {} }) => {
                     onChange={(e) => setPassword(e.target.value)}
                     onFocus={() => setIsFocused(prev => ({ ...prev, password: true }))}
                     onBlur={() => setIsFocused(prev => ({ ...prev, password: false }))}
-                    className="w-full px-4 py-3 bg-white/80 border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none backdrop-blur-sm"
+                    className="w-full px-4 py-3 bg-surface/80 border border-edge rounded-xl text-fg placeholder-fg-subtle focus:outline-none backdrop-blur-sm"
                     placeholder="••••••••"
                     autoComplete="current-password"
                     variants={inputVariants}
@@ -393,12 +401,12 @@ const AdminSignIn = ({ isOpen = true, onClose = () => {} }) => {
               </form>
               
               <motion.div 
-                className="text-center pt-4 border-t border-gray-200/50"
+                className="text-center pt-4 border-t border-edge/50"
                 variants={itemVariants}
               >
                 <motion.button 
                   onClick={goToStudentLogin}
-                  className="text-sm bg-gradient-to-r from-gray-600 to-gray-700 bg-clip-text text-transparent font-medium hover:from-gray-700 hover:to-gray-800 transition-all duration-300"
+                  className="text-sm bg-gradient-to-r from-fg-muted to-fg-subtle bg-clip-text text-transparent font-medium hover:from-fg hover:to-fg-muted transition-all duration-300"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >

@@ -95,13 +95,17 @@ try {
   let r = await fetch(`${API}/api/institutions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${suTok}` },
-    body: JSON.stringify({ name: `${TAG} Alpha`, adminEmail: `${TAG}-a@codekrack.invalid`, adminPassword: 'ZzSse#Alpha1' }),
+    // `code` is required as of migration 007 — it is what a re-add matches to
+    // restore an archived institution and reclaim its students. Without it this
+    // POST 400s, the admin login is never created, and the signIn below fails
+    // with a misleading "Invalid login credentials".
+    body: JSON.stringify({ name: `${TAG} Alpha`, code: 'ZZSSEA', adminEmail: `${TAG}-a@codekrack.invalid`, adminPassword: 'ZzSse#Alpha1' }),
   });
   const instA = (await r.json()).id;
   r = await fetch(`${API}/api/institutions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${suTok}` },
-    body: JSON.stringify({ name: `${TAG} Beta`, adminEmail: `${TAG}-b@codekrack.invalid`, adminPassword: 'ZzSse#Beta1' }),
+    body: JSON.stringify({ name: `${TAG} Beta`, code: 'ZZSSEB', adminEmail: `${TAG}-b@codekrack.invalid`, adminPassword: 'ZzSse#Beta1' }),
   });
   const instB = (await r.json()).id;
   const aTok = await signIn(`${TAG}-a@codekrack.invalid`, 'ZzSse#Alpha1');
@@ -172,15 +176,32 @@ try {
 
   console.log('\n=== COALESCING: a scrape burst must not flood the browser ===');
   sA.events.length = 0;
+  const WRITES = 40;
+  const COALESCE_MS = 400; // must match services/realtime.js
+  const t0 = Date.now();
   // 40 rapid writes, like a scraper working through a batch.
-  for (let i = 0; i < 40; i++) {
+  for (let i = 0; i < WRITES; i++) {
     await query(`update public.platform_stats set metric=$2 where user_id=$1 and platform='leetcode'`, [sid, 100 + i]);
   }
+  const elapsed = Date.now() - t0;
   await wait(1500);
   const bursts = sA.events.filter((e) => e.event === 'invalidate').length;
-  bursts > 0 && bursts <= 4
-    ? ok(`40 rapid writes -> ${bursts} SSE event(s), not 40 (coalesced in a ${400}ms window)`)
-    : no(`coalescing failed: 40 writes -> ${bursts} events`);
+
+  // Assert the PROPERTY, not a magic number.
+  //
+  // This used to assert `bursts <= 4`, which wasn't testing coalescing at all —
+  // it was encoding an assumption about network latency. Coalescing collapses
+  // whatever lands within each COALESCE_MS window, so the FLOOR on the event
+  // count is set by how long the writes take, i.e. the round trip to the DB:
+  //   fast link  (~30ms/write)  -> 40 writes in ~1.2s -> ~3 windows  -> ~3 events
+  //   slow link  (~225ms/write) -> 40 writes in ~9s   -> ~23 windows -> ~7 events
+  // Both are correct behaviour. The old assertion failed on the slow one, which
+  // made it a test of the wifi rather than of the code.
+  const windows = Math.ceil(elapsed / COALESCE_MS);
+  const ceiling = windows + 2; // slack for window-boundary timing
+  bursts > 0 && bursts <= ceiling && bursts < WRITES / 2
+    ? ok(`${WRITES} writes over ${elapsed}ms (~${windows} x ${COALESCE_MS}ms windows) -> ${bursts} SSE event(s), not ${WRITES}`)
+    : no(`coalescing failed: ${WRITES} writes over ${elapsed}ms -> ${bursts} events (expected 1..${ceiling})`);
 
   console.log('\n=== OTHER TOPICS ===');
   sA.events.length = 0; sS.events.length = 0;

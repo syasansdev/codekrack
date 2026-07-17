@@ -233,10 +233,10 @@ export const AuthProvider = ({ children }) => {
 
 /** Shown only while the session/profile resolves — normally a few hundred ms. */
 const AuthSplash = () => (
-  <div className="min-h-screen flex items-center justify-center bg-white">
+  <div className="min-h-screen flex items-center justify-center bg-surface">
     <div className="flex flex-col items-center gap-4">
       <div className="h-10 w-10 rounded-full border-[3px] border-blue-100 border-t-orange-500 animate-spin" />
-      <p className="text-sm font-medium text-ink-400">Loading CodeKrack…</p>
+      <p className="text-sm font-medium text-fg-subtle">Loading CodeKrack…</p>
     </div>
   </div>
 );

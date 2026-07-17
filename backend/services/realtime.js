@@ -22,6 +22,7 @@
 //    so the worst a scoping slip here can do is cause a needless refetch, which
 //    the API then answers with correctly-scoped data anyway.
 import pg from 'pg';
+import { NO_INSTITUTION } from '../middleware/supabaseAuth.js';
 import logger from '../utils/logger.js';
 
 const CHANNEL = 'codekrack';
@@ -181,7 +182,7 @@ export const addClient = (req, res, user) => {
   const client = {
     id,
     res,
-    institutionId: user.isSuperAdmin ? null : user.institutionId || '__no_institution__',
+    institutionId: user.isSuperAdmin ? null : user.institutionId || NO_INSTITUTION,
     isSuperAdmin: user.isSuperAdmin,
     heartbeat: null,
   };

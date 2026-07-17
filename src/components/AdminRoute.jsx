@@ -20,6 +20,7 @@ import React, { useEffect, useRef } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useAuth } from '../contexts/AuthContext';
+import AdminShell from './admin/AdminShell';
 
 const AdminRoute = () => {
   const { currentUser, isAdmin, loading, profileError } = useAuth();
@@ -41,10 +42,10 @@ const AdminRoute = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-white">
+      <div className="flex items-center justify-center min-h-screen bg-canvas">
         <div className="text-center">
-          <div className="h-12 w-12 mx-auto rounded-full border-[3px] border-blue-100 border-t-orange-500 animate-spin" />
-          <p className="mt-4 text-sm font-medium text-ink-400">Verifying admin access…</p>
+          <div className="h-12 w-12 mx-auto rounded-full border-[3px] border-brand-100 border-t-accent-500 animate-spin" />
+          <p className="mt-4 text-sm font-medium text-fg-subtle">Verifying admin access…</p>
         </div>
       </div>
     );
@@ -56,7 +57,16 @@ const AdminRoute = () => {
     return <Navigate to="/admin/signin" replace state={{ from: location.pathname }} />;
   }
 
-  return <Outlet />;
+  // The shell wraps <Outlet />, so every nested /admin/* route gets the sidebar
+  // and top bar from this one place. It is mounted INSIDE the guard on purpose:
+  // rendering admin navigation to someone who failed the check would leak the
+  // shape of the admin area (and, for a plain admin, the super-admin-only
+  // screens) before the redirect lands.
+  return (
+    <AdminShell>
+      <Outlet />
+    </AdminShell>
+  );
 };
 
 export default AdminRoute;

@@ -4,6 +4,11 @@ module.exports = {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  // 'class', not the default 'media'. The app has a real theme toggle, and
+  // 'media' would hard-wire the theme to the OS and make that toggle inert.
+  // The `dark` class is put on <html> by the inline script in index.html
+  // BEFORE first paint (see there for why), and thereafter by ThemeContext.
+  darkMode: "class",
   theme: {
     extend: {
       colors: {
@@ -91,6 +96,61 @@ module.exports = {
           900: '#343b47',
           950: '#0e1220',
         },
+
+        // ── Semantic tokens (theme-aware) ─────────────────────────────────
+        // These resolve through CSS variables defined in index.css under
+        // :root and .dark, so `bg-surface` is already correct in BOTH themes
+        // and needs no `dark:` variant at the call site.
+        //
+        // That is the whole point at this scale. The app carries ~1,100 colour
+        // utilities across ~35 files; `dark:` variants would double every one
+        // of them and leave the next person to keep two values in sync by hand.
+        //
+        // Named by ROLE, not by lightness — because the relationship inverts
+        // between themes. In light, the page is grey and cards are white, so a
+        // card is LIGHTER than its page. In dark, the page is near-black and
+        // cards sit ABOVE it. `canvas`/`surface` holds in both; `gray-50`/
+        // `white` cannot.
+        //
+        // Deliberately NOT remapping `white` and `gray` to these vars, even
+        // though it would make the retrofit nearly free: `bg-white` is a
+        // surface that must flip, but `text-white` on a brand button must stay
+        // white in both themes. Both come from the same Tailwind token, so
+        // remapping cannot tell them apart — it would invert the label on
+        // every primary button in the app.
+        canvas: 'rgb(var(--canvas) / <alpha-value>)',
+        surface: {
+          DEFAULT: 'rgb(var(--surface) / <alpha-value>)', // cards, panels, sidebar
+          2: 'rgb(var(--surface-2) / <alpha-value>)', // table heads, stat tiles, inputs
+          3: 'rgb(var(--surface-3) / <alpha-value>)', // hover / pressed
+        },
+        fg: {
+          DEFAULT: 'rgb(var(--fg) / <alpha-value>)', // headings, primary copy
+          muted: 'rgb(var(--fg-muted) / <alpha-value>)', // secondary copy, labels
+          subtle: 'rgb(var(--fg-subtle) / <alpha-value>)', // captions, placeholders
+        },
+        edge: {
+          DEFAULT: 'rgb(var(--edge) / <alpha-value>)', // hairlines, dividers
+          strong: 'rgb(var(--edge-strong) / <alpha-value>)', // input borders, focus
+        },
+        // Low-chroma fills for badges/pills. A literal bg-brand-50 is correct
+        // on white and blinding on near-black, so these flip to a deep,
+        // desaturated wash in dark rather than staying pale.
+        tint: {
+          brand: 'rgb(var(--tint-brand) / <alpha-value>)',
+          accent: 'rgb(var(--tint-accent) / <alpha-value>)',
+          success: 'rgb(var(--tint-success) / <alpha-value>)',
+          warn: 'rgb(var(--tint-warn) / <alpha-value>)',
+          danger: 'rgb(var(--tint-danger) / <alpha-value>)',
+        },
+        // Readable text/icon colour to pair with each tint above.
+        on: {
+          brand: 'rgb(var(--on-brand) / <alpha-value>)',
+          accent: 'rgb(var(--on-accent) / <alpha-value>)',
+          success: 'rgb(var(--on-success) / <alpha-value>)',
+          warn: 'rgb(var(--on-warn) / <alpha-value>)',
+          danger: 'rgb(var(--on-danger) / <alpha-value>)',
+        },
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
@@ -100,17 +160,30 @@ module.exports = {
         tightest: '-0.03em',
       },
       boxShadow: {
-        elite: '0 1px 2px rgba(16,24,40,0.04), 0 8px 24px -6px rgba(16,24,40,0.10)',
-        'elite-lg': '0 2px 4px rgba(16,24,40,0.04), 0 24px 48px -12px rgba(16,24,40,0.18)',
+        // Driven by CSS vars so elevation survives the theme flip. A soft grey
+        // shadow tuned for white is effectively invisible on a near-black
+        // canvas — which is why bolted-on dark modes read as flat. In dark,
+        // --shadow goes to true black at much higher alpha, and the hairline
+        // border does more of the work of separating a card from the page.
+        elite:
+          '0 1px 2px rgb(var(--shadow) / var(--shadow-a1)), 0 8px 24px -6px rgb(var(--shadow) / var(--shadow-a2))',
+        'elite-lg':
+          '0 2px 4px rgb(var(--shadow) / var(--shadow-a1)), 0 24px 48px -12px rgb(var(--shadow) / var(--shadow-a3))',
+        // Brand glows are chromatic, so they carry across both themes as-is.
         'glow-blue': '0 0 0 1px rgba(37,71,235,0.14), 0 10px 34px -8px rgba(37,71,235,0.45)',
         'glow-orange': '0 0 0 1px rgba(255,106,19,0.18), 0 10px 34px -8px rgba(255,106,19,0.45)',
       },
       backgroundImage: {
+        // Saturated brand gradients: identical in both themes on purpose —
+        // they carry the brand and always sit under white text.
         'brand-gradient': 'linear-gradient(135deg, #1d35d8 0%, #3b66f6 48%, #ff6a13 100%)',
-        'brand-gradient-soft': 'linear-gradient(135deg, #eef4ff 0%, #ffffff 50%, #fff8f1 100%)',
         'accent-gradient': 'linear-gradient(135deg, #ff8a4c 0%, #f04e06 100%)',
+        // These two are *surface washes*, so they must follow the theme.
+        // Hardcoded #eef4ff -> #ffffff would be a white slab in dark mode.
+        'brand-gradient-soft':
+          'linear-gradient(135deg, rgb(var(--wash-a)) 0%, rgb(var(--surface)) 50%, rgb(var(--wash-b)) 100%)',
         'brand-mesh':
-          'radial-gradient(1100px circle at 0% 0%, rgba(59,102,246,0.14), transparent 45%), radial-gradient(900px circle at 100% 10%, rgba(255,106,19,0.12), transparent 45%)',
+          'radial-gradient(1100px circle at 0% 0%, rgb(var(--mesh-a) / var(--mesh-o)), transparent 45%), radial-gradient(900px circle at 100% 10%, rgb(var(--mesh-b) / var(--mesh-o)), transparent 45%)',
       },
       keyframes: {
         'fade-up': {

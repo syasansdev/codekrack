@@ -1,39 +1,38 @@
 import { useState, useRef, useEffect } from 'react'
 import { exportToExcel, formatDataForExcel } from '../utils/excelExport'
 import { queryAPI } from '../services/apii'
-import BackButton from './BackButton'
 
 // Data Table Component
 const DataTable = ({ data }) => {
   if (!data || data.length === 0) {
-    return <p className="text-gray-500 text-sm">No data available</p>
+    return <p className="text-fg-subtle text-sm">No data available</p>
   }
 
   const columns = Object.keys(data[0])
 
   return (
     <div className="overflow-x-auto mt-4 animate-fadeIn">
-      <table className="min-w-full bg-white border border-gray-200">
+      <table className="min-w-full bg-surface border border-edge">
         <thead>
-          <tr className="bg-gray-50 border-b border-gray-200">
+          <tr className="bg-surface-2 border-b border-edge">
             {columns.map((column) => (
               <th 
                 key={column}
-                className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider"
+                className="px-4 py-3 text-left text-xs font-semibold text-fg-muted uppercase tracking-wider"
               >
                 {column}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-200">
+        <tbody className="divide-y divide-edge">
           {data.map((row, index) => (
             <tr 
               key={index} 
-              className="hover:bg-gray-50 transition-colors duration-150"
+              className="hover:bg-surface-2 transition-colors duration-150"
             >
               {columns.map((column) => (
-                <td key={column} className="px-4 py-3 text-sm text-gray-900 whitespace-nowrap">
+                <td key={column} className="px-4 py-3 text-sm text-fg whitespace-nowrap">
                   {typeof row[column] === 'object' 
                     ? JSON.stringify(row[column]) 
                     : String(row[column] || '-')
@@ -260,8 +259,7 @@ const QueryBot = () => {
 
   return (
     <>
-      <BackButton to="/admin/dashboard" />
-      <div className="min-h-screen bg-gray-50">
+      <div>
       {/* Page Top Reference */}
       <div ref={pageTopRef} className="absolute top-0" />
       
@@ -271,23 +269,23 @@ const QueryBot = () => {
         <header className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">CodeKrack Assistant</h1>
-              <p className="mt-1 text-sm text-gray-600">Ask questions about student data and analytics</p>
+              <h1 className="text-3xl font-bold text-fg">CodeKrack Assistant</h1>
+              <p className="mt-1 text-sm text-fg-muted">Ask questions about student data and analytics</p>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="hidden md:flex items-center space-x-4 text-sm text-gray-500">
-                <span className="px-3 py-1 bg-white rounded-md border border-gray-200">AI Powered</span>
-                <span className="px-3 py-1 bg-white rounded-md border border-gray-200">Real-time</span>
+              <div className="hidden md:flex items-center space-x-4 text-sm text-fg-subtle">
+                <span className="px-3 py-1 bg-surface rounded-md border border-edge">AI Powered</span>
+                <span className="px-3 py-1 bg-surface rounded-md border border-edge">Real-time</span>
               </div>
               <button
                 onClick={clearChat}
-                className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors duration-150"
+                className="px-4 py-2 text-sm text-fg-muted hover:text-fg border border-edge-strong rounded-md hover:bg-surface-2 transition-colors duration-150"
               >
                 Clear Chat
               </button>
               <button
                 onClick={scrollToTop}
-                className="hidden md:flex items-center px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors duration-150"
+                className="hidden md:flex items-center px-4 py-2 text-sm text-fg-muted hover:text-fg border border-edge-strong rounded-md hover:bg-surface-2 transition-colors duration-150"
               >
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
@@ -300,7 +298,7 @@ const QueryBot = () => {
 
         {/* Main Chat Area */}
         <main className="mb-8">
-          <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+          <div className="bg-surface rounded-lg border border-edge shadow-sm">
             
             {/* Messages Container */}
             <div className="h-[600px] overflow-y-auto p-6 space-y-4">
@@ -313,10 +311,10 @@ const QueryBot = () => {
                     
                     {/* Message Header */}
                     <div className={`flex items-center mb-1 ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
-                      <span className="text-xs font-medium text-gray-500">
+                      <span className="text-xs font-medium text-fg-subtle">
                         {message.type === 'user' ? 'You' : 'Assistant'}
                       </span>
-                      <span className="text-xs text-gray-400 ml-2">
+                      <span className="text-xs text-fg-subtle ml-2">
                         {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
@@ -325,7 +323,7 @@ const QueryBot = () => {
                     <div className={`rounded-lg px-4 py-3 ${
                       message.type === 'user' 
                         ? 'bg-blue-600 text-white' 
-                        : 'bg-gray-100 text-gray-900'
+                        : 'bg-surface-2 text-fg'
                     }`}>
                       {renderMessageContent(message)}
                     </div>
@@ -338,16 +336,16 @@ const QueryBot = () => {
                 <div className="flex justify-start animate-fadeIn">
                   <div className="max-w-3xl mr-12">
                     <div className="flex items-center mb-1">
-                      <span className="text-xs font-medium text-gray-500">Assistant</span>
+                      <span className="text-xs font-medium text-fg-subtle">Assistant</span>
                     </div>
-                    <div className="bg-gray-100 rounded-lg px-4 py-3">
+                    <div className="bg-surface-2 rounded-lg px-4 py-3">
                       <div className="flex items-center space-x-2">
                         <div className="flex space-x-1">
                           <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
                           <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
                           <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                         </div>
-                        <span className="text-sm text-gray-600">Processing your query...</span>
+                        <span className="text-sm text-fg-muted">Processing your query...</span>
                       </div>
                     </div>
                   </div>
@@ -358,7 +356,7 @@ const QueryBot = () => {
             </div>
 
             {/* Input Area */}
-            <div className="border-t border-gray-200 p-4 bg-gray-50">
+            <div className="border-t border-edge p-4 bg-surface-2">
               <div className="flex items-end space-x-3">
                 <div className="flex-1">
                   <textarea
@@ -368,7 +366,7 @@ const QueryBot = () => {
                     onKeyPress={handleKeyPress}
                     placeholder="Type your question here... (Press Enter to send, Shift+Enter for new line)"
                     rows="1"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm"
+                    className="w-full px-4 py-3 border border-edge-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm"
                     disabled={isLoading}
                     style={{ minHeight: '44px' }}
                   />
@@ -385,7 +383,7 @@ const QueryBot = () => {
                   )}
                 </button>
               </div>
-              <p className="mt-2 text-xs text-gray-500">Press Enter to send, Shift + Enter for new line</p>
+              <p className="mt-2 text-xs text-fg-subtle">Press Enter to send, Shift + Enter for new line</p>
             </div>
 
           </div>
@@ -393,10 +391,10 @@ const QueryBot = () => {
 
         {/* Example Queries - Bottom Section */}
         <section>
-          <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+          <div className="bg-surface rounded-lg border border-edge p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-gray-900">Example Queries</h3>
-              <span className="text-xs text-gray-500">{messages.length - 1} messages</span>
+              <h3 className="text-sm font-semibold text-fg">Example Queries</h3>
+              <span className="text-xs text-fg-subtle">{messages.length - 1} messages</span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {exampleQueries.map((query, index) => (
@@ -404,7 +402,7 @@ const QueryBot = () => {
                   key={index}
                   onClick={() => handleExampleQueryClick(query)}
                   disabled={isLoading}
-                  className="text-left text-sm text-gray-700 hover:text-blue-600 hover:bg-blue-50 px-4 py-3 rounded-lg border border-gray-200 hover:border-blue-300 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="text-left text-sm text-fg-muted hover:text-blue-600 hover:bg-blue-50 px-4 py-3 rounded-lg border border-edge hover:border-blue-300 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {query}
                 </button>

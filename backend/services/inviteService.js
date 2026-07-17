@@ -14,38 +14,33 @@
 // WHAT THE LINK IS: a single-use recovery token. Following it signs the student
 // in just long enough to choose a password. It expires (1h by default, set in
 // the Supabase dashboard), and using it consumes it.
-import nodemailer from 'nodemailer';
+import { sendMail } from './mailer.js';
 import { supabaseAdmin } from '../config/supabase.js';
 import logger from '../utils/logger.js';
 
-// ---- SMTP transport ---------------------------------------------------------
+// FRONTEND_URL is where the set-password link points. Getting it wrong is a
+// SILENT failure of the worst kind: every invite still "sends" successfully, and
+// every student receives a link to a machine that isn't theirs. Nothing errors,
+// invited_at gets stamped, the admin sees a green tick — and nobody can sign in.
 //
-// SMTP_ALLOW_SELF_SIGNED exists for ONE situation: a dev machine whose antivirus
-// or corporate proxy intercepts TLS and presents its own certificate, which Node
-// rightly refuses ("unable to verify the first certificate"). It disables
-// certificate verification, so it must never be true in production — a MITM
-// could then read every invite link we send, and an invite link IS a credential.
-//
-// Hence the NODE_ENV guard: setting the flag in production does nothing. The
-// proper fix on such a machine is NODE_EXTRA_CA_CERTS=<your proxy's CA .pem>,
-// which keeps verification on and simply teaches Node to trust that CA.
-const allowSelfSigned =
-  process.env.SMTP_ALLOW_SELF_SIGNED === 'true' && process.env.NODE_ENV !== 'production';
-
-if (allowSelfSigned) {
+// So in production, refuse to guess.
+const FRONTEND_URL = (() => {
+  const url = process.env.FRONTEND_URL;
+  if (url) return url.replace(/\/+$/, ''); // trailing slash -> '//reset-password'
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(
+      'FRONTEND_URL is not set. Invite emails would link to http://localhost:5173, ' +
+        'which no student can open. Set it to your deployed frontend URL (and add ' +
+        `that origin + '/reset-password' to Supabase -> Authentication -> URL Configuration).`
+    );
+  }
   logger.warn(
-    'SMTP_ALLOW_SELF_SIGNED is on — TLS certificates are NOT being verified for outgoing mail. ' +
-      'Development only. This is ignored when NODE_ENV=production.'
+    'FRONTEND_URL not set — invite links will point at http://localhost:5173. ' +
+      'Fine for local development; fatal in production.'
   );
-}
+  return 'http://localhost:5173';
+})();
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
-  ...(allowSelfSigned ? { tls: { rejectUnauthorized: false } } : {}),
-});
-
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 const RESET_PATH = '/reset-password';
 
 /**
@@ -126,13 +121,7 @@ export const sendSetPasswordEmail = async ({ email, name, isNew = true }) => {
   const link = await generateSetPasswordLink(email);
   const { subject, text, html } = inviteEmail({ name, link, isNew });
 
-  await transporter.sendMail({
-    from: `"CodeKrack" <${process.env.EMAIL_USER}>`,
-    to: email,
-    subject,
-    text,
-    html,
-  });
+  await sendMail({ to: email, subject, text, html });
 
   // Never log the link itself: it IS the credential until it's used.
   logger.info(`Set-password email sent to ${email} (${isNew ? 'new account' : 'reset'})`);

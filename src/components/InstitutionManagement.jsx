@@ -52,6 +52,18 @@ const InstitutionManagement = () => {
       return;
     }
 
+    // The code is required now, and it is not bureaucracy: it is the institution's
+    // identity. Removing an institution archives it, and re-adding it matches on
+    // this code to restore that exact row — which is what brings its students
+    // back. An institution created without a code could never be restored.
+    // The server enforces this too (and the DB has a CHECK constraint); this
+    // check exists so the error lands next to the field instead of as a toast
+    // after a round trip.
+    if (!form.code.trim()) {
+      toast.error('Institution code is required — it identifies this institution if it is ever removed and re-added');
+      return;
+    }
+
     // 8, not 6 — the server enforces a minimum of 8, so a 6-character password
     // would pass this check and then be rejected by the API. Keep them in step.
     if (!editingId) {
@@ -82,8 +94,19 @@ const InstitutionManagement = () => {
           form.adminPassword ? 'Institution updated + admin password reset' : 'Institution updated'
         );
       } else {
-        await createInstitution.mutateAsync(form);
-        toast.success('Institution + admin login created');
+        const res = await createInstitution.mutateAsync(form);
+        // A matching code restores an archived institution rather than creating
+        // a new one, and its students come back with it. Say so plainly and
+        // hold the toast longer — quietly re-adopting several hundred students
+        // is not something to discover by accident later.
+        if (res?.restored) {
+          toast.success(
+            `Restored "${form.name}" from the archive — ${res.reclaimedStudents} student(s) reclaimed`,
+            { autoClose: 8000 }
+          );
+        } else {
+          toast.success('Institution + admin login created');
+        }
         // Shown once so the super-admin can hand the credentials over. This is
         // the only place the password appears — we don't store it anywhere.
         setCreatedCreds({ email: form.adminEmail, password: form.adminPassword });
@@ -112,25 +135,39 @@ const InstitutionManagement = () => {
   };
 
   const handleDelete = async (inst) => {
+    // This dialog used to promise "Student records are KEPT but unlinked from
+    // this institution" — accurate at the time, and the reason 3 students on
+    // this database ended up stranded: unlinking is unrecoverable, because
+    // nothing records where they were. Removing now ARCHIVES, so the wording
+    // has to describe what actually happens, including how to undo it.
+    const count = inst.studentCount || 0;
     if (
       !window.confirm(
-        `Delete "${inst.name}"?\n\nThis removes its admin login (${inst.adminEmail || 'none'}). ` +
-          `Student records are KEPT but unlinked from this institution.`
+        `Remove "${inst.name}"?\n\n` +
+          `• It disappears from every list and count.\n` +
+          `• Its admin login (${inst.adminEmail || 'none'}) is deleted.\n` +
+          `• Its ${count} student(s) KEEP their link to it — nothing is unlinked.\n\n` +
+          `To bring it back, add an institution with the code "${inst.code}" again ` +
+          `and its students return automatically.`
       )
     )
       return;
     try {
       const res = await deleteInstitution.mutateAsync(inst.id);
       toast.success(
-        `Institution deleted${res.unlinkedStudents ? ` — ${res.unlinkedStudents} student(s) unlinked` : ''}`
+        `"${inst.name}" archived` +
+          (res.retainedStudents
+            ? ` — ${res.retainedStudents} student(s) kept. Re-add code "${res.code}" to restore.`
+            : ''),
+        { autoClose: 8000 }
       );
     } catch (err) {
-      toast.error(err.message || 'Delete failed');
+      toast.error(err.message || 'Remove failed');
     }
   };
 
   const inputCls =
-    'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none';
+    'w-full px-3 py-2 border border-edge-strong rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none';
 
   return (
     <div className="max-w-6xl mx-auto p-4 md:p-6">
@@ -141,8 +178,8 @@ const InstitutionManagement = () => {
         >
           ← Back to dashboard
         </button>
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Institutions</h1>
-        <p className="text-gray-600">
+        <h1 className="text-2xl md:text-3xl font-bold text-fg">Institutions</h1>
+        <p className="text-fg-muted">
           Add an institution and its admin login. That admin can sign in and will only see their
           own institution's students.
         </p>
@@ -162,7 +199,7 @@ const InstitutionManagement = () => {
                 Share these with the institution — the password is not recoverable later (you can
                 only reset it).
               </p>
-              <div className="mt-2 text-sm font-mono bg-white border border-green-200 rounded-md px-3 py-2 inline-block">
+              <div className="mt-2 text-sm font-mono bg-surface border border-green-200 rounded-md px-3 py-2 inline-block">
                 <div>ID: {createdCreds.email}</div>
                 <div>Password: {createdCreds.password}</div>
               </div>
@@ -179,12 +216,12 @@ const InstitutionManagement = () => {
 
       {/* Add / Edit form */}
       <div className="card-elite p-6 mb-8">
-        <h2 className="text-lg font-semibold text-ink-900 mb-4">
+        <h2 className="text-lg font-semibold text-fg mb-4">
           {editingId ? 'Edit institution' : 'Add a new institution'}
         </h2>
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-fg-muted mb-1">
               Name <span className="text-red-500">*</span>
             </label>
             <input
@@ -197,17 +234,28 @@ const InstitutionManagement = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Code</label>
+            <label className="block text-sm font-medium text-fg-muted mb-1">
+              Code <span className="text-red-500">*</span>
+            </label>
             <input
               type="text"
               value={form.code}
               onChange={(e) => setForm({ ...form, code: e.target.value })}
               placeholder="SJCE"
               className={inputCls}
+              required
             />
+            {/* Required as of the archive/restore change: this code is what a
+                re-add matches to reclaim an institution's students, so an
+                institution without one could never be restored. */}
+            <p className="mt-1 text-xs text-fg-subtle">
+              {editingId
+                ? 'Changing this changes what must be typed to restore this institution later.'
+                : 'Unique. Re-adding this code later restores this institution and its students.'}
+            </p>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+            <label className="block text-sm font-medium text-fg-muted mb-1">Address</label>
             <input
               type="text"
               value={form.address}
@@ -217,7 +265,7 @@ const InstitutionManagement = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Contact email</label>
+            <label className="block text-sm font-medium text-fg-muted mb-1">Contact email</label>
             <input
               type="email"
               value={form.contactEmail}
@@ -228,16 +276,16 @@ const InstitutionManagement = () => {
           </div>
 
           {/* Admin login block */}
-          <div className="md:col-span-2 border-t border-gray-100 pt-4 mt-1">
-            <h3 className="text-sm font-semibold text-gray-800 mb-1">Institution admin login</h3>
-            <p className="text-xs text-gray-500 mb-3">
+          <div className="md:col-span-2 border-t border-edge pt-4 mt-1">
+            <h3 className="text-sm font-semibold text-fg mb-1">Institution admin login</h3>
+            <p className="text-xs text-fg-subtle mb-3">
               {editingId
                 ? 'The login ID cannot be changed. Enter a new password only if you want to reset it.'
                 : 'These are the credentials the institution admin will sign in with at /admin/signin.'}
             </p>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Admin name</label>
+            <label className="block text-sm font-medium text-fg-muted mb-1">Admin name</label>
             <input
               type="text"
               value={form.adminName}
@@ -248,7 +296,7 @@ const InstitutionManagement = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-fg-muted mb-1">
               Admin login ID (email) {!editingId && <span className="text-red-500">*</span>}
             </label>
             <input
@@ -256,13 +304,13 @@ const InstitutionManagement = () => {
               value={form.adminEmail}
               onChange={(e) => setForm({ ...form, adminEmail: e.target.value })}
               placeholder="admin@college.edu"
-              className={`${inputCls} ${editingId ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+              className={`${inputCls} ${editingId ? 'bg-surface-2 cursor-not-allowed' : ''}`}
               disabled={!!editingId}
               required={!editingId}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-fg-muted mb-1">
               {editingId ? 'New password (optional)' : 'Admin password'}{' '}
               {!editingId && <span className="text-red-500">*</span>}
             </label>
@@ -297,8 +345,8 @@ const InstitutionManagement = () => {
 
       {/* List */}
       <div className="card-elite overflow-hidden">
-        <div className="px-6 py-4 border-b border-ink-100 bg-brand-gradient-soft">
-          <h2 className="text-lg font-semibold text-ink-900">
+        <div className="px-6 py-4 border-b border-edge bg-brand-gradient-soft">
+          <h2 className="text-lg font-semibold text-fg">
             All institutions ({institutions.length})
           </h2>
         </div>
@@ -308,13 +356,13 @@ const InstitutionManagement = () => {
             <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
           </div>
         ) : institutions.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
+          <div className="text-center py-12 text-fg-subtle">
             No institutions yet. Add your first one above.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-gray-600">
+              <thead className="bg-surface-2 text-fg-muted">
                 <tr>
                   <th className="text-left px-6 py-3 font-medium">Name</th>
                   <th className="text-left px-6 py-3 font-medium">Code</th>
@@ -323,15 +371,15 @@ const InstitutionManagement = () => {
                   <th className="text-right px-6 py-3 font-medium">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-edge">
                 {institutions.map((inst) => (
-                  <tr key={inst.id} className="hover:bg-gray-50">
+                  <tr key={inst.id} className="hover:bg-surface-2">
                     <td className="px-6 py-4">
-                      <div className="font-medium text-gray-800">{inst.name}</div>
-                      {inst.address && <div className="text-xs text-gray-500">{inst.address}</div>}
+                      <div className="font-medium text-fg">{inst.name}</div>
+                      {inst.address && <div className="text-xs text-fg-subtle">{inst.address}</div>}
                     </td>
-                    <td className="px-6 py-4 text-gray-600">{inst.code || '—'}</td>
-                    <td className="px-6 py-4 text-gray-600 font-mono text-xs">
+                    <td className="px-6 py-4 text-fg-muted">{inst.code || '—'}</td>
+                    <td className="px-6 py-4 text-fg-muted font-mono text-xs">
                       {inst.adminEmail || '—'}
                     </td>
                     <td className="px-6 py-4">

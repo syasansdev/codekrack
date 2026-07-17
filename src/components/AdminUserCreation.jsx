@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
-import BackButton from './BackButton';
-import * as XLSX from 'xlsx';
+import { toast } from 'react-toastify';import * as XLSX from 'xlsx';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { useAdminScope } from '../hooks/useAdminScope';
 import { useInstitutions } from '../hooks/queries/useInstitutions';
@@ -406,10 +404,10 @@ ${JSON.stringify(excelData, null, 2)}
     const modal = document.createElement('div');
     modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
     modal.innerHTML = `
-      <div class="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-hidden shadow-2xl mx-4">
-        <div class="p-6 border-b border-gray-200">
-          <h3 class="text-xl font-bold text-gray-900">Bulk Upload Results</h3>
-          <p class="text-sm text-gray-600 mt-1">
+      <div class="bg-surface rounded-xl max-w-3xl w-full max-h-[90vh] overflow-hidden shadow-2xl mx-4">
+        <div class="p-6 border-b border-edge">
+          <h3 class="text-xl font-bold text-fg">Bulk Upload Results</h3>
+          <p class="text-sm text-fg-muted mt-1">
             Added: ${results.success.length} &nbsp;|&nbsp; Failed: ${results.failed.length}
           </p>
           ${
@@ -481,7 +479,7 @@ ${JSON.stringify(excelData, null, 2)}
           }
         </div>
 
-        <div class="p-6 border-t border-gray-200 flex gap-3">
+        <div class="p-6 border-t border-edge flex gap-3">
           ${
             results.success.length > 0
               ? `<button id="ck-roster" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
@@ -489,8 +487,8 @@ ${JSON.stringify(excelData, null, 2)}
                  </button>`
               : ''
           }
-          <button id="ck-close" class="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 font-medium">Close</button>
-          <button id="ck-students" class="flex-1 px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 font-medium">View students</button>
+          <button id="ck-close" class="flex-1 px-4 py-2 text-fg-muted bg-surface-2 rounded-lg hover:bg-surface-3 font-medium">Close</button>
+          <button id="ck-students" class="flex-1 px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 font-medium">View students</button>
         </div>
       </div>`;
 
@@ -709,7 +707,7 @@ ${JSON.stringify(excelData, null, 2)}
 
   const platformIcons = {
     github: (
-      <svg className="w-5 h-5" fill="#181717" viewBox="0 0 24 24">
+      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
         <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
       </svg>
     ),
@@ -724,7 +722,7 @@ ${JSON.stringify(excelData, null, 2)}
       </svg>
     ),
     atcoder: (
-      <svg className="w-5 h-5" fill="#000000" viewBox="0 0 24 24">
+      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
         <path d="M12 0l-8 4v8l8 4 8-4V4l-8-4zm0 2.208L17.385 5 12 7.792 6.615 5 12 2.208zM5 6.5l6 3v7l-6-3v-7zm8 10v-7l6-3v7l-6 3zm-1-12.5l5 2.5-5 2.5-5-2.5 5-2.5z"/>
       </svg>
     ),
@@ -746,7 +744,7 @@ ${JSON.stringify(excelData, null, 2)}
       <div className="flex justify-center">
         <div className="w-full max-w-md flex items-center">
           {/* Progress line */}
-          <div className="w-full bg-slate-200 rounded h-1 flex items-center">
+          <div className="w-full bg-surface-3 rounded h-1 flex items-center">
             <div 
               className="h-1 bg-blue-500 rounded transition-all duration-300" 
               style={{ width: formStep === 1 ? '50%' : '100%' }}
@@ -759,7 +757,7 @@ ${JSON.stringify(excelData, null, 2)}
       </div>
       
       {/* Step labels */}
-      <div className="flex justify-between max-w-md mx-auto text-xs mt-2 px-1 font-medium text-slate-600">
+      <div className="flex justify-between max-w-md mx-auto text-xs mt-2 px-1 font-medium text-fg-muted">
         <span className={formStep >= 1 ? "text-blue-600" : ""}>Personal Info</span>
         <span className={formStep >= 2 ? "text-blue-600" : ""}>Coding Profiles</span>
       </div>
@@ -767,23 +765,21 @@ ${JSON.stringify(excelData, null, 2)}
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4">
-      <div className="container mx-auto max-w-5xl h-full flex flex-col">
-        <BackButton to="/admin/dashboard" />
-        <div className="bg-white rounded-xl overflow-hidden shadow-md border border-slate-200 flex-1 flex flex-col max-h-[calc(100vh-2rem)]">
+    <div>
+      <div className="container mx-auto max-w-5xl h-full flex flex-col">        <div className="bg-surface rounded-xl overflow-hidden shadow-md border border-edge flex-1 flex flex-col max-h-[calc(100vh-2rem)]">
         {/* Header */}
-        <div className="p-5 sm:p-6 border-b border-slate-200 bg-slate-50">
+        <div className="p-5 sm:p-6 border-b border-edge bg-surface-2">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-800">Add New Student</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-fg">Add New Student</h2>
             
             {/* Mode Toggle */}
-            <div className="flex bg-gray-100 rounded-lg p-1">
+            <div className="flex bg-surface-2 rounded-lg p-1">
               <button
                 onClick={() => setUploadMode('single')}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
                   uploadMode === 'single'
-                    ? 'bg-white text-blue-600 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-surface text-blue-600 shadow-sm'
+                    : 'text-fg-muted hover:text-fg'
                 }`}
               >
                 Single Student
@@ -792,8 +788,8 @@ ${JSON.stringify(excelData, null, 2)}
                 onClick={() => setUploadMode('bulk')}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
                   uploadMode === 'bulk'
-                    ? 'bg-white text-blue-600 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-surface text-blue-600 shadow-sm'
+                    : 'text-fg-muted hover:text-fg'
                 }`}
               >
                 Bulk Upload
@@ -803,8 +799,8 @@ ${JSON.stringify(excelData, null, 2)}
         </div>
         
         {/* Institution assignment — applies to both single and bulk */}
-        <div className="px-5 sm:px-6 py-4 border-b border-slate-200 bg-blue-50/40">
-          <label className="block text-sm font-medium text-slate-700 mb-1">
+        <div className="px-5 sm:px-6 py-4 border-b border-edge bg-blue-50/40">
+          <label className="block text-sm font-medium text-fg-muted mb-1">
             Institution <span className="text-red-500">*</span>
           </label>
           {isSuperAdmin ? (
@@ -812,7 +808,7 @@ ${JSON.stringify(excelData, null, 2)}
               <select
                 value={selectedInstitutionId}
                 onChange={(e) => setSelectedInstitutionId(e.target.value)}
-                className="w-full sm:max-w-md px-3 py-2 border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                className="w-full sm:max-w-md px-3 py-2 border border-edge-strong rounded-lg bg-surface focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               >
                 <option value="">— Select an institution —</option>
                 {institutions.map((i) => (
@@ -829,12 +825,12 @@ ${JSON.stringify(excelData, null, 2)}
               )}
             </>
           ) : (
-            <p className="text-sm text-slate-700 bg-white border border-slate-200 rounded-lg px-3 py-2 w-full sm:max-w-md">
+            <p className="text-sm text-fg-muted bg-surface border border-edge rounded-lg px-3 py-2 w-full sm:max-w-md">
               {institutions.find((i) => i.id === selectedInstitutionId)?.name || 'Your institution'}
-              <span className="text-xs text-slate-500 ml-2">(assigned automatically)</span>
+              <span className="text-xs text-fg-subtle ml-2">(assigned automatically)</span>
             </p>
           )}
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-fg-subtle mt-1">
             Students added here will belong to this institution.
           </p>
         </div>
@@ -846,18 +842,18 @@ ${JSON.stringify(excelData, null, 2)}
               <form onSubmit={handleSubmit}>
             {formStep === 1 && (
               <div className="space-y-6 animate-fade-in ">
-                <div className="flex items-center mb-4 pb-1 border-b border-slate-200 mb-10">
+                <div className="flex items-center mb-4 pb-1 border-b border-edge mb-10">
                   {/* <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold mr-3">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                   </div> */}
-                  <h3 className="text-lg font-semibold text-slate-800">Personal Information</h3>
+                  <h3 className="text-lg font-semibold text-fg">Personal Information</h3>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-slate-700 mb-2">
+                    <label htmlFor="name" className="block text-sm font-medium text-fg-muted mb-2">
                       Full Name <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
@@ -868,7 +864,7 @@ ${JSON.stringify(excelData, null, 2)}
                         value={studentData.name}
                         onChange={handleInputChange}
                         required
-                        className={`w-full px-4 py-2 border ${formErrors.name ? 'border-red-500 bg-red-50' : 'border-slate-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300`}
+                        className={`w-full px-4 py-2 border ${formErrors.name ? 'border-red-500 bg-red-50' : 'border-edge-strong'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300`}
                         placeholder="Enter full name"
                       />
                       {formErrors.name && (
@@ -878,7 +874,7 @@ ${JSON.stringify(excelData, null, 2)}
                   </div>
                   
                   <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-2">
+                    <label htmlFor="email" className="block text-sm font-medium text-fg-muted mb-2">
                       Email Address <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
@@ -889,7 +885,7 @@ ${JSON.stringify(excelData, null, 2)}
                         value={studentData.email}
                         onChange={handleInputChange}
                         required
-                        className={`w-full px-4 py-2 border ${formErrors.email ? 'border-red-500 bg-red-50' : 'border-slate-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300`}
+                        className={`w-full px-4 py-2 border ${formErrors.email ? 'border-red-500 bg-red-50' : 'border-edge-strong'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300`}
                         placeholder="student@example.com"
                       />
                       {formErrors.email && (
@@ -899,7 +895,7 @@ ${JSON.stringify(excelData, null, 2)}
                   </div>
                   
                   <div>
-                    <label htmlFor="phoneNumber" className="block text-sm font-medium text-slate-700 mb-2">
+                    <label htmlFor="phoneNumber" className="block text-sm font-medium text-fg-muted mb-2">
                       Phone Number
                     </label>
                     <input
@@ -908,13 +904,13 @@ ${JSON.stringify(excelData, null, 2)}
                       name="phoneNumber"
                       value={studentData.phoneNumber}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
+                      className="w-full px-4 py-2 border border-edge-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
                       placeholder="+91 1234567890"
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="college" className="block text-sm font-medium text-slate-700 mb-2">
+                    <label htmlFor="college" className="block text-sm font-medium text-fg-muted mb-2">
                       College
                     </label>
                     <div className="relative">
@@ -923,14 +919,14 @@ ${JSON.stringify(excelData, null, 2)}
                         name="college"
                         value={studentData.college}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 appearance-none pr-10"
+                        className="w-full px-4 py-2 border border-edge-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 appearance-none pr-10"
                       >
                         <option value="">Select College</option>
                         <option value="Engineering">Engineering</option>
                         <option value="Technology">Technology</option>
                       </select>
                       <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                        <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5 text-fg-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                         </svg>
                       </div>
@@ -938,7 +934,7 @@ ${JSON.stringify(excelData, null, 2)}
                   </div>
                   
                   <div>
-                    <label htmlFor="department" className="block text-sm font-medium text-slate-700 mb-2">
+                    <label htmlFor="department" className="block text-sm font-medium text-fg-muted mb-2">
                       Department
                     </label>
                     <div className="relative">
@@ -947,7 +943,7 @@ ${JSON.stringify(excelData, null, 2)}
                         name="department"
                         value={studentData.department}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 appearance-none pr-10"
+                        className="w-full px-4 py-2 border border-edge-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 appearance-none pr-10"
                       >
                         <option value="">Select Department</option>
                         <option value="CSE">Computer Science & Engineering</option>
@@ -960,7 +956,7 @@ ${JSON.stringify(excelData, null, 2)}
                         <option value="ADS">ADS</option>
                       </select>
                       <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                        <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5 text-fg-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                         </svg>
                       </div>
@@ -968,7 +964,7 @@ ${JSON.stringify(excelData, null, 2)}
                   </div>
                   
                   <div>
-                    <label htmlFor="year" className="block text-sm font-medium text-slate-700 mb-2">
+                    <label htmlFor="year" className="block text-sm font-medium text-fg-muted mb-2">
                       Year of Study
                     </label>
                     <div className="relative">
@@ -977,7 +973,7 @@ ${JSON.stringify(excelData, null, 2)}
                         name="year"
                         value={studentData.year}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 appearance-none pr-10"
+                        className="w-full px-4 py-2 border border-edge-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 appearance-none pr-10"
                       >
                         <option value="">Select Year</option>
                         <option value="1">1st Year</option>
@@ -986,7 +982,7 @@ ${JSON.stringify(excelData, null, 2)}
                         <option value="4">4th Year</option>
                       </select>
                       <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                        <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5 text-fg-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                         </svg>
                       </div>
@@ -994,7 +990,7 @@ ${JSON.stringify(excelData, null, 2)}
                   </div>
                   
                   <div>
-                    <label htmlFor="registerNumber" className="block text-sm font-medium text-slate-700 mb-2">
+                    <label htmlFor="registerNumber" className="block text-sm font-medium text-fg-muted mb-2">
                       Register Number
                     </label>
                     <input
@@ -1003,13 +999,13 @@ ${JSON.stringify(excelData, null, 2)}
                       name="registerNumber"
                       value={studentData.registerNumber}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
+                      className="w-full px-4 py-2 border border-edge-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
                       placeholder="REG12345"
                     />
                   </div>
                   
                   <div>
-                    <label htmlFor="rollNumber" className="block text-sm font-medium text-slate-700 mb-2">
+                    <label htmlFor="rollNumber" className="block text-sm font-medium text-fg-muted mb-2">
                       Roll Number
                     </label>
                     <input
@@ -1018,13 +1014,13 @@ ${JSON.stringify(excelData, null, 2)}
                       name="rollNumber"
                       value={studentData.rollNumber}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
+                      className="w-full px-4 py-2 border border-edge-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
                       placeholder="ROLL123"
                     />
                   </div>
                   
                   <div>
-                    <label htmlFor="tenthPercentage" className="block text-sm font-medium text-slate-700 mb-2">
+                    <label htmlFor="tenthPercentage" className="block text-sm font-medium text-fg-muted mb-2">
                       10th Percentage
                     </label>
                     <input
@@ -1033,7 +1029,7 @@ ${JSON.stringify(excelData, null, 2)}
                       name="tenthPercentage"
                       value={studentData.tenthPercentage}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
+                      className="w-full px-4 py-2 border border-edge-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
                       placeholder="85.5"
                       min="0"
                       max="100"
@@ -1042,7 +1038,7 @@ ${JSON.stringify(excelData, null, 2)}
                   </div>
                   
                   <div>
-                    <label htmlFor="twelfthPercentage" className="block text-sm font-medium text-slate-700 mb-2">
+                    <label htmlFor="twelfthPercentage" className="block text-sm font-medium text-fg-muted mb-2">
                       12th Percentage
                     </label>
                     <input
@@ -1051,7 +1047,7 @@ ${JSON.stringify(excelData, null, 2)}
                       name="twelfthPercentage"
                       value={studentData.twelfthPercentage}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
+                      className="w-full px-4 py-2 border border-edge-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
                       placeholder="90.2"
                       min="0"
                       max="100"
@@ -1064,7 +1060,7 @@ ${JSON.stringify(excelData, null, 2)}
                   <button
                     type="button"
                     onClick={handleReset}
-                    className="flex items-center justify-center px-5 py-2 text-sm font-medium text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-500 transition-all duration-300"
+                    className="flex items-center justify-center px-5 py-2 text-sm font-medium text-fg-muted bg-surface-2 rounded-lg hover:bg-surface-3 focus:outline-none focus:ring-2 focus:ring-slate-500 transition-all duration-300"
                   >
                     <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -1087,26 +1083,26 @@ ${JSON.stringify(excelData, null, 2)}
             
             {formStep === 2 && (
               <div className="space-y-6 animate-fade-in ">
-                <div className="flex items-center mb-10 pb-1 border-b border-slate-200">
+                <div className="flex items-center mb-10 pb-1 border-b border-edge">
                   <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold mr-3">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
                     </svg>
                   </div>
-                  <h3 className="text-lg font-semibold text-slate-800 ">
+                  <h3 className="text-lg font-semibold text-fg ">
                     Coding Profiles
                   </h3>
                 </div>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pb-6">
                   <div>
-                    <label htmlFor="github" className="flex items-center text-sm font-medium text-slate-700 mb-2">
+                    <label htmlFor="github" className="flex items-center text-sm font-medium text-fg-muted mb-2">
                       {platformIcons.github}
                       <span className="ml-2">GitHub Profile</span>
                     </label>
                     <div className="relative mb-4">
                       <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none ">
-                        <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5 text-fg-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                         </svg>
                       </div>
@@ -1116,20 +1112,20 @@ ${JSON.stringify(excelData, null, 2)}
                         name="platformUrls.github"
                         value={studentData.platformUrls.github}
                         onChange={handleInputChange}
-                        className="w-full pl-10 px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
+                        className="w-full pl-10 px-4 py-2 border border-edge-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
                         placeholder="github.com/username"
                       />
                     </div>
                   </div>
                   
                   <div>
-                    <label htmlFor="leetcode" className="flex items-center text-sm font-medium text-slate-700 mb-2">
+                    <label htmlFor="leetcode" className="flex items-center text-sm font-medium text-fg-muted mb-2">
                       {platformIcons.leetcode}
                       <span className="ml-2">LeetCode Profile</span>
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                        <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5 text-fg-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                         </svg>
                       </div>
@@ -1139,20 +1135,20 @@ ${JSON.stringify(excelData, null, 2)}
                         name="platformUrls.leetcode"
                         value={studentData.platformUrls.leetcode}
                         onChange={handleInputChange}
-                        className="w-full pl-10 px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
+                        className="w-full pl-10 px-4 py-2 border border-edge-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
                         placeholder="leetcode.com/username"
                       />
                     </div>
                   </div>
                   
                   <div>
-                    <label htmlFor="codeforces" className="flex items-center text-sm font-medium text-slate-700 mb-2">
+                    <label htmlFor="codeforces" className="flex items-center text-sm font-medium text-fg-muted mb-2">
                       {platformIcons.codeforces}
                       <span className="ml-2">Codeforces Profile</span>
                     </label>
                     <div className="relative mb-4">
                       <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                        <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5 text-fg-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                         </svg>
                       </div>
@@ -1162,20 +1158,20 @@ ${JSON.stringify(excelData, null, 2)}
                         name="platformUrls.codeforces"
                         value={studentData.platformUrls.codeforces}
                         onChange={handleInputChange}
-                        className="w-full pl-10 px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
+                        className="w-full pl-10 px-4 py-2 border border-edge-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
                         placeholder="codeforces.com/profile/username"
                       />
                     </div>
                   </div>
                   
                   <div>
-                    <label htmlFor="atcoder" className="flex items-center text-sm font-medium text-slate-700 mb-2">
+                    <label htmlFor="atcoder" className="flex items-center text-sm font-medium text-fg-muted mb-2">
                       {platformIcons.atcoder}
                       <span className="ml-2">AtCoder Profile</span>
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                        <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5 text-fg-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                         </svg>
                       </div>
@@ -1185,20 +1181,20 @@ ${JSON.stringify(excelData, null, 2)}
                         name="platformUrls.atcoder"
                         value={studentData.platformUrls.atcoder}
                         onChange={handleInputChange}
-                        className="w-full pl-10 px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
+                        className="w-full pl-10 px-4 py-2 border border-edge-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
                         placeholder="atcoder.jp/users/username"
                       />
                     </div>
                   </div>
                   
                   <div>
-                    <label htmlFor="hackerrank" className="flex items-center text-sm font-medium text-slate-700 mb-2">
+                    <label htmlFor="hackerrank" className="flex items-center text-sm font-medium text-fg-muted mb-2">
                       {platformIcons.hackerrank}
                       <span className="ml-2">HackerRank Profile</span>
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                        <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5 text-fg-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                         </svg>
                       </div>
@@ -1208,20 +1204,20 @@ ${JSON.stringify(excelData, null, 2)}
                         name="platformUrls.hackerrank"
                         value={studentData.platformUrls.hackerrank}
                         onChange={handleInputChange}
-                        className="w-full pl-10 px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
+                        className="w-full pl-10 px-4 py-2 border border-edge-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
                         placeholder="hackerrank.com/username"
                       />
                     </div>
                   </div>
                   
                   <div>
-                    <label htmlFor="linkedin" className="flex items-center text-sm font-medium text-slate-700 mb-2">
+                    <label htmlFor="linkedin" className="flex items-center text-sm font-medium text-fg-muted mb-2">
                       {platformIcons.linkedin}
                       <span className="ml-2">LinkedIn Profile</span>
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                        <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5 text-fg-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                         </svg>
                       </div>
@@ -1231,22 +1227,22 @@ ${JSON.stringify(excelData, null, 2)}
                         name="platformUrls.linkedin"
                         value={studentData.platformUrls.linkedin}
                         onChange={handleInputChange}
-                        className="w-full pl-10 px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
+                        className="w-full pl-10 px-4 py-2 border border-edge-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
                         placeholder="linkedin.com/in/username"
                       />
                     </div>
                   </div>
                   
                   <div>
-                    <label htmlFor="resume" className="flex items-center text-sm font-medium text-slate-700 mb-2">
-                      <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <label htmlFor="resume" className="flex items-center text-sm font-medium text-fg-muted mb-2">
+                      <svg className="w-5 h-5 text-fg-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
                       <span className="ml-2">Resume Drive URL</span>
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                        <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5 text-fg-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                         </svg>
                       </div>
@@ -1256,7 +1252,7 @@ ${JSON.stringify(excelData, null, 2)}
                         name="platformUrls.resume"
                         value={studentData.platformUrls.resume}
                         onChange={handleInputChange}
-                        className="w-full pl-10 px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
+                        className="w-full pl-10 px-4 py-2 border border-edge-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
                         placeholder="drive.google.com/file/d/..."
                       />
                     </div>
@@ -1267,7 +1263,7 @@ ${JSON.stringify(excelData, null, 2)}
                   <button
                     type="button"
                     onClick={() => setFormStep(1)}
-                    className="flex items-center justify-center px-5 py-2 text-sm font-medium text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-500 transition-all duration-300"
+                    className="flex items-center justify-center px-5 py-2 text-sm font-medium text-fg-muted bg-surface-2 rounded-lg hover:bg-surface-3 focus:outline-none focus:ring-2 focus:ring-slate-500 transition-all duration-300"
                   >
                     <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
@@ -1279,7 +1275,7 @@ ${JSON.stringify(excelData, null, 2)}
                     <button
                       type="button"
                       onClick={() => navigate('/admin/students')}
-                      className="flex items-center justify-center px-5 py-2 text-sm font-medium text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-500 transition-all duration-300"
+                      className="flex items-center justify-center px-5 py-2 text-sm font-medium text-fg-muted bg-surface-2 rounded-lg hover:bg-surface-3 focus:outline-none focus:ring-2 focus:ring-slate-500 transition-all duration-300"
                     >
                       Cancel
                     </button>
@@ -1320,14 +1316,14 @@ ${JSON.stringify(excelData, null, 2)}
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Bulk Student Upload</h3>
-                <p className="text-sm text-gray-600 mb-6">
+                <h3 className="text-lg font-semibold text-fg mb-2">Bulk Student Upload</h3>
+                <p className="text-sm text-fg-muted mb-6">
                   Upload an Excel file with student data. Our AI will automatically detect and map your columns.
                 </p>
               </div>
               
               {!bulkFile ? (
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors">
+                <div className="border-2 border-dashed border-edge-strong rounded-lg p-8 text-center hover:border-blue-400 transition-colors">
                   <input
                     type="file"
                     accept=".xlsx,.xls"
@@ -1337,13 +1333,13 @@ ${JSON.stringify(excelData, null, 2)}
                     disabled={bulkProcessing}
                   />
                   <label htmlFor="bulk-upload" className="cursor-pointer">
-                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="w-12 h-12 bg-surface-2 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <svg className="w-6 h-6 text-fg-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
                     </div>
-                    <p className="text-lg font-medium text-gray-900 mb-2">Choose Excel File</p>
-                    <p className="text-sm text-gray-500">Supports .xlsx and .xls files</p>
+                    <p className="text-lg font-medium text-fg mb-2">Choose Excel File</p>
+                    <p className="text-sm text-fg-subtle">Supports .xlsx and .xls files</p>
                   </label>
                 </div>
               ) : (
@@ -1361,17 +1357,17 @@ ${JSON.stringify(excelData, null, 2)}
                   </div>
                   
                   {bulkData.length > 0 && (
-                    <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="bg-surface-2 rounded-lg p-4">
                       <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
                         <h5 className="font-medium text-blue-900 mb-2">Raw Excel Data (First Row)</h5>
                         <div className="text-xs text-blue-800 max-h-20 overflow-y-auto">
                           {JSON.stringify(Object.keys(bulkData[0] || {}), null, 2)}
                         </div>
                       </div>
-                      <h4 className="font-medium text-gray-900 mb-3">Preview (First 3 students) - All Fields</h4>
+                      <h4 className="font-medium text-fg mb-3">Preview (First 3 students) - All Fields</h4>
                       <div className="space-y-4 max-h-96 overflow-y-auto">
                         {bulkData.slice(0, 3).map((student, index) => (
-                          <div key={index} className="bg-white border border-gray-200 rounded p-4 text-sm">
+                          <div key={index} className="bg-surface border border-edge rounded p-4 text-sm">
                             <div className="font-semibold text-blue-600 mb-2">Student {index + 1}</div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                               <div><strong>Name:</strong> {student.name || 'N/A'}</div>
@@ -1385,8 +1381,8 @@ ${JSON.stringify(excelData, null, 2)}
                               <div><strong>10th %:</strong> {student.tenthPercentage || 'N/A'}</div>
                               <div><strong>12th %:</strong> {student.twelfthPercentage || 'N/A'}</div>
                             </div>
-                            <div className="mt-3 pt-3 border-t border-gray-200">
-                              <div className="font-medium text-gray-700 mb-2">Platform URLs:</div>
+                            <div className="mt-3 pt-3 border-t border-edge">
+                              <div className="font-medium text-fg-muted mb-2">Platform URLs:</div>
                               <div className="grid grid-cols-1 gap-1 text-xs">
                                 <div><strong>GitHub:</strong> {student.github || 'N/A'}</div>
                                 <div><strong>LeetCode:</strong> {student.leetcode || 'N/A'}</div>
@@ -1401,7 +1397,7 @@ ${JSON.stringify(excelData, null, 2)}
                         ))}
                       </div>
                       {bulkData.length > 3 && (
-                        <p className="text-xs text-gray-500 mt-2">...and {bulkData.length - 3} more students</p>
+                        <p className="text-xs text-fg-subtle mt-2">...and {bulkData.length - 3} more students</p>
                       )}
                     </div>
                   )}
@@ -1413,7 +1409,7 @@ ${JSON.stringify(excelData, null, 2)}
                         setBulkData([]);
                         setBulkResults({ success: [], failed: [] });
                       }}
-                      className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                      className="flex-1 px-4 py-2 text-fg-muted bg-surface-2 rounded-lg hover:bg-surface-3 transition-colors font-medium"
                       disabled={bulkProcessing}
                     >
                       Choose Different File
@@ -1492,7 +1488,7 @@ ${JSON.stringify(excelData, null, 2)}
           )}
         </div>
         
-        <div className="p-4 text-center text-sm text-slate-500 border-t border-slate-200 bg-slate-50">
+        <div className="p-4 text-center text-sm text-fg-subtle border-t border-edge bg-surface-2">
           <p>After adding a student, a temporary password will be generated and stored securely.</p>
         </div>
         </div>

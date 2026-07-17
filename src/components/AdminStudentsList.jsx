@@ -3,7 +3,6 @@ import { useAdminScope } from '../hooks/useAdminScope';
 import { useStudents, useDeleteStudent } from '../hooks/queries/useStudents';
 import { toast } from 'react-toastify';
 import { motion, AnimatePresence } from 'framer-motion';
-import BackButton from './BackButton';
 import StudentViewDetails from './StudentViewDetails';
 import EditStudentModal from './EditStudentModal';
 
@@ -55,7 +54,7 @@ const AdminStudentsList = () => {
       <div className="flex justify-center items-center min-h-96">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 text-lg font-medium">Loading students...</p>
+          <p className="text-fg-muted text-lg font-medium">Loading students...</p>
         </div>
       </div>
     );
@@ -63,36 +62,35 @@ const AdminStudentsList = () => {
 
   return (
     <>
-      <BackButton to="/admin/dashboard" />
       <div className="p-6 max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8 text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-3">Student Management</h1>
-          <p className="text-lg text-gray-600">Manage student accounts and data</p>
+          <h1 className="text-4xl font-bold text-fg mb-3">Student Management</h1>
+          <p className="text-lg text-fg-muted">Manage student accounts and data</p>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 text-center">
+          <div className="bg-surface p-6 rounded-2xl shadow-lg border border-edge text-center">
             <div className="text-3xl font-bold text-blue-600 mb-2">{students.length}</div>
-            <div className="text-sm text-gray-600 font-medium">Total Students</div>
+            <div className="text-sm text-fg-muted font-medium">Total Students</div>
           </div>
           {/* "Active Accounts" and "Temp Passwords" used to live here, counted
               from requiresPasswordReset and tempPassword. Both fields are gone —
               no password is stored, and whether someone has actually signed in
               is auth.users.last_sign_in_at, reported on the Student Access
               screen. Counting a dropped field would just render 0 forever. */}
-          <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 text-center">
+          <div className="bg-surface p-6 rounded-2xl shadow-lg border border-edge text-center">
             <div className="text-3xl font-bold text-green-600 mb-2">
               {students.filter((s) => s.invitedAt).length}
             </div>
-            <div className="text-sm text-gray-600 font-medium">Invited</div>
+            <div className="text-sm text-fg-muted font-medium">Invited</div>
           </div>
-          <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 text-center">
+          <div className="bg-surface p-6 rounded-2xl shadow-lg border border-edge text-center">
             <div className="text-3xl font-bold text-purple-600 mb-2">
               {students.filter((s) => Object.keys(s.platformUrls || {}).length > 0).length}
             </div>
-            <div className="text-sm text-gray-600 font-medium">With Platforms</div>
+            <div className="text-sm text-fg-muted font-medium">With Platforms</div>
           </div>
         </div>
 
@@ -100,7 +98,7 @@ const AdminStudentsList = () => {
         <div className="mb-8">
           <div className="relative max-w-md mx-auto">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="h-5 w-5 text-fg-subtle" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
@@ -109,27 +107,27 @@ const AdminStudentsList = () => {
               placeholder="Search students..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="block w-full pl-10 pr-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="block w-full pl-10 pr-4 py-3 border border-edge-strong rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
         </div>
 
         {/* Students Table */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+        <div className="bg-surface rounded-2xl shadow-lg border border-edge overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-edge">
+              <thead className="bg-surface-2">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-fg-subtle uppercase tracking-wider">Student</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-fg-subtle uppercase tracking-wider">Department</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-fg-subtle uppercase tracking-wider">Year</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-fg-subtle uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-fg-subtle uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-surface divide-y divide-edge">
                 {filteredStudents.map((student) => (
-                  <tr key={student.id} className="hover:bg-gray-50">
+                  <tr key={student.id} className="hover:bg-surface-2">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
@@ -138,20 +136,20 @@ const AdminStudentsList = () => {
                           </span>
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">{student.name}</div>
-                          <div className="text-sm text-gray-500">{student.email}</div>
+                          <div className="text-sm font-medium text-fg">{student.name}</div>
+                          <div className="text-sm text-fg-subtle">{student.email}</div>
                           {student.registerNumber && (
-                            <div className="text-xs text-gray-400">Reg: {student.registerNumber}</div>
+                            <div className="text-xs text-fg-subtle">Reg: {student.registerNumber}</div>
                           )}
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{student.department || 'N/A'}</div>
-                      <div className="text-sm text-gray-500">{student.college || ''}</div>
+                      <div className="text-sm text-fg">{student.department || 'N/A'}</div>
+                      <div className="text-sm text-fg-subtle">{student.college || ''}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
+                      <div className="text-sm text-fg">
                         {student.year ? `Year ${student.year}` : 'N/A'}
                       </div>
                     </td>
@@ -214,8 +212,8 @@ const AdminStudentsList = () => {
         {filteredStudents.length === 0 && (
           <div className="text-center py-16">
             <div className="text-6xl mb-4">👥</div>
-            <h3 className="text-2xl font-semibold text-gray-600 mb-2">No students found</h3>
-            <p className="text-gray-500">
+            <h3 className="text-2xl font-semibold text-fg-muted mb-2">No students found</h3>
+            <p className="text-fg-subtle">
               {searchTerm ? 'Try adjusting your search terms.' : 'Students will appear here once added.'}
             </p>
           </div>
@@ -236,7 +234,7 @@ const AdminStudentsList = () => {
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
-              className="bg-white rounded-2xl shadow-xl max-w-md w-full mx-auto"
+              className="bg-surface rounded-2xl shadow-xl max-w-md w-full mx-auto"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-6">
@@ -247,12 +245,12 @@ const AdminStudentsList = () => {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900">Delete Student</h3>
-                    <p className="text-sm text-gray-500">This action cannot be undone</p>
+                    <h3 className="text-lg font-semibold text-fg">Delete Student</h3>
+                    <p className="text-sm text-fg-subtle">This action cannot be undone</p>
                   </div>
                 </div>
 
-                <div className="bg-gray-50 rounded-xl p-4 mb-4">
+                <div className="bg-surface-2 rounded-xl p-4 mb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
                       <span className="text-blue-600 font-bold text-sm">
@@ -260,8 +258,8 @@ const AdminStudentsList = () => {
                       </span>
                     </div>
                     <div>
-                      <div className="font-medium text-gray-900">{deleteModal.student?.name}</div>
-                      <div className="text-sm text-gray-500">{deleteModal.student?.email}</div>
+                      <div className="font-medium text-fg">{deleteModal.student?.name}</div>
+                      <div className="text-sm text-fg-subtle">{deleteModal.student?.email}</div>
                     </div>
                   </div>
                 </div>
@@ -280,7 +278,7 @@ const AdminStudentsList = () => {
                   <button
                     onClick={() => setDeleteModal({ show: false, student: null })}
                     disabled={deleting}
-                    className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 disabled:opacity-50 transition-colors font-medium"
+                    className="flex-1 px-4 py-3 bg-surface-2 text-fg-muted rounded-xl hover:bg-surface-3 disabled:opacity-50 transition-colors font-medium"
                   >
                     Cancel
                   </button>

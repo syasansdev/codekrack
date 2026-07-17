@@ -13,7 +13,7 @@ import express from 'express';
 import crypto from 'crypto';
 import { supabaseAdmin } from '../config/supabase.js';
 import { query, one, many, tx } from '../config/db.js';
-import { verifyAdmin, verifyToken, scopeFor } from '../middleware/supabaseAuth.js';
+import { verifyAdmin, verifyToken, scopeFor, NO_INSTITUTION } from '../middleware/supabaseAuth.js';
 import { sendSetPasswordEmail } from '../services/inviteService.js';
 import {
   STUDENT_SELECT,
@@ -234,11 +234,14 @@ router.post('/', verifyAdmin, async (req, res) => {
   }
 
   const institutionId = scopeFor(req, requestedInstitutionId);
-  if (!institutionId || institutionId === '__no_institution__') {
+  if (!institutionId || institutionId === NO_INSTITUTION) {
     return res.status(400).json({ success: false, error: 'An institution is required' });
   }
 
-  const inst = await one('select id from public.institutions where id = $1', [institutionId]);
+  const inst = await one(
+    'select id from public.institutions where id = $1 and deleted_at is null',
+    [institutionId]
+  );
   if (!inst) return res.status(400).json({ success: false, error: 'Institution not found' });
 
   const lower = String(email).toLowerCase().trim();
@@ -388,7 +391,10 @@ router.patch('/:id', verifyAdmin, async (req, res) => {
         return res.status(400).json({ success: false, error: 'Invalid institutionId' });
       }
       if (dest) {
-        const exists = await one('select id from public.institutions where id = $1', [dest]);
+        const exists = await one(
+          'select id from public.institutions where id = $1 and deleted_at is null',
+          [dest]
+        );
         if (!exists) return res.status(400).json({ success: false, error: 'Institution not found' });
       }
       params.push(dest || null);

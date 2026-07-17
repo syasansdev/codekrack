@@ -21,7 +21,7 @@ const PlatformIcon = ({ platform }) => {
       </svg>
     ),
     github: (
-      <svg viewBox="0 0 24 24" className="w-5 h-5 text-gray-800">
+      <svg viewBox="0 0 24 24" className="w-5 h-5 text-fg">
         <path fill="currentColor" d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
       </svg>
     )
@@ -191,24 +191,24 @@ const EditStudentModal = ({ student, onClose, onUpdate }) => {
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
-          className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[95vh] overflow-hidden"
+          className="bg-surface rounded-2xl shadow-2xl max-w-4xl w-full max-h-[95vh] overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="px-8 py-6 border-b border-slate-200 bg-slate-50">
+          <div className="px-8 py-6 border-b border-edge bg-surface-2">
             <div className="flex justify-between items-start">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center text-lg font-bold shadow-lg">
                   {getInitials(student?.name)}
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Edit Student Profile</h2>
-                  <p className="text-sm text-slate-600 mt-1">Update student information and platform URLs</p>
+                  <h2 className="text-2xl font-bold text-fg tracking-tight">Edit Student Profile</h2>
+                  <p className="text-sm text-fg-muted mt-1">Update student information and platform URLs</p>
                 </div>
               </div>
               <button
                 onClick={onClose}
-                className="text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-full p-2 transition-all duration-200 hover:rotate-90"
+                className="text-fg-subtle hover:text-fg-muted hover:bg-surface-3 rounded-full p-2 transition-all duration-200 hover:rotate-90"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -221,91 +221,91 @@ const EditStudentModal = ({ student, onClose, onUpdate }) => {
           <form onSubmit={handleSubmit} className="overflow-y-auto max-h-[calc(95vh-180px)]">
             <div className="p-8 space-y-8">
               {/* Basic Information */}
-              <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+              <div className="bg-surface border border-edge rounded-xl p-6 shadow-sm">
                 <div className="flex items-center gap-3 mb-6">
                   {/* <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
                     <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                   </div> */}
-                  <h3 className="text-xl font-bold text-slate-900">Basic Information</h3>
+                  <h3 className="text-xl font-bold text-fg">Basic Information</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    <label className="block text-sm font-semibold text-fg-muted mb-2">
                       Full Name *
                     </label>
                     <input
                       type="text"
                       value={formData.name}
                       onChange={(e) => handleInputChange('name', e.target.value)}
-                      className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${errors.name ? 'border-red-400 bg-red-50' : 'border-slate-300 hover:border-slate-400'}`}
+                      className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${errors.name ? 'border-red-400 bg-red-50' : 'border-edge-strong hover:border-edge-strong'}`}
                       placeholder="Enter student full name"
                     />
                     {errors.name && <p className="text-red-500 text-xs mt-2 flex items-center gap-1"><span>⚠️</span>{errors.name}</p>}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    <label className="block text-sm font-semibold text-fg-muted mb-2">
                       Email Address *
                     </label>
                     <input
                       type="email"
                       value={formData.email}
                       onChange={(e) => handleInputChange('email', e.target.value)}
-                      className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${errors.email ? 'border-red-400 bg-red-50' : 'border-slate-300 hover:border-slate-400'}`}
+                      className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${errors.email ? 'border-red-400 bg-red-50' : 'border-edge-strong hover:border-edge-strong'}`}
                       placeholder="student@example.com"
                     />
                     {errors.email && <p className="text-red-500 text-xs mt-2 flex items-center gap-1"><span>⚠️</span>{errors.email}</p>}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    <label className="block text-sm font-semibold text-fg-muted mb-2">
                       Register Number
                     </label>
                     <input
                       type="text"
                       value={formData.registerNumber}
                       onChange={(e) => handleInputChange('registerNumber', e.target.value)}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-slate-400 transition-all duration-200"
+                      className="w-full px-4 py-3 border border-edge-strong rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-edge-strong transition-all duration-200"
                       placeholder="Enter register number"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    <label className="block text-sm font-semibold text-fg-muted mb-2">
                       Roll Number
                     </label>
                     <input
                       type="text"
                       value={formData.rollNumber}
                       onChange={(e) => handleInputChange('rollNumber', e.target.value)}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-slate-400 transition-all duration-200"
+                      className="w-full px-4 py-3 border border-edge-strong rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-edge-strong transition-all duration-200"
                       placeholder="Enter roll number"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    <label className="block text-sm font-semibold text-fg-muted mb-2">
                       Department
                     </label>
                     <input
                       type="text"
                       value={formData.department}
                       onChange={(e) => handleInputChange('department', e.target.value)}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-slate-400 transition-all duration-200"
+                      className="w-full px-4 py-3 border border-edge-strong rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-edge-strong transition-all duration-200"
                       placeholder="Computer Science"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    <label className="block text-sm font-semibold text-fg-muted mb-2">
                       Academic Year
                     </label>
                     <select
                       value={formData.year}
                       onChange={(e) => handleInputChange('year', e.target.value)}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-slate-400 transition-all duration-200 bg-white"
+                      className="w-full px-4 py-3 border border-edge-strong rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-edge-strong transition-all duration-200 bg-surface"
                     >
                       <option value="">Select Year</option>
                       <option value="1">1st Year</option>
@@ -317,40 +317,40 @@ const EditStudentModal = ({ student, onClose, onUpdate }) => {
                 </div>
 
                 <div className="mt-6">
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  <label className="block text-sm font-semibold text-fg-muted mb-2">
                     Phone Number
                   </label>
                   <input
                     type="tel"
                     value={formData.phoneNumber}
                     onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
-                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-slate-400 transition-all duration-200"
+                    className="w-full px-4 py-3 border border-edge-strong rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-edge-strong transition-all duration-200"
                     placeholder="+91 9876543210"
                   />
                 </div>
               </div>
 
               {/* Platform URLs */}
-              <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+              <div className="bg-surface border border-edge rounded-xl p-6 shadow-sm">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
                     <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                     </svg>
                   </div>
-                  <h3 className="text-xl font-bold text-slate-900">Platform URLs</h3>
+                  <h3 className="text-xl font-bold text-fg">Platform URLs</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {Object.entries(platformLabels).map(([platform, label]) => (
                     <div key={platform} className="space-y-2">
-                      <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                      <label className="flex items-center gap-2 text-sm font-semibold text-fg-muted">
                         <PlatformIcon platform={platform} />
                         {label} Profile URL
                       </label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <div className="w-[25px] h-[25px] bg-gray-200 rounded flex items-center justify-center">
-                            <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <div className="w-[25px] h-[25px] bg-surface-3 rounded flex items-center justify-center">
+                            <svg className="w-4 h-4 text-fg-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                             </svg>
                           </div>
@@ -359,7 +359,7 @@ const EditStudentModal = ({ student, onClose, onUpdate }) => {
                           type="url"
                           value={formData.platformUrls[platform]}
                           onChange={(e) => handleInputChange(`platformUrls.${platform}`, e.target.value)}
-                          className={`w-full pl-12 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${errors[`platformUrls.${platform}`] ? 'border-red-400 bg-red-50' : 'border-slate-300 hover:border-slate-400'}`}
+                          className={`w-full pl-12 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${errors[`platformUrls.${platform}`] ? 'border-red-400 bg-red-50' : 'border-edge-strong hover:border-edge-strong'}`}
                           placeholder={platformPlaceholders[platform]}
                         />
                       </div>
@@ -373,8 +373,8 @@ const EditStudentModal = ({ student, onClose, onUpdate }) => {
             </div>
 
             {/* Footer */}
-            <div className="px-8 py-6 border-t border-slate-200 bg-slate-50 flex justify-between items-center">
-              <div className="text-sm text-slate-500">
+            <div className="px-8 py-6 border-t border-edge bg-surface-2 flex justify-between items-center">
+              <div className="text-sm text-fg-subtle">
                 <span className="flex items-center gap-2">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -387,7 +387,7 @@ const EditStudentModal = ({ student, onClose, onUpdate }) => {
                   type="button"
                   onClick={onClose}
                   disabled={loading}
-                  className="px-6 py-3 text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 disabled:opacity-50 transition-all duration-200 font-medium hover:scale-105 transform"
+                  className="px-6 py-3 text-fg-muted bg-surface border border-edge-strong rounded-xl hover:bg-surface-2 disabled:opacity-50 transition-all duration-200 font-medium hover:scale-105 transform"
                 >
                   Cancel
                 </button>

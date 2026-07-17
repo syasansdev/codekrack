@@ -57,7 +57,7 @@ const PlatformIcon = ({ platform }) => {
       </svg>
     ),
     github: (
-      <svg viewBox="0 0 24 24" fill="currentColor" className="h-8 w-8 text-gray-800 transition transform hover:scale-110 duration-300">
+      <svg viewBox="0 0 24 24" fill="currentColor" className="h-8 w-8 text-fg transition transform hover:scale-110 duration-300">
         <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"></path>
       </svg>
     ),
@@ -68,9 +68,9 @@ const PlatformIcon = ({ platform }) => {
 // --- Helper UI Components ---
 
 const StatItem = ({ label, value }) => (
-  <div className="flex justify-between items-center py-3 border-b border-slate-100 last:border-b-0 hover:bg-slate-50 transition-colors duration-200">
-    <dt className="text-sm text-slate-500">{label}</dt>
-    <dd className="text-base font-semibold text-slate-800 tracking-tight">{value}</dd>
+  <div className="flex justify-between items-center py-3 border-b border-edge last:border-b-0 hover:bg-surface-2 transition-colors duration-200">
+    <dt className="text-sm text-fg-subtle">{label}</dt>
+    <dd className="text-base font-semibold text-fg tracking-tight">{value}</dd>
   </div>
 );
   
@@ -99,11 +99,15 @@ const RadialProgressCard = ({ value, maxValue, label, color, isMounted }) => {
   const offset = circumference - (percentage / 100) * circumference;
 
   return (
-    <div className="bg-white rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-2">
+    <div className="bg-surface rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-2">
       <div className="relative w-32 h-32">
         <svg className="w-full h-full" viewBox="0 0 120 120">
+          {/* The unfilled track of the progress ring. It is drawn with
+              stroke="currentColor", so this className IS the track colour —
+              surface-3 keeps it one step off the card in both themes, where
+              slate-100 was a light-mode-only grey that vanished on dark. */}
           <circle
-            className="text-slate-100"
+            className="text-surface-3"
             strokeWidth="10"
             stroke="currentColor"
             fill="transparent"
@@ -130,10 +134,10 @@ const RadialProgressCard = ({ value, maxValue, label, color, isMounted }) => {
           />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-3xl font-bold text-slate-800">{animatedValue}</span>
+          <span className="text-3xl font-bold text-fg">{animatedValue}</span>
         </div>
       </div>
-      <p className="mt-4 text-sm font-semibold text-slate-600">{label}</p>
+      <p className="mt-4 text-sm font-semibold text-fg-muted">{label}</p>
     </div>
   );
 };
@@ -141,13 +145,13 @@ const RadialProgressCard = ({ value, maxValue, label, color, isMounted }) => {
 const SkeletonLoader = () => (
   <div className="space-y-4 animate-pulse p-2">
     <div className="flex justify-between items-center">
-      <div className="h-6 bg-slate-200 rounded-md w-1/3"></div>
-      <div className="h-4 bg-slate-200 rounded-md w-1/4"></div>
+      <div className="h-6 bg-surface-3 rounded-md w-1/3"></div>
+      <div className="h-4 bg-surface-3 rounded-md w-1/4"></div>
     </div>
     <div className="space-y-3 pt-4">
-      <div className="h-4 bg-slate-200 rounded-md w-full"></div>
-      <div className="h-4 bg-slate-200 rounded-md w-5/6"></div>
-      <div className="h-4 bg-slate-200 rounded-md w-full"></div>
+      <div className="h-4 bg-surface-3 rounded-md w-full"></div>
+      <div className="h-4 bg-surface-3 rounded-md w-5/6"></div>
+      <div className="h-4 bg-surface-3 rounded-md w-full"></div>
     </div>
   </div>
 );
@@ -189,483 +193,23 @@ const PlatformStatus = ({ status }) => {
   return (
     <div className="flex items-center gap-2">
       <div className={`w-2 h-2 rounded-full ${config.color}`}></div>
-      <span className="text-xs text-slate-500">{config.text}</span>
+      <span className="text-xs text-fg-subtle">{config.text}</span>
     </div>
   );
 };
-
-// --- Enhanced Scraping Functions with Kenkoooo API for AtCoder ---
-
-const extractUsername = (url, pattern) => {
-  const match = url.match(pattern);
-  return match ? match[1] : url.split('/').filter(Boolean).pop();
-};
-
-const fetchWithProxy = async (url, options = {}) => {
-  const proxies = [
-    `https://corsproxy.io/?${encodeURIComponent(url)}`,
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
-  ];
-  
-  for (const proxyUrl of proxies) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
-      
-      const response = await fetch(proxyUrl, {
-        ...options,
-        signal: controller.signal,
-        headers: {
-          'Accept': 'application/json, text/html, */*',
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-          ...options.headers,
-        },
-      });
-      
-      clearTimeout(timeoutId);
-      
-      if (response.ok) {
-        return response;
-      }
-    } catch (error) {
-      console.log(`Proxy ${proxyUrl} failed:`, error.message);
-      continue;
-    }
-  }
-  
-  throw new Error('All proxy attempts failed');
-};
-
-const getAtCoderRank = (rating) => {
-  if (rating >= 2800) return 'Red';
-  if (rating >= 2400) return 'Orange';
-  if (rating >= 2000) return 'Yellow';
-  if (rating >= 1600) return 'Blue';
-  if (rating >= 1200) return 'Cyan';
-  if (rating >= 800) return 'Green';
-  if (rating >= 400) return 'Brown';
-  return 'Gray';
-};
-
-const scrapeLeetCode = async (leetcodeUrl) => {
-  const empty = {
-    totalSolved: 0, easySolved: 0, mediumSolved: 0, hardSolved: 0,
-    ranking: 0, acceptanceRate: 0, reputation: 0,
-  };
-  try {
-    const username = extractUsername(leetcodeUrl, /leetcode\.com\/(?:u\/)?([^\/\?]+)/);
-    if (!username) return empty;
-
-    // Official LeetCode GraphQL via a CORS proxy (browser can't call it directly).
-    const query = `
-      query getUserProfile($username: String!) {
-        matchedUser(username: $username) {
-          profile { ranking reputation }
-          submitStatsGlobal {
-            acSubmissionNum { difficulty count }
-            totalSubmissionNum { difficulty count }
-          }
-        }
-      }`;
-    const endpoint = 'https://leetcode.com/graphql';
-    const proxied = `https://corsproxy.io/?url=${encodeURIComponent(endpoint)}`;
-
-    let json = null;
-    try {
-      const res = await fetch(proxied, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query, variables: { username } }),
-      });
-      if (res.ok) json = await res.json();
-    } catch (proxyError) {
-      console.log('LeetCode GraphQL proxy failed:', proxyError.message);
-    }
-
-    const user = json && json.data && json.data.matchedUser;
-    if (!user || !user.submitStatsGlobal) return empty;
-
-    const ac = user.submitStatsGlobal.acSubmissionNum || [];
-    const totals = user.submitStatsGlobal.totalSubmissionNum || [];
-    const countOf = (arr, difficulty) => {
-      const entry = arr.find((x) => x.difficulty === difficulty);
-      return entry ? entry.count : 0;
-    };
-    const totalSolved = countOf(ac, 'All');
-    const totalSubmissions = countOf(totals, 'All');
-
-    return {
-      totalSolved,
-      easySolved: countOf(ac, 'Easy'),
-      mediumSolved: countOf(ac, 'Medium'),
-      hardSolved: countOf(ac, 'Hard'),
-      ranking: (user.profile && user.profile.ranking) || 0,
-      acceptanceRate:
-        totalSubmissions > 0 ? Math.round((totalSolved / totalSubmissions) * 1000) / 10 : 0,
-      reputation: (user.profile && user.profile.reputation) || 0,
-    };
-  } catch (error) {
-    console.error('LeetCode scraping error:', error);
-    return empty;
-  }
-};
-
-const scrapeGitHub = async (githubUrl) => {
-  try {
-    const username = extractUsername(githubUrl, /github\.com\/([^\/\?]+)/);
-    
-    if (!username) {
-      throw new Error('Invalid GitHub URL');
-    }
-
-    const headers = {
-      'Accept': 'application/vnd.github.v3+json',
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-    };
-    
-    // Add GitHub token if available
-    if (import.meta.env.VITE_GITHUB_TOKEN) {
-      headers['Authorization'] = `token ${import.meta.env.VITE_GITHUB_TOKEN}`;
-    }
-
-    const userResponse = await fetch(`https://api.github.com/users/${username}`, { headers });
-    
-    if (!userResponse.ok) {
-      if (userResponse.status === 403) {
-        throw new Error('GitHub API rate limit exceeded. Please try again later.');
-      }
-      if (userResponse.status === 404) {
-        throw new Error('GitHub user not found');
-      }
-      throw new Error(`GitHub API error: ${userResponse.status}`);
-    }
-    
-    const userData = await userResponse.json();
-
-    // Get repositories data
-    let totalStars = 0;
-    let totalForks = 0;
-    
-    try {
-      const reposResponse = await fetch(
-        `https://api.github.com/users/${username}/repos?per_page=30&page=1&sort=updated`,
-        { headers }
-      );
-      
-      if (reposResponse.ok) {
-        const reposData = await reposResponse.json();
-        totalStars = reposData.reduce((sum, repo) => sum + (repo.stargazers_count || 0), 0);
-        totalForks = reposData.reduce((sum, repo) => sum + (repo.forks_count || 0), 0);
-      }
-    } catch (repoError) {
-      console.log('GitHub repos API failed, using basic user data:', repoError.message);
-    }
-
-    // Calculate contributions based on available data
-    const totalContributions = (userData.public_repos || 0) + (userData.followers || 0);
-
-    return {
-      username: userData.login,
-      name: userData.name || username,
-      repositories: userData.public_repos || 0,
-      followers: userData.followers || 0,
-      following: userData.following || 0,
-      totalStars: totalStars,
-      totalForks: totalForks,
-      totalContributions: totalContributions,
-      accountCreated: userData.created_at,
-      lastUpdated: userData.updated_at,
-    };
-
-  } catch (error) {
-    console.error('GitHub scraping error:', error);
-    return {
-      error: error.message,
-      repositories: 0,
-      followers: 0,
-      following: 0,
-      totalStars: 0,
-      totalForks: 0,
-      totalContributions: 0,
-    };
-  }
-};
-
-const scrapeCodeforces = async (codeforcesUrl) => {
-  try {
-    const username = extractUsername(codeforcesUrl, /codeforces\.com\/profile\/([^\/\?]+)/);
-    
-    if (!username) {
-      throw new Error('Invalid Codeforces URL');
-    }
-
-    const response = await fetch(`https://codeforces.com/api/user.info?handles=${username}`, {
-      headers: {
-        'Accept': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      }
-    });
-    
-    if (!response.ok) throw new Error('Codeforces API error');
-    
-    const data = await response.json();
-    
-    if (data.status !== 'OK' || !data.result?.[0]) {
-      throw new Error('User not found');
-    }
-
-    const user = data.result[0];
-
-    // Get submissions count
-    let problemsSolved = 0;
-    try {
-      const submissionsResponse = await fetch(`https://codeforces.com/api/user.status?handle=${username}&from=1&count=1000`, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
-      });
-      
-      if (submissionsResponse.ok) {
-        const submissionsData = await submissionsResponse.json();
-        if (submissionsData.status === 'OK') {
-          const solvedProblems = new Set();
-          submissionsData.result.forEach(sub => {
-            if (sub.verdict === 'OK' && sub.problem) {
-              solvedProblems.add(`${sub.problem.contestId}-${sub.problem.index}`);
-            }
-          });
-          problemsSolved = solvedProblems.size;
-        }
-      }
-    } catch (subError) {
-      console.log('Codeforces submissions API failed, defaulting to 0 problems:', subError.message);
-      // If we can't get submissions, assume 0 problems (no fake estimates)
-      problemsSolved = 0;
-    }
-
-    return {
-      rating: user.rating || 'Unrated',
-      maxRating: user.maxRating || 'N/A',
-      problemsSolved: problemsSolved,
-      rank: user.rank || 'unrated',
-      maxRank: user.maxRank || 'N/A',
-      contribution: user.contribution || 0
-    };
-
-  } catch (error) {
-    console.error('Codeforces scraping error:', error);
-    return {
-      rating: 'Unrated',
-      maxRating: 'N/A',
-      problemsSolved: 0,
-      rank: 'unrated',
-      maxRank: 'N/A',
-      contribution: 0
-    };
-  }
-};
-
-const scrapeAtCoder = async (atcoderUrl) => {
-  try {
-    const username = extractUsername(atcoderUrl, /atcoder\.jp\/users\/([^\/\?]+)/);
-    console.log(`Scraping AtCoder for user: ${username} using Kenkoooo API`);
-    
-    if (!username) {
-      throw new Error('Invalid AtCoder URL');
-    }
-
-    // Primary Method: Kenkoooo API for accurate accepted problems count
-    try {
-      console.log('Using Kenkoooo API for AtCoder data');
-      
-      // Get AC submissions count from Kenkoooo API
-      const kenkooooAcUrl = `https://kenkoooo.com/atcoder/atcoder-api/v3/user/ac_rank?user=${username}`;
-      const acResponse = await fetch(kenkooooAcUrl, {
-        headers: {
-          'Accept': 'application/json',
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
-      });
-      
-      if (acResponse.ok) {
-        const acData = await acResponse.json();
-        const problemsSolved = acData.count || 0;
-        
-        console.log(`Kenkoooo API - Problems solved for ${username}: ${problemsSolved}`);
-        
-        // Get user info and rating from AtCoder API
-        let rating = 0;
-        let maxRating = 0;
-        let contestsParticipated = 0;
-        let rank = 'Gray';
-        
-        try {
-          const userInfoUrl = `https://atcoder.jp/users/${username}/history/json`;
-          const userInfoResponse = await fetchWithProxy(userInfoUrl);
-          
-          if (userInfoResponse.ok) {
-            const contestData = await userInfoResponse.json();
-            if (Array.isArray(contestData) && contestData.length > 0) {
-              const ratings = contestData.map(contest => contest.NewRating || contest.newRating).filter(r => r !== null && r !== undefined);
-              rating = ratings.length > 0 ? ratings[ratings.length - 1] : 0;
-              maxRating = ratings.length > 0 ? Math.max(...ratings) : 0;
-              contestsParticipated = contestData.length;
-              rank = getAtCoderRank(rating);
-              
-              console.log(`AtCoder API - Rating: ${rating}, Contests: ${contestsParticipated}`);
-            }
-          }
-        } catch (userInfoError) {
-          console.log('AtCoder user info API failed:', userInfoError.message);
-          // Use default values if API fails
-          rating = 0;
-          maxRating = 0;
-          contestsParticipated = 0;
-          rank = 'Gray';
-        }
-        
-        return {
-          rating: rating,
-          maxRating: maxRating,
-          contestsParticipated: contestsParticipated,
-          problemsSolved: problemsSolved,
-          rank: rank,
-          lastUpdated: new Date().toISOString(),
-          source: 'Kenkoooo API + AtCoder API'
-        };
-      } else {
-        throw new Error(`Kenkoooo API returned status: ${acResponse.status}`);
-      }
-    } catch (kenkooooError) {
-      console.log('Kenkoooo API failed:', kenkooooError.message);
-    }
-    
-    // Fallback Method: Try Kenkoooo submissions API for more detailed data
-    try {
-      console.log('Trying Kenkoooo submissions API as fallback');
-      const kenkooooSubmissionsUrl = `https://kenkoooo.com/atcoder/atcoder-api/v3/user/submissions?user=${username}&from_second=0`;
-      const submissionsResponse = await fetch(kenkooooSubmissionsUrl, {
-        headers: {
-          'Accept': 'application/json',
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
-      });
-      
-      if (submissionsResponse.ok) {
-        const submissionsData = await submissionsResponse.json();
-        console.log(`Kenkoooo submissions API - Total submissions: ${submissionsData.length}`);
-        
-        if (Array.isArray(submissionsData)) {
-          // Calculate unique solved problems from AC submissions
-          const solvedProblems = new Set();
-          const contestSubmissions = new Set();
-          
-          submissionsData.forEach(submission => {
-            if (submission.result === 'AC') {
-              solvedProblems.add(submission.problem_id);
-              contestSubmissions.add(submission.contest_id);
-            }
-          });
-          
-          const problemsSolved = solvedProblems.size;
-          const contestsParticipated = contestSubmissions.size;
-          
-          console.log(`Kenkoooo submissions - Solved: ${problemsSolved}, Contests: ${contestsParticipated}`);
-          
-          // Get rating info
-          let rating = 0;
-          let maxRating = 0;
-          let rank = 'Gray';
-          
-          try {
-            const userInfoUrl = `https://atcoder.jp/users/${username}/history/json`;
-            const userInfoResponse = await fetchWithProxy(userInfoUrl);
-            
-            if (userInfoResponse.ok) {
-              const contestData = await userInfoResponse.json();
-              if (Array.isArray(contestData) && contestData.length > 0) {
-                const ratings = contestData.map(contest => contest.NewRating || contest.newRating).filter(r => r !== null && r !== undefined);
-                rating = ratings.length > 0 ? ratings[ratings.length - 1] : 0;
-                maxRating = ratings.length > 0 ? Math.max(...ratings) : 0;
-                rank = getAtCoderRank(rating);
-              }
-            }
-          } catch (ratingError) {
-            console.log('Rating API failed:', ratingError.message);
-            // Use default values if rating API fails
-            rating = 0;
-            maxRating = 0;
-            rank = 'Gray';
-          }
-          
-          return {
-            rating: rating,
-            maxRating: maxRating,
-            contestsParticipated: contestsParticipated,
-            problemsSolved: problemsSolved,
-            rank: rank,
-            lastUpdated: new Date().toISOString(),
-            source: 'Kenkoooo Submissions API'
-          };
-        }
-      }
-    } catch (submissionsError) {
-      console.log('Kenkoooo submissions API failed:', submissionsError.message);
-    }
-    
-    // Final fallback: Try traditional AtCoder API
-    try {
-      const apiUrl = `https://atcoder.jp/users/${username}/history/json`;
-      const response = await fetchWithProxy(apiUrl);
-      
-      if (response.ok) {
-        const data = await response.json();
-        
-        if (Array.isArray(data) && data.length > 0) {
-          const ratings = data.map(contest => contest.NewRating || contest.newRating).filter(r => r !== null && r !== undefined);
-          const currentRating = ratings.length > 0 ? ratings[ratings.length - 1] : 0;
-          const maxRating = ratings.length > 0 ? Math.max(...ratings) : 0;
-          
-          // Calculate problems solved based on contest participation
-          const problemsSolved = data.length > 0 ? data.length : 0;
-          
-          return {
-            rating: currentRating,
-            maxRating: maxRating,
-            contestsParticipated: data.length,
-            problemsSolved: problemsSolved,
-            rank: getAtCoderRank(currentRating),
-            lastUpdated: new Date().toISOString(),
-            source: 'AtCoder API (estimated problems)'
-          };
-        }
-      }
-    } catch (apiError) {
-      console.log('AtCoder API failed:', apiError.message);
-    }
-    
-    // Ultimate fallback: Return empty data
-    console.log('All AtCoder methods failed, returning empty data');
-    return {
-      rating: 0,
-      maxRating: 0,
-      contestsParticipated: 0,
-      rank: 'Gray',
-      problemsSolved: 0
-    };
-
-  } catch (error) {
-    console.error('AtCoder scraping error:', error);
-    return {
-      rating: 0,
-      maxRating: 0,
-      contestsParticipated: 0,
-      rank: 'Gray',
-      problemsSolved: 0
-    };
-  }
-};
+// The browser scrapers that used to live here are gone.
+//
+// This file held a THIRD copy of scrapeLeetCode / scrapeGitHub /
+// scrapeCodeforces / scrapeAtCoder — ~470 lines that fetched each platform
+// through public CORS proxies (corsproxy.io, allorigins.win, codetabs.com)
+// from the admin's own browser. Their call sites were replaced by the
+// server-side rescrape flow, but the definitions were left behind: dead code
+// that still shipped in the bundle, still read VITE_GITHUB_TOKEN, and still
+// contained a copy of the AtCoder bug that invented `rank: 'Gray',
+// problemsSolved: 0` for users who don't exist.
+//
+// Scraping is backend/services/scraper/platforms.js now — official APIs, no
+// proxies, run by the GitHub Action.
 
 // --- Main Component ---
 
@@ -880,11 +424,11 @@ const StudentViewDetails = ({ student, onClose, onStudentUpdate, isAdminView = f
       onClick={onClose}
     >
       <div 
-        className={`bg-slate-50 rounded-2xl shadow-2xl max-w-6xl w-full max-h-[95vh] flex flex-col overflow-hidden transition-all duration-500 ease-out ${isMounted ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-8'}`}
+        className={`bg-surface-2 rounded-2xl shadow-2xl max-w-6xl w-full max-h-[95vh] flex flex-col overflow-hidden transition-all duration-500 ease-out ${isMounted ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-8'}`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <header className="px-8 py-4 border-b border-slate-200 bg-white">
+        <header className="px-8 py-4 border-b border-edge bg-surface">
           <div className="flex justify-between items-start gap-6">
             <div className="flex items-center gap-5">
               <div 
@@ -893,8 +437,8 @@ const StudentViewDetails = ({ student, onClose, onStudentUpdate, isAdminView = f
                 {getInitials(currentStudent.name)}
               </div>
               <div>
-                <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight">{currentStudent.name}</h2>
-                <p className="text-slate-500 mt-1">{currentStudent.email}</p>
+                <h2 className="text-3xl font-extrabold text-fg tracking-tight">{currentStudent.name}</h2>
+                <p className="text-fg-subtle mt-1">{currentStudent.email}</p>
                 {isAutoScraping && (
                   <div className="flex items-center gap-2 mt-1 text-sm text-blue-600">
                     <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
@@ -917,7 +461,7 @@ const StudentViewDetails = ({ student, onClose, onStudentUpdate, isAdminView = f
               )}
               <button
                 onClick={onClose}
-                className="text-slate-400 hover:bg-slate-200 hover:text-slate-600 rounded-full p-2 transition-all duration-300 hover:rotate-90"
+                className="text-fg-subtle hover:bg-surface-3 hover:text-fg-muted rounded-full p-2 transition-all duration-300 hover:rotate-90"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -925,37 +469,37 @@ const StudentViewDetails = ({ student, onClose, onStudentUpdate, isAdminView = f
               </button>
             </div>
           </div>
-          <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-2 text-sm text-slate-600">
+          <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-2 text-sm text-fg-muted">
             <div className="flex gap-2 hover:translate-x-1 transition-transform duration-200">
-              <strong className="font-medium text-slate-500">Register No:</strong>
+              <strong className="font-medium text-fg-subtle">Register No:</strong>
               <span>{currentStudent.registerNumber || 'N/A'}</span>
             </div>
             <div className="flex gap-2 hover:translate-x-1 transition-transform duration-200">
-              <strong className="font-medium text-slate-500">Roll No:</strong>
+              <strong className="font-medium text-fg-subtle">Roll No:</strong>
               <span>{currentStudent.rollNumber || 'N/A'}</span>
             </div>
             <div className="flex gap-2 hover:translate-x-1 transition-transform duration-200">
-              <strong className="font-medium text-slate-500">Department:</strong>
+              <strong className="font-medium text-fg-subtle">Department:</strong>
               <span>{currentStudent.department || 'N/A'}</span>
             </div>
             <div className="flex gap-2 hover:translate-x-1 transition-transform duration-200">
-              <strong className="font-medium text-slate-500">Year:</strong>
+              <strong className="font-medium text-fg-subtle">Year:</strong>
               <span>{currentStudent.year || 'N/A'}</span>
             </div>
           </div>
           {currentStudent.scrapingStatus?.lastUpdated && (
-            <div className="mt-3 text-xs text-slate-400">
+            <div className="mt-3 text-xs text-fg-subtle">
               Last updated: {formatLastUpdated(currentStudent.scrapingStatus.lastUpdated)}
             </div>
           )}
         </header>
 
         {/* Body */}
-        <main className="overflow-y-auto flex-1 p-8 bg-slate-100/70">
+        <main className="overflow-y-auto flex-1 p-8 bg-surface-2/70">
           {/* Overall Snapshot Section */}
           <section className="opacity-0 animate-fadeIn" style={{ animationDelay: '0.1s', animationFillMode: 'forwards' }}>
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-base font-semibold text-slate-500 uppercase tracking-wider">
+              <h3 className="text-base font-semibold text-fg-subtle uppercase tracking-wider">
                 Overall Snapshot
               </h3>
               <div className="flex gap-2">
@@ -998,7 +542,7 @@ const StudentViewDetails = ({ student, onClose, onStudentUpdate, isAdminView = f
 
           {/* Platform Details Section */}
           <section className="mt-10 opacity-0 animate-fadeIn" style={{ animationDelay: '0.6s', animationFillMode: 'forwards' }}>
-            <h3 className="text-base font-semibold text-slate-500 mb-4 uppercase tracking-wider">
+            <h3 className="text-base font-semibold text-fg-subtle mb-4 uppercase tracking-wider">
               Platform Details
             </h3>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -1012,17 +556,17 @@ const StudentViewDetails = ({ student, onClose, onStudentUpdate, isAdminView = f
                 return (
                   <div 
                     key={platform} 
-                    className="bg-white border border-slate-200/80 rounded-xl overflow-hidden shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1 opacity-0 animate-fadeIn" 
+                    className="bg-surface border border-edge/80 rounded-xl overflow-hidden shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1 opacity-0 animate-fadeIn" 
                     style={{ 
                       animationDelay: `${0.7 + (index * 0.1)}s`,
                       animationFillMode: 'forwards'
                     }}
                   >
-                    <div className="flex items-center justify-between p-6 border-b border-slate-100">
+                    <div className="flex items-center justify-between p-6 border-b border-edge">
                       <div className="flex items-center gap-4">
                         <PlatformIcon platform={platform} />
                         <div>
-                          <h4 className="text-2xl font-bold text-slate-800 capitalize">{platform}</h4>
+                          <h4 className="text-2xl font-bold text-fg capitalize">{platform}</h4>
                           <PlatformStatus status={status} />
                           {realTimeData?.loading && (
                             <span className="text-xs text-blue-500">Live updating...</span>
@@ -1047,12 +591,12 @@ const StudentViewDetails = ({ student, onClose, onStudentUpdate, isAdminView = f
                           onRetry={() => handleRetryPlatform(platform)}
                         />
                       ) : !data ? (
-                        <div className="flex flex-col items-center justify-center h-32 text-slate-500">
+                        <div className="flex flex-col items-center justify-center h-32 text-fg-subtle">
                           <svg className="w-12 h-12 mb-2 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                           </svg>
                           <p className="text-sm">No data available</p>
-                          <p className="text-xs text-slate-400">Data will be fetched automatically</p>
+                          <p className="text-xs text-fg-subtle">Data will be fetched automatically</p>
                         </div>
                       ) : (
                         <dl>
@@ -1107,14 +651,14 @@ const StudentViewDetails = ({ student, onClose, onStudentUpdate, isAdminView = f
             </div>
             
             {availablePlatforms.length === 0 && (
-              <div className="bg-white border border-slate-200 rounded-xl p-8 text-center mt-6 opacity-0 animate-fadeIn" style={{ animationDelay: '0.8s', animationFillMode: 'forwards' }}>
+              <div className="bg-surface border border-edge rounded-xl p-8 text-center mt-6 opacity-0 animate-fadeIn" style={{ animationDelay: '0.8s', animationFillMode: 'forwards' }}>
                 <svg className="w-16 h-16 mx-auto text-slate-300 mb-4 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                 </svg>
-                <h4 className="text-xl font-bold text-slate-700 mb-2">
+                <h4 className="text-xl font-bold text-fg-muted mb-2">
                   No Platform Profiles Linked
                 </h4>
-                <p className="text-slate-500 max-w-md mx-auto">
+                <p className="text-fg-subtle max-w-md mx-auto">
                   This student hasn't linked any coding platform profiles yet. Encourage them to add their profiles for better tracking.
                 </p>
               </div>
@@ -1123,8 +667,8 @@ const StudentViewDetails = ({ student, onClose, onStudentUpdate, isAdminView = f
         </main>
 
         {/* Footer */}
-        <footer className="px-8 py-3 border-t border-slate-200 flex justify-between items-center rounded-b-xl bg-white opacity-0 animate-fadeIn" style={{ animationDelay: '0.9s', animationFillMode: 'forwards' }}>
-          <div className="text-sm text-slate-500">
+        <footer className="px-8 py-3 border-t border-edge flex justify-between items-center rounded-b-xl bg-surface opacity-0 animate-fadeIn" style={{ animationDelay: '0.9s', animationFillMode: 'forwards' }}>
+          <div className="text-sm text-fg-subtle">
             {isAutoScraping ? (
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
@@ -1137,7 +681,7 @@ const StudentViewDetails = ({ student, onClose, onStudentUpdate, isAdminView = f
           <div className="flex items-center gap-3">
             <button
               onClick={onClose}
-              className="px-5 py-2.5 bg-white text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-100 transition-colors font-medium focus:outline-none focus:ring-2 focus:ring-slate-400 hover:scale-105 transform duration-200"
+              className="px-5 py-2.5 bg-surface text-fg-muted border border-edge-strong rounded-lg hover:bg-surface-3 transition-colors font-medium focus:outline-none focus:ring-2 focus:ring-slate-400 hover:scale-105 transform duration-200"
             >
               Close
             </button>

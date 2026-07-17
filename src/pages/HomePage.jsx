@@ -126,11 +126,15 @@ const HomePage = () => {
     { 
       title: 'AtCoder',
       subtitle: 'Algorithm Contests',
+      // currentColor + text-fg, not #000000. This mark is monochrome, and black
+      // ink is only correct on a light card — on the dark theme it was a black
+      // logo on a near-black tile, i.e. invisible. currentColor lets the one
+      // token drive it in both themes.
       icon: (
-        <svg className="w-10 h-10" viewBox="0 0 24 24" fill="none">
-          <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#000000" stroke="#000000" strokeWidth="1.5" strokeLinejoin="round"/>
-          <path d="M2 17L12 22L22 17" stroke="#000000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          <path d="M2 12L12 17L22 12" stroke="#000000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <svg className="w-10 h-10 text-fg" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="currentColor" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+          <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       ),
       stats: [
@@ -144,9 +148,12 @@ const HomePage = () => {
     { 
       title: 'GitHub',
       subtitle: 'Open Source',
+      // Same reason as AtCoder above: GitHub's mark is monochrome, and #181717
+      // disappeared against the dark card. GitHub's own brand guidance is
+      // black-on-light / white-on-dark, which is exactly what text-fg does.
       icon: (
-        <svg className="w-10 h-10" viewBox="0 0 24 24" fill="none">
-          <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12C2 16.42 4.865 20.17 8.839 21.49C9.339 21.58 9.52 21.27 9.52 21C9.52 20.77 9.511 20.14 9.506 19.31C6.726 19.91 6.139 17.77 6.139 17.77C5.685 16.61 5.029 16.3 5.029 16.3C4.121 15.68 5.098 15.69 5.098 15.69C6.101 15.76 6.629 16.73 6.629 16.73C7.521 18.26 8.97 17.82 9.539 17.56C9.631 16.91 9.889 16.47 10.175 16.22C7.955 15.97 5.62 15.11 5.62 11.37C5.62 10.28 6.01 9.39 6.649 8.69C6.546 8.44 6.203 7.43 6.747 6.06C6.747 6.06 7.584 5.79 9.497 7.05C10.294 6.83 11.147 6.72 12 6.715C12.853 6.72 13.706 6.83 14.503 7.05C16.416 5.79 17.253 6.06 17.253 6.06C17.797 7.43 17.454 8.44 17.351 8.69C17.99 9.39 18.38 10.28 18.38 11.37C18.38 15.12 16.042 15.968 13.817 16.215C14.172 16.53 14.492 17.15 14.492 18.1C14.492 19.47 14.48 20.57 14.48 21C14.48 21.27 14.66 21.585 15.168 21.489C19.138 20.166 22 16.418 22 12C22 6.477 17.523 2 12 2Z" fill="#181717"/>
+        <svg className="w-10 h-10 text-fg" viewBox="0 0 24 24" fill="none">
+          <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12C2 16.42 4.865 20.17 8.839 21.49C9.339 21.58 9.52 21.27 9.52 21C9.52 20.77 9.511 20.14 9.506 19.31C6.726 19.91 6.139 17.77 6.139 17.77C5.685 16.61 5.029 16.3 5.029 16.3C4.121 15.68 5.098 15.69 5.098 15.69C6.101 15.76 6.629 16.73 6.629 16.73C7.521 18.26 8.97 17.82 9.539 17.56C9.631 16.91 9.889 16.47 10.175 16.22C7.955 15.97 5.62 15.11 5.62 11.37C5.62 10.28 6.01 9.39 6.649 8.69C6.546 8.44 6.203 7.43 6.747 6.06C6.747 6.06 7.584 5.79 9.497 7.05C10.294 6.83 11.147 6.72 12 6.715C12.853 6.72 13.706 6.83 14.503 7.05C16.416 5.79 17.253 6.06 17.253 6.06C17.797 7.43 17.454 8.44 17.351 8.69C17.99 9.39 18.38 10.28 18.38 11.37C18.38 15.12 16.042 15.968 13.817 16.215C14.172 16.53 14.492 17.15 14.492 18.1C14.492 19.47 14.48 20.57 14.48 21C14.48 21.27 14.66 21.585 15.168 21.489C19.138 20.166 22 16.418 22 12C22 6.477 17.523 2 12 2Z" fill="currentColor"/>
         </svg>
       ),
       stats: [
@@ -164,7 +171,7 @@ const HomePage = () => {
       completed: { label: 'SYNCED', color: 'bg-green-50 text-green-700 border border-green-200' },
       failed: { label: 'FAILED', color: 'bg-red-50 text-red-700 border border-red-200' },
       in_progress: { label: 'SYNCING', color: 'bg-blue-50 text-blue-700 border border-blue-200' },
-      not_started: { label: 'PENDING', color: 'bg-gray-50 text-gray-600 border border-gray-200' }
+      not_started: { label: 'PENDING', color: 'bg-surface-2 text-fg-muted border border-edge' }
     };
 
     const config = statusConfig[status] || statusConfig.not_started;
@@ -202,7 +209,7 @@ const HomePage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col bg-white">
+      <div className="min-h-screen flex flex-col bg-surface">
         <main className="flex-grow px-4 py-6 md:px-8">
           <motion.div 
             className="flex flex-col items-center justify-center h-[70vh]"
@@ -212,11 +219,11 @@ const HomePage = () => {
             transition={{ duration: 0.3 }}
           >
             <div className="relative">
-              <div className="w-16 h-16 border-4 border-gray-200 rounded-full"></div>
+              <div className="w-16 h-16 border-4 border-edge rounded-full"></div>
               <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin absolute top-0"></div>
             </div>
-            <p className="mt-6 text-lg font-semibold text-gray-900">Loading your dashboard...</p>
-            <p className="mt-2 text-sm text-gray-600">Fetching your coding statistics</p>
+            <p className="mt-6 text-lg font-semibold text-fg">Loading your dashboard...</p>
+            <p className="mt-2 text-sm text-fg-muted">Fetching your coding statistics</p>
           </motion.div>
         </main>
       </div>
@@ -225,7 +232,7 @@ const HomePage = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen flex flex-col bg-white">
+      <div className="min-h-screen flex flex-col bg-surface">
         <main className="flex-grow px-4 py-6 md:px-8">
           <motion.div 
             className="max-w-2xl mx-auto mt-20"
@@ -233,12 +240,12 @@ const HomePage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ type: 'spring', delay: 0.1 }}
           >
-            <div className="bg-white rounded-xl border border-gray-200 p-8 text-center shadow-lg">
+            <div className="bg-surface rounded-xl border border-edge p-8 text-center shadow-lg">
               <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-100">
                 <span className="text-2xl font-bold text-red-600">!</span>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-3">Unable to Load Dashboard</h2>
-              <p className="text-gray-600 mb-6">{error}</p>
+              <h2 className="text-2xl font-bold text-fg mb-3">Unable to Load Dashboard</h2>
+              <p className="text-fg-muted mb-6">{error}</p>
               <motion.button
                 onClick={() => window.location.reload()}
                 className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm shadow"
@@ -255,7 +262,7 @@ const HomePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white mb-12">
+    <div className="min-h-screen bg-surface mb-12">
       <main className="px-4 py-6 md:px-8 md:py-8">
         <AnimatePresence mode="wait">
           <motion.div 
@@ -272,29 +279,29 @@ const HomePage = () => {
                 initial="hidden"
                 animate="visible"
               >
-                <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-md">
+                <div className="bg-surface rounded-xl border border-edge p-6 shadow-md">
                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <motion.div className="flex-1" variants={itemVariants}>
-                      <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+                      <h1 className="text-2xl md:text-3xl font-bold text-fg mb-2">
                         Welcome back, {userData?.name}
                       </h1>
-                      <p className="text-gray-600 mb-3">
+                      <p className="text-fg-muted mb-3">
                         {userData?.department} · Year {userData?.year} · {userData?.college}
                       </p>
-                      <p className="text-sm text-gray-500 leading-relaxed max-w-2xl">
+                      <p className="text-sm text-fg-subtle leading-relaxed max-w-2xl">
                         Track your competitive programming progress and coding statistics across multiple platforms.
                       </p>
                     </motion.div>
                     <motion.div 
-                      className="bg-gray-50 rounded-lg p-4 text-center border border-gray-200 min-w-[140px]" 
+                      className="bg-surface-2 rounded-lg p-4 text-center border border-edge min-w-[140px]" 
                       variants={itemVariants}
                       whileHover={{ scale: 1.05, boxShadow: '0px 10px 25px rgba(0,0,0,0.1)' }}
                     >
-                      <p className="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">Total Score</p>
-                      <p className="text-3xl font-bold text-gray-900">
+                      <p className="text-xs font-medium text-fg-muted uppercase tracking-wide mb-1">Total Score</p>
+                      <p className="text-3xl font-bold text-fg">
                         <AnimatedStat value={calculateOverallScore()} />
                       </p>
-                      <p className="text-xs text-gray-500 mt-1">Problems Solved</p>
+                      <p className="text-xs text-fg-subtle mt-1">Problems Solved</p>
                     </motion.div>
                   </div>
                 </div>
@@ -313,20 +320,20 @@ const HomePage = () => {
                     variants={itemVariants}
                     whileHover={{ y: -8, scale: 1.05, boxShadow: "0px 15px 25px -5px rgba(0,0,0,0.15)" }}
                     transition={{ type: 'spring', stiffness: 300 }}
-                    className="bg-white rounded-lg border border-gray-200 p-4 shadow-md"
+                    className="bg-surface rounded-lg border border-edge p-4 shadow-md"
                   >
                     <div className="flex items-center gap-3">
                       <div className={`p-2 rounded-lg ${
                         platform.color === 'orange' ? 'bg-orange-50' :
-                        platform.color === 'blue' ? 'bg-blue-50' : 'bg-gray-50'
+                        platform.color === 'blue' ? 'bg-blue-50' : 'bg-surface-2'
                       }`}>
                         {platform.icon}
                       </div>
                       <div>
-                        <p className="text-xl font-semibold text-gray-900">
+                        <p className="text-xl font-semibold text-fg">
                             <AnimatedStat value={platform.stats[0].value} />
                         </p>
-                        <p className="text-xs text-gray-600">{platform.title}</p>
+                        <p className="text-xs text-fg-muted">{platform.title}</p>
                       </div>
                     </div>
                   </motion.div>
@@ -344,7 +351,7 @@ const HomePage = () => {
                   <motion.div
                     key={platform.title}
                     variants={itemVariants}
-                    className="bg-white rounded-xl border border-gray-200 shadow-md transition-shadow duration-300 hover:shadow-xl"
+                    className="bg-surface rounded-xl border border-edge shadow-md transition-shadow duration-300 hover:shadow-xl"
                   >
                     <div className="p-5">
                       {/* Header */}
@@ -353,17 +360,17 @@ const HomePage = () => {
                           <motion.div 
                             className={`p-2 rounded-lg ${
                               platform.color === 'orange' ? 'bg-orange-50' :
-                              platform.color === 'blue' ? 'bg-blue-50' : 'bg-gray-50'
+                              platform.color === 'blue' ? 'bg-blue-50' : 'bg-surface-2'
                             }`}
                             whileHover={{ rotate: 15 }}
                           >
                             {platform.icon}
                           </motion.div>
                           <div>
-                            <h3 className="text-lg font-semibold text-gray-900">
+                            <h3 className="text-lg font-semibold text-fg">
                               {platform.title}
                             </h3>
-                            <p className="text-xs text-gray-500">{platform.subtitle}</p>
+                            <p className="text-xs text-fg-subtle">{platform.subtitle}</p>
                           </div>
                         </div>
                          <motion.div initial={{scale: 0}} animate={{scale: 1}} transition={{ delay: 0.5, type: 'spring', stiffness: 400 }}>
@@ -376,12 +383,12 @@ const HomePage = () => {
                         {platform.stats.map((stat, idx) => (
                           <div 
                             key={idx}
-                            className="bg-gray-50 rounded-lg p-3 border border-gray-100 hover:bg-gray-100 transition-colors duration-150"
+                            className="bg-surface-2 rounded-lg p-3 border border-edge hover:bg-surface-3 transition-colors duration-150"
                           >
-                            <p className="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">
+                            <p className="text-xs font-medium text-fg-muted uppercase tracking-wide mb-1">
                               {stat.label}
                             </p>
-                            <p className="text-2xl font-bold text-gray-900">
+                            <p className="text-2xl font-bold text-fg">
                               <AnimatedStat value={stat.value} />
                             </p>
                           </div>

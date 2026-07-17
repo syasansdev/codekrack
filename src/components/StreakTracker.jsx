@@ -10,12 +10,12 @@ const StreakTracker = ({ streak }) => {
   });
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6">
+    <div className="bg-surface rounded-xl shadow-sm p-6">
       <div className="flex justify-between items-center mb-6">
-        <h3 className="font-semibold text-gray-800">Coding Streak</h3>
+        <h3 className="font-semibold text-fg">Coding Streak</h3>
         <div className="flex items-center">
           <span className="text-2xl font-bold text-blue-600">{streak}</span>
-          <span className="ml-1 text-gray-500 text-sm">days</span>
+          <span className="ml-1 text-fg-subtle text-sm">days</span>
         </div>
       </div>
       
@@ -29,7 +29,7 @@ const StreakTracker = ({ streak }) => {
             className={`w-7 h-7 rounded-sm flex items-center justify-center text-xs font-medium ${
               day.isActive 
                 ? 'bg-blue-500 text-white' 
-                : 'bg-gray-100 text-gray-400'
+                : 'bg-surface-2 text-fg-subtle'
             }`}
           >
             {day.day}
@@ -37,11 +37,11 @@ const StreakTracker = ({ streak }) => {
         ))}
       </div>
       
-      <div className="mt-6 pt-4 border-t border-gray-100">
+      <div className="mt-6 pt-4 border-t border-edge">
         <div className="flex justify-between items-center">
-          <div className="text-sm text-gray-500">Current streak</div>
+          <div className="text-sm text-fg-subtle">Current streak</div>
           <motion.div 
-            className="h-2 bg-gray-100 rounded-full overflow-hidden w-2/3"
+            className="h-2 bg-surface-2 rounded-full overflow-hidden w-2/3"
             initial={{ width: 0 }}
             animate={{ width: "66.666667%" }}
             transition={{ delay: 0.5, duration: 1 }}
@@ -55,9 +55,9 @@ const StreakTracker = ({ streak }) => {
           </motion.div>
         </div>
         <div className="flex justify-between mt-2 text-xs">
-          <span className="text-gray-500">0</span>
-          <span className="text-gray-500">50</span>
-          <span className="text-gray-500">100</span>
+          <span className="text-fg-subtle">0</span>
+          <span className="text-fg-subtle">50</span>
+          <span className="text-fg-subtle">100</span>
         </div>
       </div>
     </div>

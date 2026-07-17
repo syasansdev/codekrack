@@ -77,7 +77,7 @@ const Footer = () => {
 
   return (
     <motion.footer 
-      className="bg-gray-100 border-t border-gray-200 py-16 relative overflow-hidden"
+      className="bg-surface-2 border-t border-edge py-16 relative overflow-hidden"
       variants={footerContainerVariants}
       initial="hidden"
       whileInView="show"
@@ -120,7 +120,7 @@ const Footer = () => {
                 ))}
               </motion.span>
             </motion.div>
-            <p className="text-gray-600 text-sm mb-4 leading-relaxed">
+            <p className="text-fg-muted text-sm mb-4 leading-relaxed">
               Bridging the gap between students and administrators through seamless communication and support.
             </p>
             
@@ -131,7 +131,7 @@ const Footer = () => {
               ].map((feature, index) => (
                 <motion.div 
                   key={index}
-                  className="flex items-center space-x-3 text-sm text-gray-700 p-2 rounded-lg hover:bg-blue-50 transition-colors duration-200"
+                  className="flex items-center space-x-3 text-sm text-fg-muted p-2 rounded-lg hover:bg-blue-50 transition-colors duration-200"
                   whileHover={{ x: 5, backgroundColor: 'rgba(239, 246, 255, 1)' }}
                   transition={{ type: 'spring', stiffness: 300 }}
                 >
@@ -149,7 +149,7 @@ const Footer = () => {
           
           {/* Quick Links */}
           <motion.div variants={columnVariants}>
-            <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+            <h3 className="text-lg font-semibold text-fg mb-6 flex items-center">
               <Users className="w-5 h-5 mr-2 text-blue-500" />
               For Students
             </h3>
@@ -163,7 +163,7 @@ const Footer = () => {
                 <motion.li key={item.name} variants={linkItemVariants}>
                   <motion.a 
                     href={item.href} 
-                    className="text-sm text-gray-600 hover:text-blue-600 transition-all duration-200 flex items-center group py-1"
+                    className="text-sm text-fg-muted hover:text-blue-600 transition-all duration-200 flex items-center group py-1"
                     whileHover={{ x: 4, transition: { type: 'spring', stiffness: 400 } }}
                   >
                     <ArrowRight className="w-3 h-3 mr-2 text-blue-500 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
@@ -176,7 +176,7 @@ const Footer = () => {
           
           {/* Admin Links */}
           <motion.div variants={columnVariants}>
-            <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+            <h3 className="text-lg font-semibold text-fg mb-6 flex items-center">
               <Shield className="w-5 h-5 mr-2 text-blue-500" />
               For Admins
             </h3>
@@ -190,7 +190,7 @@ const Footer = () => {
                  <motion.li key={item.name} variants={linkItemVariants}>
                   <motion.a 
                     href={item.href} 
-                    className="text-sm text-gray-600 hover:text-blue-600 transition-all duration-200 flex items-center group py-1"
+                    className="text-sm text-fg-muted hover:text-blue-600 transition-all duration-200 flex items-center group py-1"
                     whileHover={{ x: 4, transition: { type: 'spring', stiffness: 400 } }}
                   >
                     <ArrowRight className="w-3 h-3 mr-2 text-blue-500 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
@@ -203,7 +203,7 @@ const Footer = () => {
           
           {/* Support & Legal */}
           <motion.div variants={columnVariants}>
-            <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+            <h3 className="text-lg font-semibold text-fg mb-6 flex items-center">
               <BookOpen className="w-5 h-5 mr-2 text-blue-500" />
               Resources
             </h3>
@@ -217,7 +217,7 @@ const Footer = () => {
                 <motion.li key={item.name} variants={linkItemVariants}>
                   <motion.a 
                     href={item.href} 
-                    className="text-sm text-gray-600 hover:text-blue-600 transition-all duration-200 flex items-center group py-1"
+                    className="text-sm text-fg-muted hover:text-blue-600 transition-all duration-200 flex items-center group py-1"
                     whileHover={{ x: 4, transition: { type: 'spring', stiffness: 400 } }}
                   >
                     <ArrowRight className="w-3 h-3 mr-2 text-blue-500 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
@@ -231,7 +231,7 @@ const Footer = () => {
         
         {/* Bottom Section */}
         <motion.div 
-          className="mt-12 border-t border-gray-200 pt-8 flex flex-col md:flex-row justify-between items-center"
+          className="mt-12 border-t border-edge pt-8 flex flex-col md:flex-row justify-between items-center"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -239,7 +239,7 @@ const Footer = () => {
         >
           <div className="flex flex-col items-center md:items-start gap-1 mb-4 md:mb-0">
             <div className="flex items-center space-x-2">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-fg-muted">
                 &copy; {currentYear} {brandName}. Made with
               </p>
               <motion.div
@@ -248,9 +248,9 @@ const Footer = () => {
               >
                 <Heart className="w-4 h-4 text-red-500 fill-current" />
               </motion.div>
-              <p className="text-sm text-gray-600">for better education.</p>
+              <p className="text-sm text-fg-muted">for better education.</p>
             </div>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-fg-subtle">
               A product of{" "}
               <a
                 href="https://syasans.com/"
@@ -264,7 +264,7 @@ const Footer = () => {
           </div>
           
           <div className="flex items-center space-x-1">
-            <span className="text-sm text-gray-500 mr-4">Follow us:</span>
+            <span className="text-sm text-fg-subtle mr-4">Follow us:</span>
             {[
               { icon: Twitter, href: '#', label: 'Twitter' },
               { icon: Facebook, href: '#', label: 'Facebook' },
@@ -275,7 +275,7 @@ const Footer = () => {
               <motion.a 
                 key={index}
                 href={social.href}
-                className="text-gray-400 hover:text-blue-600 transition-all duration-300 p-2 rounded-full hover:bg-blue-50"
+                className="text-fg-subtle hover:text-blue-600 transition-all duration-300 p-2 rounded-full hover:bg-blue-50"
                 whileHover={{ scale: 1.2, rotate: 8, y: -2 }}
                 whileTap={{ scale: 0.9, rotate: -8 }}
                 initial={{ opacity: 0, scale: 0.5 }}

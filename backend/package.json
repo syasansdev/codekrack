@@ -11,7 +11,7 @@
     "dev:emulator": "cross-env PORT=5001 FIREBASE_AUTH_EMULATOR_HOST=localhost:9099 FIRESTORE_EMULATOR_HOST=localhost:8080 nodemon -r dotenv/config server.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "test": "node tests/api.test.mjs && node tests/sse.test.mjs && node tests/invite.test.mjs && node tests/email-auth.test.mjs && node tests/scraper.test.mjs",
+    "test": "node tests/api.test.mjs && node tests/sse.test.mjs && node tests/invite.test.mjs && node tests/email-auth.test.mjs && node tests/mail.test.mjs && node tests/scraper.test.mjs",
     "test:api": "node tests/api.test.mjs",
     "test:sse": "node tests/sse.test.mjs",
     "test:scraper": "node tests/scraper.test.mjs",
@@ -20,7 +20,10 @@
     "migrate": "node db/migrate.js",
     "migrate:status": "node db/migrate.js --status",
     "test:invite": "node tests/invite.test.mjs",
-    "test:email": "node tests/email-auth.test.mjs"
+    "test:email": "node tests/email-auth.test.mjs",
+    "test:tabs": "node tests/tab-focus.test.mjs",
+    "test:browser": "node tests/tab-focus.test.mjs",
+    "test:mail": "node tests/mail.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.7",
@@ -30,11 +33,9 @@
     "express": "^4.21.2",
     "express-rate-limit": "^7.5.1",
     "helmet": "^7.2.0",
-    "hope-portal": "file:..",
     "morgan": "^1.10.1",
     "node-cron": "^4.2.1",
     "nodemailer": "^7.0.9",
-    "pdfkit": "^0.17.2",
     "pg": "^8.22.0",
     "winston": "^3.18.1"
   },
@@ -53,7 +54,7 @@
     "supertest": "^6.3.4"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0"
   },
   "lint-staged": {
     "*.js": "eslint --cache --fix",

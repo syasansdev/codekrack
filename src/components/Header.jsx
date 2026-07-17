@@ -256,7 +256,7 @@ const Header = () => {
     // Empty cells for days before the first day of the month
     for (let i = 0; i < firstDay; i++) {
       days.push(
-        <div key={`empty-${i}`} className="h-16 border border-gray-100"></div>
+        <div key={`empty-${i}`} className="h-16 border border-edge"></div>
       );
     }
 
@@ -268,13 +268,13 @@ const Header = () => {
       days.push(
         <motion.div
           key={day}
-          className={`h-16 border border-gray-100 p-1 relative overflow-hidden cursor-pointer ${
-            isToday ? 'bg-blue-50 border-blue-200' : 'hover:bg-gray-50'
+          className={`h-16 border border-edge p-1 relative overflow-hidden cursor-pointer ${
+            isToday ? 'bg-blue-50 border-blue-200' : 'hover:bg-surface-2'
           }`}
           whileHover={{ scale: 1.02 }}
           transition={{ duration: 0.2 }}
         >
-          <div className={`text-xs font-medium mb-1 ${isToday ? 'text-blue-600' : 'text-gray-700'}`}>
+          <div className={`text-xs font-medium mb-1 ${isToday ? 'text-blue-600' : 'text-fg-muted'}`}>
             {day}
           </div>
           
@@ -295,7 +295,7 @@ const Header = () => {
             })}
             
             {dayContests.length > 1 && (
-              <div className="text-xs text-gray-500 font-medium">
+              <div className="text-xs text-fg-subtle font-medium">
                 +{dayContests.length - 1}
               </div>
             )}
@@ -324,12 +324,17 @@ const Header = () => {
     </svg>
   );
 
-  // Navigation items
+  // Navigation items.
+  //
+  // 'Achievements' -> '/achievements' was still listed here after the route was
+  // deleted in the Firebase purge (App.jsx documents why: it ranked students by
+  // a field nothing ever wrote, so every rank came out 0). Nothing removed the
+  // link, so a quarter of the student nav bar led straight to the 404 page.
+  // Verified: zero routes in App.jsx match '/achievements'.
   const navItems = [
     { name: 'Dashboard', path: '/dashboard' },
     { name: 'Leaderboard', path: '/leaderboard' },
-    { name: 'Achievements', path: '/achievements' },
-    { name: 'Activity', path: '/activity' }
+    { name: 'Activity', path: '/activity' },
   ];
 
   // Check if current path is active
@@ -339,12 +344,12 @@ const Header = () => {
 
   if (loading) {
     return (
-      <header className="h-16 bg-white shadow-md sticky top-0 z-50">
+      <header className="h-16 bg-surface shadow-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-full">
-          <div className="animate-pulse h-8 w-32 bg-gray-200 rounded"></div>
+          <div className="animate-pulse h-8 w-32 bg-surface-3 rounded"></div>
           <div className="flex items-center space-x-4">
-            <div className="animate-pulse h-8 w-24 bg-gray-200 rounded"></div>
-            <div className="animate-pulse h-8 w-8 bg-gray-200 rounded-full"></div>
+            <div className="animate-pulse h-8 w-24 bg-surface-3 rounded"></div>
+            <div className="animate-pulse h-8 w-8 bg-surface-3 rounded-full"></div>
           </div>
         </div>
       </header>
@@ -354,7 +359,7 @@ const Header = () => {
   return (
     <motion.header 
       className={`sticky top-0 z-50 transition-all duration-300 ${
-        isScrolled ? 'bg-white shadow-md py-2' : 'bg-white py-3'
+        isScrolled ? 'bg-surface shadow-md py-2' : 'bg-surface py-3'
       }`}
       initial={{ y: -100 }}
       animate={{ y: 0 }}
@@ -384,7 +389,7 @@ const Header = () => {
                   className={`font-medium transition-colors duration-200 ${
                     isActive(item.path)
                       ? 'text-blue-600'
-                      : 'text-gray-600 hover:text-blue-600'
+                      : 'text-fg-muted hover:text-blue-600'
                   }`}
                   whileHover={{ y: -2 }}
                   whileTap={{ y: 0 }}
@@ -397,7 +402,7 @@ const Header = () => {
             {/* Calendar Icon */}
             <motion.button
               onClick={handleCalendarClick}
-              className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+              className="p-2 text-fg-muted hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               title="Contest Calendar"
@@ -410,7 +415,7 @@ const Header = () => {
             {user && (
               <div className="relative" ref={dropdownRef}>
                 <motion.div 
-                  className="flex items-center space-x-2 cursor-pointer rounded-full hover:bg-gray-100 p-1.5 pr-3 transition-colors duration-200"
+                  className="flex items-center space-x-2 cursor-pointer rounded-full hover:bg-surface-3 p-1.5 pr-3 transition-colors duration-200"
                   onClick={toggleDropdown}
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -428,14 +433,14 @@ const Header = () => {
                         onError={() => setImageError(true)}
                       />
                     ) : (
-                      <div className="h-8 w-8 rounded-full bg-gray-100 border-2 border-gray-200 flex items-center justify-center shadow-sm">
-                        <AccountIcon className="h-4 w-4 text-gray-500" />
+                      <div className="h-8 w-8 rounded-full bg-surface-2 border-2 border-edge flex items-center justify-center shadow-sm">
+                        <AccountIcon className="h-4 w-4 text-fg-subtle" />
                       </div>
                     )}
                   </div>
                   
                   <div className="hidden sm:block">
-                    <p className="text-sm font-semibold text-gray-700 line-clamp-1">
+                    <p className="text-sm font-semibold text-fg-muted line-clamp-1">
                       {getDisplayName(user.name)}
                     </p>
                     {user.streak > 0 && (
@@ -445,7 +450,7 @@ const Header = () => {
                     )}
                   </div>
                   <svg 
-                    className={`h-5 w-5 text-gray-400 transition-transform duration-200 ease-in-out ${isDropdownOpen ? 'rotate-180' : ''}`} 
+                    className={`h-5 w-5 text-fg-subtle transition-transform duration-200 ease-in-out ${isDropdownOpen ? 'rotate-180' : ''}`} 
                     fill="none" 
                     viewBox="0 0 24 24" 
                     stroke="currentColor"
@@ -458,7 +463,7 @@ const Header = () => {
                 <AnimatePresence>
                   {isDropdownOpen && (
                     <motion.div 
-                      className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg overflow-hidden z-10 border border-gray-100"
+                      className="absolute right-0 mt-2 w-64 bg-surface rounded-xl shadow-lg overflow-hidden z-10 border border-edge"
                       initial={{ opacity: 0, y: -10, scale: 0.95 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -10, scale: 0.95 }}
@@ -479,14 +484,14 @@ const Header = () => {
                                 onError={() => setImageError(true)}
                               />
                             ) : (
-                              <div className="h-10 w-10 rounded-full bg-gray-100 border-2 border-white flex items-center justify-center shadow">
-                                <AccountIcon className="h-5 w-5 text-gray-500" />
+                              <div className="h-10 w-10 rounded-full bg-surface-2 border-2 border-white flex items-center justify-center shadow">
+                                <AccountIcon className="h-5 w-5 text-fg-subtle" />
                               </div>
                             )}
                           </div>
                           <div className="ml-3 overflow-hidden">
-                            <p className="text-sm font-bold text-gray-800 truncate">{user.name}</p>
-                            <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                            <p className="text-sm font-bold text-fg truncate">{user.name}</p>
+                            <p className="text-xs text-fg-subtle truncate">{user.email}</p>
                             {user.department && (
                               <p className="text-xs text-blue-600 font-medium truncate">
                                 {user.department}
@@ -503,9 +508,9 @@ const Header = () => {
                             setIsDropdownOpen(false);
                             navigate('/profile');
                           }}
-                          className="flex items-center w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition-colors duration-200"
+                          className="flex items-center w-full px-4 py-2.5 text-sm text-fg-muted hover:bg-blue-50 transition-colors duration-200"
                         >
-                          <AccountIcon className="w-4 h-4 mr-3 text-gray-400" />
+                          <AccountIcon className="w-4 h-4 mr-3 text-fg-subtle" />
                           Profile
                         </button> */}
                         
@@ -514,9 +519,9 @@ const Header = () => {
                             setIsDropdownOpen(false);
                             navigate('/settings');
                           }}
-                          className="flex items-center w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition-colors duration-200"
+                          className="flex items-center w-full px-4 py-2.5 text-sm text-fg-muted hover:bg-blue-50 transition-colors duration-200"
                         >
-                          <svg className="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4 mr-3 text-fg-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                           </svg>
@@ -525,22 +530,22 @@ const Header = () => {
                       </div>
                       
                       {/* Divider */}
-                      <div className="h-px bg-gray-200 mx-2"></div>
+                      <div className="h-px bg-surface-3 mx-2"></div>
                       
                       {/* Additional user info */}
-                      <div className="px-4 py-2 bg-gray-50">
-                        <div className="flex justify-between text-xs text-gray-500">
+                      <div className="px-4 py-2 bg-surface-2">
+                        <div className="flex justify-between text-xs text-fg-subtle">
                           <span>Role:</span>
                           <span className="font-medium capitalize">{user.role || 'student'}</span>
                         </div>
                         {user.registerNumber && (
-                          <div className="flex justify-between text-xs text-gray-500 mt-1">
+                          <div className="flex justify-between text-xs text-fg-subtle mt-1">
                             <span>Reg No:</span>
                             <span className="font-medium">{user.registerNumber}</span>
                           </div>
                         )}
                         {user.streak > 0 && (
-                          <div className="flex justify-between text-xs text-gray-500 mt-1">
+                          <div className="flex justify-between text-xs text-fg-subtle mt-1">
                             <span>Streak:</span>
                             <span className="font-medium text-orange-600">🔥 {user.streak} days</span>
                           </div>
@@ -582,15 +587,15 @@ const Header = () => {
                       onError={() => setImageError(true)}
                     />
                   ) : (
-                    <div className="h-8 w-8 rounded-full bg-gray-100 border-2 border-gray-200 flex items-center justify-center shadow-sm">
-                      <AccountIcon className="h-4 w-4 text-gray-500" />
+                    <div className="h-8 w-8 rounded-full bg-surface-2 border-2 border-edge flex items-center justify-center shadow-sm">
+                      <AccountIcon className="h-4 w-4 text-fg-subtle" />
                     </div>
                   )}
                 </div>
                 
                 {/* User info for mobile - only show on larger mobile screens */}
                 <div className="hidden xs:block">
-                  <p className="text-sm font-semibold text-gray-700 line-clamp-1">
+                  <p className="text-sm font-semibold text-fg-muted line-clamp-1">
                     {getDisplayName(user.name)}
                   </p>
                   {user.streak > 0 && (
@@ -606,7 +611,7 @@ const Header = () => {
             <motion.button
               ref={hamburgerRef}
               onClick={toggleMobileMenu}
-              className="p-2 rounded-md text-gray-600 hover:text-blue-600 hover:bg-gray-100 transition-colors duration-200"
+              className="p-2 rounded-md text-fg-muted hover:text-blue-600 hover:bg-surface-3 transition-colors duration-200"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               aria-label="Toggle menu"
@@ -641,43 +646,43 @@ const Header = () => {
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-auto"
+                className="bg-surface rounded-xl max-w-4xl w-full max-h-[90vh] overflow-auto"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="p-6">
                   {/* Calendar Header */}
                   <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-bold text-gray-800">Contest Calendar</h2>
+                    <h2 className="text-2xl font-bold text-fg">Contest Calendar</h2>
                     <div className="flex items-center gap-4">
                       <motion.button
                         onClick={() => navigateMonth(-1)}
-                        className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                        className="p-2 rounded-lg hover:bg-surface-3 transition-colors"
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
                       >
-                        <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5 text-fg-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                         </svg>
                       </motion.button>
                       
-                      <h3 className="text-xl font-semibold text-gray-800 min-w-[200px] text-center">
+                      <h3 className="text-xl font-semibold text-fg min-w-[200px] text-center">
                         {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
                       </h3>
                       
                       <motion.button
                         onClick={() => navigateMonth(1)}
-                        className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                        className="p-2 rounded-lg hover:bg-surface-3 transition-colors"
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
                       >
-                        <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5 text-fg-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                         </svg>
                       </motion.button>
                       
                       <button
                         onClick={() => setShowCalendar(false)}
-                        className="p-2 text-gray-400 hover:text-gray-600"
+                        className="p-2 text-fg-subtle hover:text-fg-muted"
                       >
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -693,10 +698,10 @@ const Header = () => {
                   ) : (
                     <>
                       {/* Calendar Grid */}
-                      <div className="grid grid-cols-7 gap-0 border border-gray-200 rounded-lg overflow-hidden mb-4">
+                      <div className="grid grid-cols-7 gap-0 border border-edge rounded-lg overflow-hidden mb-4">
                         {/* Day Headers */}
                         {dayNames.map(day => (
-                          <div key={day} className="bg-gray-50 p-2 text-center font-semibold text-gray-700 border-b border-gray-200 text-sm">
+                          <div key={day} className="bg-surface-2 p-2 text-center font-semibold text-fg-muted border-b border-edge text-sm">
                             {day}
                           </div>
                         ))}
@@ -707,13 +712,13 @@ const Header = () => {
 
                       {/* Legend */}
                       <div className="flex flex-wrap gap-4">
-                        <h4 className="text-sm font-semibold text-gray-700 w-full">Platforms:</h4>
+                        <h4 className="text-sm font-semibold text-fg-muted w-full">Platforms:</h4>
                         {['Codeforces', 'LeetCode', 'CodeChef', 'AtCoder', 'HackerRank'].map(platform => {
                           const colors = getPlatformColor(platform);
                           return (
                             <div key={platform} className="flex items-center gap-2">
                               <div className={`w-3 h-3 rounded ${colors.bg}`}></div>
-                              <span className="text-sm text-gray-600">{platform}</span>
+                              <span className="text-sm text-fg-muted">{platform}</span>
                             </div>
                           );
                         })}
@@ -740,14 +745,14 @@ const Header = () => {
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-white rounded-xl p-6 max-w-md w-full"
+                className="bg-surface rounded-xl p-6 max-w-md w-full"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex justify-between items-start mb-4">
-                  <h3 className="text-xl font-bold text-gray-800">{selectedContest.name}</h3>
+                  <h3 className="text-xl font-bold text-fg">{selectedContest.name}</h3>
                   <button
                     onClick={() => setSelectedContest(null)}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-fg-subtle hover:text-fg-muted"
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -764,19 +769,19 @@ const Header = () => {
                   
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span className="text-gray-500">Date:</span>
+                      <span className="text-fg-subtle">Date:</span>
                       <p className="font-medium">{selectedContest.date}</p>
                     </div>
                     <div>
-                      <span className="text-gray-500">Time:</span>
+                      <span className="text-fg-subtle">Time:</span>
                       <p className="font-medium">{selectedContest.time}</p>
                     </div>
                     <div>
-                      <span className="text-gray-500">Duration:</span>
+                      <span className="text-fg-subtle">Duration:</span>
                       <p className="font-medium">{selectedContest.duration}</p>
                     </div>
                     <div>
-                      <span className="text-gray-500">Status:</span>
+                      <span className="text-fg-subtle">Status:</span>
                       <p className="font-medium text-green-600">Upcoming</p>
                     </div>
                   </div>
@@ -813,23 +818,23 @@ const Header = () => {
               {/* Mobile Menu Panel */}
               <motion.div
                 ref={mobileMenuRef}
-                className="fixed top-0 right-0 bottom-0 w-80 max-w-full bg-white shadow-xl z-50 md:hidden overflow-y-auto"
+                className="fixed top-0 right-0 bottom-0 w-80 max-w-full bg-surface shadow-xl z-50 md:hidden overflow-y-auto"
                 initial={{ x: '100%' }}
                 animate={{ x: 0 }}
                 exit={{ x: '100%' }}
                 transition={{ type: 'spring', damping: 30, stiffness: 300 }}
               >
                 {/* Header with Close Button */}
-                <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white sticky top-0">
-                  <h2 className="text-lg font-semibold text-gray-800">Menu</h2>
+                <div className="flex items-center justify-between p-4 border-b border-edge bg-surface sticky top-0">
+                  <h2 className="text-lg font-semibold text-fg">Menu</h2>
                   <motion.button
                     onClick={closeMobileMenu}
-                    className="p-2 rounded-full hover:bg-gray-100 transition-colors duration-200"
+                    className="p-2 rounded-full hover:bg-surface-3 transition-colors duration-200"
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                     aria-label="Close menu"
                   >
-                    <svg className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="h-5 w-5 text-fg-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </motion.button>
@@ -838,7 +843,7 @@ const Header = () => {
                 <div className="p-4 space-y-4">
                   {/* Navigation Links */}
                   <div className="space-y-2">
-                    <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide px-2">Navigation</h3>
+                    <h3 className="text-sm font-semibold text-fg-subtle uppercase tracking-wide px-2">Navigation</h3>
                     {navItems.map((item) => (
                       <motion.button
                         key={item.name}
@@ -846,7 +851,7 @@ const Header = () => {
                         className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-colors duration-200 flex items-center ${
                           isActive(item.path)
                             ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600'
-                            : 'text-gray-600 hover:bg-gray-50'
+                            : 'text-fg-muted hover:bg-surface-2'
                         }`}
                         whileHover={{ x: 4 }}
                         whileTap={{ scale: 0.98 }}
@@ -861,8 +866,8 @@ const Header = () => {
                   
                   {/* User Section */}
                   {user && (
-                    <div className="border-t border-gray-200 pt-4">
-                      <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide px-2 mb-3">Account</h3>
+                    <div className="border-t border-edge pt-4">
+                      <h3 className="text-sm font-semibold text-fg-subtle uppercase tracking-wide px-2 mb-3">Account</h3>
                       
                       {/* User Profile Card */}
                       <div className="px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg mb-3">
@@ -876,14 +881,14 @@ const Header = () => {
                                 onError={() => setImageError(true)}
                               />
                             ) : (
-                              <div className="h-12 w-12 rounded-full bg-gray-100 border-2 border-white flex items-center justify-center shadow">
-                                <AccountIcon className="h-6 w-6 text-gray-500" />
+                              <div className="h-12 w-12 rounded-full bg-surface-2 border-2 border-white flex items-center justify-center shadow">
+                                <AccountIcon className="h-6 w-6 text-fg-subtle" />
                               </div>
                             )}
                           </div>
                           <div className="ml-3 flex-1 min-w-0">
-                            <p className="text-sm font-bold text-gray-800 truncate">{user.name}</p>
-                            <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                            <p className="text-sm font-bold text-fg truncate">{user.name}</p>
+                            <p className="text-xs text-fg-subtle truncate">{user.email}</p>
                             {user.department && (
                               <p className="text-xs text-blue-600 font-medium truncate">
                                 {user.department}
@@ -900,9 +905,9 @@ const Header = () => {
                             closeMobileMenu();
                             navigate('/profile');
                           }}
-                          className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                          className="flex items-center w-full px-4 py-3 text-sm text-fg-muted hover:bg-blue-50 rounded-lg transition-colors duration-200"
                         >
-                          <AccountIcon className="w-4 h-4 mr-3 text-gray-400" />
+                          <AccountIcon className="w-4 h-4 mr-3 text-fg-subtle" />
                           Profile
                         </button> */}
                         
@@ -911,9 +916,9 @@ const Header = () => {
                             closeMobileMenu();
                             navigate('/settings');
                           }}
-                          className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                          className="flex items-center w-full px-4 py-3 text-sm text-fg-muted hover:bg-blue-50 rounded-lg transition-colors duration-200"
                         >
-                          <svg className="w-4 h-4 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4 mr-3 text-fg-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                           </svg>
@@ -922,20 +927,20 @@ const Header = () => {
                       </div>
                       
                       {/* User Info */}
-                      <div className="px-4 py-3 bg-gray-50 rounded-lg mb-3">
+                      <div className="px-4 py-3 bg-surface-2 rounded-lg mb-3">
                         <div className="space-y-2">
-                          <div className="flex justify-between text-xs text-gray-500">
+                          <div className="flex justify-between text-xs text-fg-subtle">
                             <span>Role:</span>
                             <span className="font-medium capitalize">{user.role || 'student'}</span>
                           </div>
                           {user.registerNumber && (
-                            <div className="flex justify-between text-xs text-gray-500">
+                            <div className="flex justify-between text-xs text-fg-subtle">
                               <span>Reg No:</span>
                               <span className="font-medium">{user.registerNumber}</span>
                             </div>
                           )}
                           {user.streak > 0 && (
-                            <div className="flex justify-between text-xs text-gray-500">
+                            <div className="flex justify-between text-xs text-fg-subtle">
                               <span>Streak:</span>
                               <span className="font-medium text-orange-600">🔥 {user.streak} days</span>
                             </div>

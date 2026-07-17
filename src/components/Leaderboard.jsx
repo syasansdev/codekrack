@@ -185,12 +185,26 @@ const Leaderboard = () => {
       // Platform filter - only show users who have valid data for the selected platform
       const platformMetric = getPlatformMetric(user, selectedPlatform);
       const hasPlatformData = platformMetric > 0;
-      
-      // Additional validation: check if user has platform URL configured
-      const platform = platforms.find(p => p.id === selectedPlatform);
-      const hasPlatformUrl = platform && user.platformUrls?.[platform.dataField];
 
-      return matchesSearch && matchesDepartment && matchesCollege && hasPlatformData && hasPlatformUrl;
+      // There was a second condition here that emptied this entire table:
+      //
+      //   const hasPlatformUrl = platform && user.platformUrls?.[platform.dataField];
+      //   return ... && hasPlatformData && hasPlatformUrl;
+      //
+      // ...but the rows are built above with `platformUrls: {}` — a hardcoded
+      // empty object, because /api/dashboard/leaderboard/student does not return
+      // profile URLs (serializeBoard sends username/metric/rating/data; only the
+      // scraping-status endpoint carries profile_url). So hasPlatformUrl was
+      // undefined for every row and the filter dropped all of them. The board
+      // rendered as permanently empty while the stat cards above it — which read
+      // the UNFILTERED array — cheerfully reported "Total Coders: 6".
+      //
+      // The check was a leftover from Firestore, where the client held the whole
+      // student document. It is redundant now regardless: the server only returns
+      // rows whose scrape status is 'completed', which is strictly stronger than
+      // "a URL was configured". AdminLeaderboard never had this condition, which
+      // is why the admin board kept working and only the student one broke.
+      return matchesSearch && matchesDepartment && matchesCollege && hasPlatformData;
     });
 
     // Sorting - Primary: by metric (descending), Secondary: by name (alphabetical)
@@ -259,7 +273,7 @@ const Leaderboard = () => {
       completed: { label: 'Updated', color: 'bg-green-100 text-green-800' },
       failed: { label: 'Failed', color: 'bg-red-100 text-red-800' },
       in_progress: { label: 'Updating', color: 'bg-blue-100 text-blue-800' },
-      not_started: { label: 'Not Started', color: 'bg-gray-100 text-gray-800' }
+      not_started: { label: 'Not Started', color: 'bg-surface-2 text-fg' }
     };
 
     const config = statusConfig[status] || statusConfig.not_started;
@@ -289,14 +303,14 @@ const Leaderboard = () => {
   if (!currentUser) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="bg-white rounded-xl shadow-lg p-8 text-center max-w-md">
+        <div className="bg-surface rounded-xl shadow-lg p-8 text-center max-w-md">
           <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg className="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Authentication Required</h2>
-          <p className="text-gray-600 mb-6">
+          <h2 className="text-2xl font-bold text-fg mb-2">Authentication Required</h2>
+          <p className="text-fg-muted mb-6">
             Please sign in to view the leaderboard and track your progress.
           </p>
           <Link
@@ -313,14 +327,14 @@ const Leaderboard = () => {
   if (error && data.length === 0) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="bg-white rounded-xl shadow-lg p-8 text-center max-w-md">
+        <div className="bg-surface rounded-xl shadow-lg p-8 text-center max-w-md">
           <div className="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg className="w-10 h-10 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Error Loading Data</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
+          <h2 className="text-2xl font-bold text-fg mb-2">Error Loading Data</h2>
+          <p className="text-fg-muted mb-4">{error}</p>
           <button
             onClick={() => window.location.reload()}
             className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-semibold"
@@ -333,7 +347,7 @@ const Leaderboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-surface-2 to-blue-50 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <motion.div
@@ -342,10 +356,10 @@ const Leaderboard = () => {
           transition={{ duration: 0.5 }}
           className="text-center mb-12"
         >
-          {/* <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 bg-gradient-to-r from-gray-900 to-blue-700 bg-clip-text text-transparent">
+          {/* <h1 className="text-4xl md:text-5xl font-bold text-fg mb-4 bg-gradient-to-r from-fg to-blue-700 bg-clip-text text-transparent">
             Coding Leaderboard
           </h1> */}
-          <p className="text-xl text-gray-900 max-w-2xl mx-auto">
+          <p className="text-xl text-fg max-w-2xl mx-auto">
             Track your progress across LeetCode, Codeforces, AtCoder, and GitHub
           </p>
         </motion.div>
@@ -358,8 +372,8 @@ const Leaderboard = () => {
             className="flex items-center justify-center p-16"
           >
             <div className="text-center">
-              <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-blue-600 mb-4"></div>
-              <p className="text-gray-600 font-semibold text-lg">Loading leaderboard data...</p>
+              <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-edge border-t-blue-600 mb-4"></div>
+              <p className="text-fg-muted font-semibold text-lg">Loading leaderboard data...</p>
             </div>
           </motion.div>
         )}
@@ -386,10 +400,10 @@ const Leaderboard = () => {
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ delay: 0.3 + index * 0.1 }}
                   whileHover={{ scale: 1.05, y: -2 }}
-                  className="bg-white rounded-xl shadow-lg p-6 border border-gray-200"
+                  className="bg-surface rounded-xl shadow-lg p-6 border border-edge"
                 >
-                  <p className="text-sm font-semibold text-gray-600 mb-2">{stat.label}</p>
-                  <p className="text-2xl font-bold text-gray-900">{stat.value.toLocaleString()}</p>
+                  <p className="text-sm font-semibold text-fg-muted mb-2">{stat.label}</p>
+                  <p className="text-2xl font-bold text-fg">{stat.value.toLocaleString()}</p>
                   <div className={`w-12 h-1 bg-${stat.color}-500 rounded-full mt-2`} />
                 </motion.div>
               ))}
@@ -400,12 +414,12 @@ const Leaderboard = () => {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.4 }}
-              className="bg-white rounded-xl shadow-lg p-6 mb-8 border border-gray-200"
+              className="bg-surface rounded-xl shadow-lg p-6 mb-8 border border-edge"
             >
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Rankings</h2>
-                  <p className="text-gray-600">
+                  <h2 className="text-2xl font-bold text-fg mb-2">Rankings</h2>
+                  <p className="text-fg-muted">
                     {filteredAndSortedData.length} coders found • Sorted by {currentPlatform.metricLabel.toLowerCase()} (highest to lowest)
                   </p>
                 </div>
@@ -418,10 +432,10 @@ const Leaderboard = () => {
                       placeholder="Search coders..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white w-full sm:w-64"
+                      className="pl-10 pr-4 py-3 border border-edge-strong rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-surface w-full sm:w-64"
                     />
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="h-5 w-5 text-fg-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                       </svg>
                     </div>
@@ -431,7 +445,7 @@ const Leaderboard = () => {
                   <select
                     value={itemsPerPage}
                     onChange={(e) => setItemsPerPage(Number(e.target.value))}
-                    className="px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                    className="px-4 py-3 border border-edge-strong rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-surface"
                   >
                     {itemsPerPageOptions.map(option => (
                       <option key={option} value={option}>
@@ -446,7 +460,7 @@ const Leaderboard = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Platform Filters */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-fg-muted mb-2">
                     Platform:
                   </label>
                   <div className="flex flex-wrap gap-2">
@@ -459,7 +473,7 @@ const Leaderboard = () => {
                         className={`px-3 py-2 rounded-lg border transition-all duration-200 font-medium text-sm ${
                           selectedPlatform === platform.id
                             ? `bg-${platform.color}-500 text-white border-${platform.color}-500 shadow-md`
-                            : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
+                            : 'bg-surface text-fg-muted border-edge-strong hover:border-edge-strong'
                         }`}
                       >
                         {platform.name}
@@ -470,13 +484,13 @@ const Leaderboard = () => {
 
                 {/* Department Filter */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-fg-muted mb-2">
                     Department:
                   </label>
                   <select
                     value={departmentFilter}
                     onChange={(e) => setDepartmentFilter(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                    className="w-full px-4 py-2 border border-edge-strong rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-surface"
                   >
                     {departments.map(dept => (
                       <option key={dept} value={dept}>
@@ -488,13 +502,13 @@ const Leaderboard = () => {
 
                 {/* College Filter */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-fg-muted mb-2">
                     College:
                   </label>
                   <select
                     value={collegeFilter}
                     onChange={(e) => setCollegeFilter(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                    className="w-full px-4 py-2 border border-edge-strong rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-surface"
                   >
                     {collegeOptions.map(college => (
                       <option key={college.id} value={college.id}>
@@ -511,32 +525,32 @@ const Leaderboard = () => {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.6 }}
-              className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200"
+              className="bg-surface rounded-xl shadow-lg overflow-hidden border border-edge"
             >
               {/* Table Header */}
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                    <tr className="bg-gradient-to-r from-surface-2 to-surface-3 border-b border-edge">
+                      <th className="px-6 py-4 text-left text-xs font-bold text-fg-muted uppercase tracking-wider">
                         Rank
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      <th className="px-6 py-4 text-left text-xs font-bold text-fg-muted uppercase tracking-wider">
                         Coder
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider hidden lg:table-cell">
+                      <th className="px-6 py-4 text-left text-xs font-bold text-fg-muted uppercase tracking-wider hidden lg:table-cell">
                         Department
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider hidden md:table-cell">
+                      <th className="px-6 py-4 text-left text-xs font-bold text-fg-muted uppercase tracking-wider hidden md:table-cell">
                         College
                       </th>
-                      <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      <th className="px-6 py-4 text-right text-xs font-bold text-fg-muted uppercase tracking-wider">
                         {getPlatformLabel(selectedPlatform)}
                       </th>
                     </tr>
                   </thead>
                   
-                  <tbody className="divide-y divide-gray-200">
+                  <tbody className="divide-y divide-edge">
                     <AnimatePresence>
                       {currentStudents.map((user, index) => {
                         const globalRank = startIndex + index + 1;
@@ -566,7 +580,7 @@ const Leaderboard = () => {
                                 className={`flex items-center justify-center w-10 h-10 rounded-xl border-2 font-bold text-sm ${
                                   isTopThree 
                                     ? 'border-yellow-400 bg-yellow-50 text-yellow-700 shadow-sm' 
-                                    : 'border-gray-200 bg-white text-gray-700'
+                                    : 'border-edge bg-surface text-fg-muted'
                                 }`}
                               >
                                 {globalRank}
@@ -603,7 +617,7 @@ const Leaderboard = () => {
                                   )}
                                 </motion.div>
                                 <div className="min-w-0 flex-1">
-                                  <div className="text-base font-bold text-gray-900 truncate">
+                                  <div className="text-base font-bold text-fg truncate">
                                     {user.name || 'Unknown User'}
                                     {user.isCurrentUser && (
                                       <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
@@ -611,10 +625,10 @@ const Leaderboard = () => {
                                       </span>
                                     )}
                                   </div>
-                                  <div className="text-sm text-gray-500 truncate">
+                                  <div className="text-sm text-fg-subtle truncate">
                                     {user.email || 'No email'}
                                   </div>
-                                  <div className="text-xs text-gray-400 lg:hidden">
+                                  <div className="text-xs text-fg-subtle lg:hidden">
                                     {user.department} • Year {user.year}
                                   </div>
                                 </div>
@@ -623,10 +637,10 @@ const Leaderboard = () => {
                             
                             {/* Department */}
                             <td className="px-6 py-4 hidden lg:table-cell">
-                              <div className="text-sm font-semibold text-gray-900">
+                              <div className="text-sm font-semibold text-fg">
                                 {user.department}
                               </div>
-                              <div className="text-xs text-gray-500">
+                              <div className="text-xs text-fg-subtle">
                                 Year {user.year}
                               </div>
                             </td>
@@ -647,11 +661,11 @@ const Leaderboard = () => {
                               <motion.div
                                 initial={{ scale: 0.8 }}
                                 animate={{ scale: 1 }}
-                                className="text-xl font-bold text-gray-900"
+                                className="text-xl font-bold text-fg"
                               >
                                 {user.displayMetric.toLocaleString()}
                               </motion.div>
-                              <div className="text-xs text-gray-500 mt-1">
+                              <div className="text-xs text-fg-subtle mt-1">
                                 {getPlatformLabel(selectedPlatform)}
                               </div>
                               {/* {getScrapingStatusBadge(user, selectedPlatform)} */}
@@ -671,13 +685,13 @@ const Leaderboard = () => {
                   animate={{ opacity: 1 }}
                   className="p-16 text-center"
                 >
-                  <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-24 h-24 bg-surface-2 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <svg className="w-12 h-12 text-fg-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-3">No Coders Found</h3>
-                  <p className="text-gray-600 mb-4">
+                  <h3 className="text-2xl font-bold text-fg mb-3">No Coders Found</h3>
+                  <p className="text-fg-muted mb-4">
                     Try adjusting your search or filters to find more results.
                   </p>
                   <button
@@ -695,8 +709,8 @@ const Leaderboard = () => {
 
               {/* Pagination */}
               {filteredAndSortedData.length > 0 && (
-                <div className="flex flex-col sm:flex-row justify-between items-center p-6 border-t border-gray-200 bg-gray-50">
-                  <div className="text-sm text-gray-700 mb-4 sm:mb-0">
+                <div className="flex flex-col sm:flex-row justify-between items-center p-6 border-t border-edge bg-surface-2">
+                  <div className="text-sm text-fg-muted mb-4 sm:mb-0">
                     Showing {startIndex + 1} to {Math.min(endIndex, filteredAndSortedData.length)} of {filteredAndSortedData.length} coders
                   </div>
                   
@@ -706,8 +720,8 @@ const Leaderboard = () => {
                       disabled={currentPage === 1}
                       className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
                         currentPage === 1
-                          ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
-                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                          ? 'bg-surface-2 text-fg-subtle border-edge cursor-not-allowed'
+                          : 'bg-surface text-fg-muted border-edge-strong hover:bg-surface-2'
                       }`}
                     >
                       Previous
@@ -733,7 +747,7 @@ const Leaderboard = () => {
                             className={`w-10 h-10 rounded-lg border text-sm font-medium transition-colors ${
                               currentPage === pageNum
                                 ? 'bg-blue-600 text-white border-blue-600'
-                                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                : 'bg-surface text-fg-muted border-edge-strong hover:bg-surface-2'
                             }`}
                           >
                             {pageNum}
@@ -747,8 +761,8 @@ const Leaderboard = () => {
                       disabled={currentPage === totalPages}
                       className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
                         currentPage === totalPages
-                          ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
-                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                          ? 'bg-surface-2 text-fg-subtle border-edge cursor-not-allowed'
+                          : 'bg-surface text-fg-muted border-edge-strong hover:bg-surface-2'
                       }`}
                     >
                       Next

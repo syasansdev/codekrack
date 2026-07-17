@@ -122,25 +122,25 @@ const Profile = () => {
 
   if (!userData) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="min-h-screen flex items-center justify-center bg-surface-2">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading profile...</p>
+          <p className="text-fg-muted">Loading profile...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-surface-2">
       <div className="max-w-6xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <motion.div 
           initial={{ opacity: 0, y: -20 }} 
           animate={{ opacity: 1, y: 0 }} 
           transition={{ duration: 0.5 }}
         >
-          <h1 className="text-4xl font-bold text-gray-900 tracking-tight">Account Settings</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-4xl font-bold text-fg tracking-tight">Account Settings</h1>
+          <p className="text-fg-muted mt-2">
             Hello, <span className="font-semibold text-blue-600">{userData.name || 'User'}</span>! Manage your profile and security settings.
           </p>
         </motion.div>
@@ -156,7 +156,7 @@ const Profile = () => {
                   className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors relative ${
                     activeTab === tab.id 
                       ? 'text-white' 
-                      : 'text-gray-600 hover:bg-gray-200'
+                      : 'text-fg-muted hover:bg-surface-3'
                   }`}
                 >
                   {activeTab === tab.id && (
@@ -186,10 +186,10 @@ const Profile = () => {
                 exit="exit"
               >
                 {activeTab === 'profile' && (
-                  <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-                    <div className="p-6 border-b border-gray-200">
-                      <h2 className="text-2xl font-semibold text-gray-900">Your Information</h2>
-                      <p className="text-gray-500 mt-1">Update your personal details here.</p>
+                  <div className="bg-surface rounded-xl shadow-lg border border-edge overflow-hidden">
+                    <div className="p-6 border-b border-edge">
+                      <h2 className="text-2xl font-semibold text-fg">Your Information</h2>
+                      <p className="text-fg-subtle mt-1">Update your personal details here.</p>
                     </div>
                     
                     <form onSubmit={handleSaveProfile} className="p-6 space-y-6">
@@ -206,7 +206,7 @@ const Profile = () => {
                       {/* Name & Email */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-fg-muted mb-2">
                             Full Name
                           </label>
                           <input 
@@ -214,33 +214,33 @@ const Profile = () => {
                             name="name" 
                             value={formData.name} 
                             onChange={handleInputChange}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                            className="w-full px-4 py-3 border border-edge-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                             placeholder="Enter your full name"
                             required 
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-fg-muted mb-2">
                             Email Address
                           </label>
-                          <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-600">
+                          <div className="px-4 py-3 bg-surface-2 border border-edge rounded-lg text-fg-muted">
                             {currentUser?.email || 'No email available'}
                           </div>
-                          <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+                          <p className="text-xs text-fg-subtle mt-1">Email cannot be changed</p>
                         </div>
                       </div>
                       
                       {/* Department & Year */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-fg-muted mb-2">
                             Department
                           </label>
                           <select 
                             name="department" 
                             value={formData.department} 
                             onChange={handleInputChange}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                            className="w-full px-4 py-3 border border-edge-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                           >
                             <option value="">Select Department</option>
                             <option value="Computer Science">Computer Science</option>
@@ -252,14 +252,14 @@ const Profile = () => {
                           </select>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-fg-muted mb-2">
                             Academic Year
                           </label>
                           <select 
                             name="year" 
                             value={formData.year} 
                             onChange={handleInputChange}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                            className="w-full px-4 py-3 border border-edge-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                           >
                             <option value="">Select Year</option>
                             <option value="1">First Year</option>
@@ -273,7 +273,7 @@ const Profile = () => {
                       {/* College & Phone */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-fg-muted mb-2">
                             College
                           </label>
                           <input 
@@ -281,12 +281,12 @@ const Profile = () => {
                             name="college" 
                             value={formData.college} 
                             onChange={handleInputChange}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                            className="w-full px-4 py-3 border border-edge-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                             placeholder="Enter your college name"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="block text-sm font-medium text-fg-muted mb-2">
                             Phone Number
                           </label>
                           <input
@@ -294,7 +294,7 @@ const Profile = () => {
                             name="phoneNumber"
                             value={formData.phoneNumber}
                             onChange={handleInputChange}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                            className="w-full px-4 py-3 border border-edge-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                             placeholder="Enter your phone number"
                           />
                         </div>
@@ -302,7 +302,7 @@ const Profile = () => {
                       
                       {/* Resume URL */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-fg-muted mb-2">
                           Resume Drive URL
                         </label>
                         <input 
@@ -310,17 +310,17 @@ const Profile = () => {
                           name="resumeUrl" 
                           value={formData.resumeUrl} 
                           onChange={handleInputChange}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                          className="w-full px-4 py-3 border border-edge-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                           placeholder="https://drive.google.com/file/d/..."
                         />
-                        <p className="text-xs text-gray-500 mt-1">Share your Google Drive resume link here</p>
+                        <p className="text-xs text-fg-subtle mt-1">Share your Google Drive resume link here</p>
                       </div>
                       
-                      <div className="pt-6 border-t border-gray-200 flex justify-end gap-3">
+                      <div className="pt-6 border-t border-edge flex justify-end gap-3">
                         <motion.button 
                           type="button" 
                           onClick={handleResetForm}
-                          className="px-6 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 font-medium transition-colors duration-200"
+                          className="px-6 py-3 text-fg-muted bg-surface-2 rounded-lg hover:bg-surface-3 font-medium transition-colors duration-200"
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                         >
@@ -349,10 +349,10 @@ const Profile = () => {
                 )}
                 
                 {activeTab === 'security' && (
-                  <div className="bg-white rounded-xl shadow-lg border border-gray-200">
-                    <div className="p-6 border-b border-gray-200">
-                      <h2 className="text-2xl font-semibold text-gray-900">Password & Security</h2>
-                      <p className="text-gray-500 mt-1">Manage your password to keep your account secure.</p>
+                  <div className="bg-surface rounded-xl shadow-lg border border-edge">
+                    <div className="p-6 border-b border-edge">
+                      <h2 className="text-2xl font-semibold text-fg">Password & Security</h2>
+                      <p className="text-fg-subtle mt-1">Manage your password to keep your account secure.</p>
                     </div>
                     
                     <div className="p-6 space-y-6">
@@ -370,10 +370,10 @@ const Profile = () => {
                         </div>
                       </div>
                       
-                      <div className="pt-6 border-t border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                      <div className="pt-6 border-t border-edge flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <div className="flex-1">
-                          <h3 className="font-medium text-gray-800 text-lg">Change Password</h3>
-                          <p className="text-sm text-gray-500 mt-1">
+                          <h3 className="font-medium text-fg text-lg">Change Password</h3>
+                          <p className="text-sm text-fg-subtle mt-1">
                             Last changed on {userData.passwordLastChanged ? new Date(userData.passwordLastChanged.seconds * 1000).toLocaleDateString() : 'N/A'}
                           </p>
                         </div>

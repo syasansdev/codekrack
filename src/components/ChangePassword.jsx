@@ -114,17 +114,17 @@ const ChangePassword = ({ isOpen, onClose }) => {
         exit={{ opacity: 0 }}
       >
         <motion.div
-          className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl"
+          className="bg-surface rounded-2xl w-full max-w-md p-6 shadow-xl"
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
           transition={{ type: "spring", damping: 20, stiffness: 300 }}
         >
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Change Password</h2>
+            <h2 className="text-2xl font-bold text-fg">Change Password</h2>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-fg-subtle hover:text-fg-muted transition-colors"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -135,14 +135,14 @@ const ChangePassword = ({ isOpen, onClose }) => {
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Current Password */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-fg-muted mb-2">
                 Current Password
               </label>
               <input
                 type="password"
                 value={formData.currentPassword}
                 onChange={(e) => handlePasswordChange('currentPassword', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className="w-full px-3 py-2 border border-edge-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 placeholder="Enter your current password"
                 required
               />
@@ -150,14 +150,14 @@ const ChangePassword = ({ isOpen, onClose }) => {
 
             {/* New Password */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-fg-muted mb-2">
                 New Password
               </label>
               <input
                 type="password"
                 value={formData.newPassword}
                 onChange={(e) => handlePasswordChange('newPassword', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className="w-full px-3 py-2 border border-edge-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 placeholder="At least 6 characters"
                 required
               />
@@ -170,7 +170,7 @@ const ChangePassword = ({ isOpen, onClose }) => {
                   className="mt-2"
                 >
                   <div className="flex justify-between text-xs mb-1">
-                    <span className="text-gray-600">Password strength:</span>
+                    <span className="text-fg-muted">Password strength:</span>
                     <span className={`font-medium ${
                       passwordStrength <= 25 ? 'text-red-600' :
                       passwordStrength <= 50 ? 'text-yellow-600' : 
@@ -179,7 +179,7 @@ const ChangePassword = ({ isOpen, onClose }) => {
                       {getStrengthText()}
                     </span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="w-full bg-surface-3 rounded-full h-2">
                     <motion.div
                       className={`h-2 rounded-full ${getStrengthColor()}`}
                       initial={{ width: 0 }}
@@ -193,14 +193,14 @@ const ChangePassword = ({ isOpen, onClose }) => {
 
             {/* Confirm Password */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-fg-muted mb-2">
                 Confirm New Password
               </label>
               <input
                 type="password"
                 value={formData.confirmPassword}
                 onChange={(e) => handlePasswordChange('confirmPassword', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className="w-full px-3 py-2 border border-edge-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 placeholder="Confirm new password"
                 required
               />
@@ -254,7 +254,7 @@ const ChangePassword = ({ isOpen, onClose }) => {
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors font-medium disabled:opacity-50"
+                className="flex-1 px-4 py-2 text-fg-muted bg-surface-2 rounded-lg hover:bg-surface-3 transition-colors font-medium disabled:opacity-50"
                 disabled={loading}
               >
                 Cancel

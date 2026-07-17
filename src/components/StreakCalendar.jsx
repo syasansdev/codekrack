@@ -24,13 +24,13 @@ const StreakCalendar = () => {
     } else if (isToday) {
       classes += 'border-2 border-blue-500 text-blue-600 font-bold';
     } else {
-      classes += 'text-gray-700 bg-gray-100';
+      classes += 'text-fg-muted bg-surface-2';
     }
     return classes;
   };
 
   return (
-    <div className="bg-white p-3 rounded-lg shadow-md border border-gray-200 w-64">
+    <div className="bg-surface p-3 rounded-lg shadow-md border border-edge w-64">
       <div className="flex justify-between items-center mb-2">
         <h3 className="text-sm font-semibold text-blue-800">
           {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
@@ -38,7 +38,7 @@ const StreakCalendar = () => {
       </div>
       <div className="grid grid-cols-7 gap-1 text-center">
         {daysOfWeek.map(day => (
-          <div key={day} className="text-xs font-medium text-gray-500">{day}</div>
+          <div key={day} className="text-xs font-medium text-fg-subtle">{day}</div>
         ))}
         {/* Blank spaces for days before the 1st of the month */}
         {Array.from({ length: firstDayOfMonth }).map((_, index) => (

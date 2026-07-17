@@ -94,7 +94,7 @@ try {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${suTok}` },
     body: JSON.stringify({
-      name: `${TAG} College`, adminEmail: `${TAG}-a@codekrack.invalid`, adminPassword: 'ZzMail#Ad1',
+      name: `${TAG} College`, code: 'ZZMAIL', adminEmail: `${TAG}-a@codekrack.invalid`, adminPassword: 'ZzMail#Ad1',
     }),
   });
   const instId = (await r.json()).id;
