@@ -200,6 +200,30 @@ try {
   r = await call('PATCH', `/api/students/${s3}`, aTok, { name: 'Cross Write' });
   r.status === 404 ? ok("admin A patching B's student -> 404") : no('cross-write -> ' + r.status);
 
+  console.log('\n=== CHANGE EMAIL: profile AND login move together ===');
+  const newEmail = `${TAG}-s1-changed@codekrack.invalid`;
+  r = await call('PATCH', `/api/students/${s1}`, aTok, { email: newEmail });
+  r.status === 200 && r.body?.student?.email === newEmail
+    ? ok('email change -> 200 and the returned profile shows the new address')
+    : no('email change -> ' + r.status + ' ' + JSON.stringify(r.body?.student?.email));
+  // The LOGIN must have moved too, not just the profile copy — otherwise the
+  // student signs in with the old address while the UI shows the new one.
+  const authAfter = await supabaseAdmin.auth.admin.getUserById(s1);
+  authAfter.data?.user?.email === newEmail
+    ? ok('the Supabase auth login moved to the new address')
+    : no('*** LOGIN STILL OLD: ' + authAfter.data?.user?.email + ' (profile/login desync)');
+  const profRow = await many('select email from public.profiles where id=$1', [s1]);
+  profRow[0]?.email === newEmail ? ok('profiles.email persisted') : no('profile email: ' + profRow[0]?.email);
+
+  // Uniqueness: cannot take an address another account already uses.
+  r = await call('PATCH', `/api/students/${s1}`, aTok, { email: `${TAG}-s3@codekrack.invalid` });
+  r.status === 400 ? ok("changing to another account's email -> 400 (no collision)") : no('dupe email -> ' + r.status);
+  // ...and the failed attempt left the login untouched (no half-applied change).
+  const authUnchanged = await supabaseAdmin.auth.admin.getUserById(s1);
+  authUnchanged.data?.user?.email === newEmail
+    ? ok('rejected change did not move the login')
+    : no('*** login moved despite 400: ' + authUnchanged.data?.user?.email);
+
   console.log('\n=== DASHBOARD / LEADERBOARD ===');
   r = await call('GET', '/api/dashboard/stats', aTok);
   r.body?.stats?.totalStudents === 2 ? ok('stats scoped: admin A sees 2 students') : no('stats: ' + JSON.stringify(r.body?.stats));

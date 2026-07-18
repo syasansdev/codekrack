@@ -9,10 +9,9 @@ import {
   Phone,
   MapPin,
   Facebook,
-  Twitter,
   Instagram,
   Linkedin,
-  Github,
+  Youtube,
   Heart,
   ArrowRight
 } from 'lucide-react';
@@ -103,22 +102,16 @@ const Footer = () => {
             variants={columnVariants}
           >
             <motion.div 
-              className="flex items-center space-x-2 mb-4"
+              className="mb-4"
               whileHover={{ scale: 1.02 }}
               transition={{ type: 'spring', stiffness: 400, damping: 10 }}
             >
-              <motion.span 
-                variants={brandNameVariants} 
-                initial="hidden" 
-                animate="visible" 
-                className="text-2xl font-bold text-blue-600 inline-block"
-              >
-                {brandName.split("").map((char, index) => (
-                  <motion.span key={char + "-" + index} variants={letterVariants} className="inline-block">
-                    {char}
-                  </motion.span>
-                ))}
-              </motion.span>
+              <img
+                src="/Codekrack - Big.jpg"
+                alt="CodeKrack"
+                className="h-10 w-auto object-contain"
+                style={{ maxWidth: '155px' }}
+              />
             </motion.div>
             <p className="text-fg-muted text-sm mb-4 leading-relaxed">
               Bridging the gap between students and administrators through seamless communication and support.
@@ -256,9 +249,14 @@ const Footer = () => {
                 href="https://syasans.com/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-600 hover:underline font-medium"
+                className="inline-flex items-center"
               >
-                Syasans
+                <img
+                  src="/colour BIG.jpg"
+                  alt="Syasans Career Analytics"
+                  className="h-5 w-auto object-contain opacity-80 hover:opacity-100 transition-opacity ml-1"
+                  style={{ maxWidth: '100px' }}
+                />
               </a>
             </p>
           </div>
@@ -266,11 +264,11 @@ const Footer = () => {
           <div className="flex items-center space-x-1">
             <span className="text-sm text-fg-subtle mr-4">Follow us:</span>
             {[
-              { icon: Twitter, href: '#', label: 'Twitter' },
-              { icon: Facebook, href: '#', label: 'Facebook' },
+              { icon: Facebook, href: 'https://www.facebook.com/SYASANS', label: 'Facebook' },
               { icon: Instagram, href: '#', label: 'Instagram' },
-              { icon: Linkedin, href: '#', label: 'LinkedIn' },
-              { icon: Github, href: '#', label: 'GitHub' }
+              { icon: Linkedin, href: 'https://www.linkedin.com/company/syasans', label: 'LinkedIn' },
+              { icon: Youtube, href: 'https://www.youtube.com/@SyasansCareerAnalytics/shorts', label: 'YouTube' },
+              { icon: Mail, href: 'mailto:syasanscareeranalytics@gmail.com', label: 'Email' }
             ].map((social, index) => (
               <motion.a 
                 key={index}

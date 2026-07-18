@@ -279,8 +279,16 @@ const AdminSignIn = ({ isOpen = true, onClose = () => {} }) => {
                 animate={{ width: 64 }}
                 transition={{ delay: 0.5, duration: 0.8 }}
               />
+              <div className="flex justify-center mt-4 mb-3">
+                <img
+                  src="/Codekrack - Big.jpg"
+                  alt="CodeKrack"
+                  className="h-14 w-auto object-contain"
+                  style={{ maxWidth: '200px' }}
+                />
+              </div>
               <motion.h2 
-                className="text-3xl font-bold   mt-6 mb-2"
+                className="text-3xl font-bold   mt-2 mb-2"
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
@@ -412,6 +420,22 @@ const AdminSignIn = ({ isOpen = true, onClose = () => {} }) => {
                 >
                   Not an admin? Go to Student Login →
                 </motion.button>
+              </motion.div>
+
+              {/* Syasans branding */}
+              <motion.div
+                className="flex items-center justify-center gap-2 pt-3"
+                variants={itemVariants}
+              >
+                <span className="text-xs text-fg-subtle">Powered by</span>
+                <a href="https://syasans.com/" target="_blank" rel="noopener noreferrer">
+                  <img
+                    src="/colour BIG.jpg"
+                    alt="Syasans Career Analytics"
+                    className="h-5 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity"
+                    style={{ maxWidth: '100px' }}
+                  />
+                </a>
               </motion.div>
             </motion.div>
 

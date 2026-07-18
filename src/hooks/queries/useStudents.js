@@ -63,8 +63,10 @@ export const useUpdateMyProfile = () => {
     onSuccess: (student) => {
       // The server returns the saved row — seed it rather than refetch.
       if (student) qc.setQueryData(queryKeys.me.profile(), student);
-      // The name may show in admin lists too.
+      // The name shows in admin lists and on both leaderboards, so a student
+      // renaming themselves has to refresh those too.
       qc.invalidateQueries({ queryKey: queryKeys.students.lists() });
+      qc.invalidateQueries({ queryKey: queryKeys.leaderboard.all });
     },
   });
 };
@@ -92,9 +94,18 @@ export const useUpdateStudent = () => {
       // The server returns the updated row, so seed the detail cache with it
       // instead of refetching what we were just handed.
       if (student) qc.setQueryData(queryKeys.students.detail(id), student);
-      qc.invalidateQueries({ queryKey: queryKeys.students.lists() });
+      // students.all (not just lists) so the Access screen refetches too — it
+      // shows name and email, both of which an edit can change. lists() alone
+      // left ['students','access',…] stale.
+      qc.invalidateQueries({ queryKey: queryKeys.students.all });
       // Editing a platform URL resets that platform to pending.
       qc.invalidateQueries({ queryKey: queryKeys.scraping.all });
+      // The leaderboards render the student's name AND email (and filter on
+      // email), so an edit has to refresh them too — otherwise a corrected
+      // address shows everywhere EXCEPT the board. These are SSE-backed with
+      // staleTime Infinity, but invalidateQueries refetches active queries
+      // regardless, so this is what actually moves them.
+      qc.invalidateQueries({ queryKey: queryKeys.leaderboard.all });
     },
   });
 };

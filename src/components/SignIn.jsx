@@ -97,6 +97,14 @@ const SignIn = ({ isOpen, onClose }) => {
         </button>
 
         <div className="text-center mb-6">
+          <div className="flex justify-center mb-4">
+            <img
+              src="/Codekrack - Big.jpg"
+              alt="CodeKrack"
+              className="h-14 w-auto object-contain"
+              style={{ maxWidth: '200px' }}
+            />
+          </div>
           <h2 className="font-display text-2xl font-bold text-fg mb-1">Sign In</h2>
           <p className="text-fg-subtle">Welcome back to CodeKrack!</p>
         </div>

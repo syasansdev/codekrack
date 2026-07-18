@@ -8,7 +8,7 @@
 # cache, no dev tooling, no source you don't run.
 
 # ---- deps -------------------------------------------------------------------
-FROM node:20-alpine AS deps
+FROM node:22-alpine AS deps
 
 WORKDIR /app
 
@@ -25,10 +25,15 @@ RUN npm ci --omit=dev
 
 
 # ---- runtime ----------------------------------------------------------------
-FROM node:20-alpine AS runtime
+# Node 22 (current LTS). Both stages MUST use the same major — node_modules is
+# built in `deps` and copied here, and a version skew between build and runtime
+# is how you get a module that installed cleanly but throws at import. 22 also
+# matches the local/CI Node the app is tested on, so the image runs what you
+# verified rather than a different runtime.
+FROM node:22-alpine AS runtime
 
-# Node 20: mailer.js and scripts/scrape.js use global fetch (Node 18+), and
-# node-fetch was removed when the scraper moved server-side.
+# mailer.js and scripts/scrape.js use the global fetch (Node 18+), so node-fetch
+# was dropped when the scraper moved server-side.
 ENV NODE_ENV=production
 
 # dumb-init makes the container respect signals. Without a real init, Node runs as

@@ -86,8 +86,50 @@ export const MAIL_FROM = `"CodeKrack" <${process.env.EMAIL_USER}>`;
  * outage should catch it and say so (POST /api/students does exactly this:
  * `invited: false`), rather than have this pretend it worked.
  */
+// Turn a nodemailer send failure into a message that names the culprit.
+//
+// A raw 550 arrives as e.message = "Message failed: 550 5.1.1 ..." with the
+// actual bounced address buried in e.rejected. The admin then sees "email
+// failed" and swears the address is right. Rewriting the message to lead with
+// the exact recipient and the SMTP reason turns that into "asha@gmail.com
+// rejected: 550 5.1.1 no such mailbox" — the whole diagnosis, in the toast.
+//
+// The original error object is preserved (responseCode, rejected, stack) and
+// only enriched, so nothing downstream that inspects those fields breaks.
+const enrichSendError = (err, fallbackTo) => {
+  const recipient = err.rejected?.length ? err.rejected.join(', ') : fallbackTo;
+  const smtp = err.response || err.message || 'unknown SMTP error';
+  err.recipient = recipient;
+  err.smtpResponse = err.response || null;
+  err.message = `Delivery to ${recipient} failed: ${smtp}`;
+  logger.error(`Mail to ${recipient} rejected (${err.responseCode ?? 'no SMTP code'}): ${smtp}`);
+  return err;
+};
+
 export const sendMail = async ({ to, subject, text, html }) => {
-  const info = await transporter.sendMail({ from: MAIL_FROM, to, subject, text, html });
+  let info;
+  try {
+    info = await transporter.sendMail({ from: MAIL_FROM, to, subject, text, html });
+  } catch (err) {
+    // The receiving server refused the whole transaction. For a @gmail.com
+    // recipient Gmail validates at submission time, so a typo'd gmail bounces
+    // synchronously right here rather than as a delayed bounce email.
+    throw enrichSendError(err, to);
+  }
+
+  // Some servers ACCEPT the message and then reject individual recipients
+  // instead of failing the transaction — nodemailer resolves, with the refused
+  // addresses in info.rejected. For a single-recipient invite that is still a
+  // failure: do not stamp invited_at and tell the admin it worked when the one
+  // person it was for got nothing.
+  if (info.rejected?.length) {
+    const err = new Error('recipient rejected');
+    err.rejected = info.rejected;
+    err.response = info.response;
+    err.responseCode = info.rejectedErrors?.[0]?.responseCode;
+    throw enrichSendError(err, to);
+  }
+
   logger.info(`Mail sent to ${to}: ${subject} (${info.response?.split(' ')[0] || 'ok'})`);
   return info;
 };

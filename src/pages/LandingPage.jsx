@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import SignIn from "../components/SignIn";
 // import { motion } from "framer-motion";
-import { Twitter, Facebook, Linkedin, Github, ArrowRight } from "lucide-react";
+import { Facebook, Linkedin, Youtube, Mail, ArrowRight } from "lucide-react";
 
 // Error Boundary Component
 class ErrorBoundary extends React.Component {
@@ -201,10 +201,10 @@ const socialIconVariants = {
 // --- Social Icons Data ---
 // This makes it easier to manage the social links and their icons.
 const socialLinks = [
-  { name: "twitter", icon: <Twitter size={18} />, href: "#" },
-  { name: "facebook", icon: <Facebook size={18} />, href: "#" },
-  { name: "linkedin", icon: <Linkedin size={18} />, href: "#" },
-  { name: "github", icon: <Github size={18} />, href: "#" },
+  { name: "facebook", icon: <Facebook size={18} />, href: "https://www.facebook.com/SYASANS", label: "Facebook" },
+  { name: "linkedin", icon: <Linkedin size={18} />, href: "https://www.linkedin.com/company/syasans", label: "LinkedIn" },
+  { name: "youtube", icon: <Youtube size={18} />, href: "https://www.youtube.com/@SyasansCareerAnalytics/shorts", label: "YouTube" },
+  { name: "mail", icon: <Mail size={18} />, href: "mailto:syasanscareeranalytics@gmail.com", label: "Email" },
 ];
 
   const handleNextContest = () => {
@@ -612,8 +612,10 @@ const socialLinks = [
 
         {/* Navigation */}
         <motion.nav
-          className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 backdrop-blur ${
-            scrolled ? "bg-surface/90 shadow-md" : "bg-surface/80"
+          className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+            scrolled
+              ? "bg-white/95 shadow-lg border-b border-gray-100 backdrop-blur-xl"
+              : "bg-white/90 border-b border-gray-50 backdrop-blur-md"
           }`}
           initial={{ y: -100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -624,52 +626,41 @@ const socialLinks = [
           }}
         >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16 sm:h-20">
-              <div className="flex items-center space-x-2">
-                {/* CK, not CT — a leftover from the CodeTrack -> CodeKrack
-                    rename that was sitting directly beside the wordmark, so the
-                    logo and the name disagreed on the top-left of the public
-                    landing page. Same fix in the footer mark below. */}
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-brand-gradient rounded-lg flex items-center justify-center text-white font-bold text-sm sm:text-base shadow-glow-blue">
-                  CK
-                </div>
-                <span className="text-lg sm:text-xl font-bold text-fg">
-                  Code<span className="text-orange-500">Krack</span>
-                </span>
+            <div className="flex justify-between items-center h-[72px] sm:h-[88px]">
+              <div className="flex items-center">
+                <motion.img
+                  src="/Codekrack - Big.jpg"
+                  alt="CodeKrack"
+                  className="h-14 sm:h-16 md:h-[68px] w-auto object-contain"
+                  style={{ maxWidth: '220px' }}
+                  whileHover={{ scale: 1.03 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                />
               </div>
 
               {/* Desktop Navigation */}
-              <div className="hidden md:flex items-center space-x-10">
-                <a
-                  href="#features"
-                  className="text-fg-muted hover:text-blue-600 font-medium transition-colors duration-300"
-                >
-                  Features
-                </a>
-                <a
-                  href="#contests"
-                  className="text-fg-muted hover:text-blue-600 font-medium transition-colors duration-300"
-                >
-                  Contests
-                </a>
-                <a
-                  href="#testimonials"
-                  className="text-fg-muted hover:text-blue-600 font-medium transition-colors duration-300"
-                >
-                  Testimonials
-                </a>
+              <div className="hidden md:flex items-center space-x-8">
+                {['#features', '#contests', '#testimonials'].map((href, i) => (
+                  <a
+                    key={i}
+                    href={href}
+                    className="text-[15px] font-semibold text-gray-500 hover:text-blue-600 transition-colors duration-200 tracking-wide relative group"
+                  >
+                    {['Features', 'Contests', 'Testimonials'][i]}
+                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-500 group-hover:w-full transition-all duration-300 rounded-full" />
+                  </a>
+                ))}
               </div>
 
-              <div className="hidden md:flex space-x-4">
-               
+              <div className="hidden md:flex items-center gap-3">
                 <motion.button
-                  className="btn-accent text-sm sm:text-base"
+                  className="btn-accent text-sm font-bold px-6 py-2.5 rounded-xl shadow-lg"
                   variants={buttonVariants}
                   whileHover="hover"
                   whileTap="tap"
                   onClick={openSignInModal}
                 >
-                  Get Started
+                  Get Started →
                 </motion.button>
               </div>
 
@@ -764,6 +755,26 @@ const socialLinks = [
           </AnimatePresence>
         </motion.nav>
 
+        {/* Syasans Parent Company Ribbon */}
+        <motion.div
+          className="w-full bg-gradient-to-r from-[#e8f0fe] via-[#f8f9ff] to-[#fff4ed] border-b border-blue-100/60 py-2 px-4 flex items-center justify-center gap-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.6, duration: 0.5 }}
+        >
+          <div className="w-8 h-px bg-gradient-to-r from-transparent to-blue-300" />
+          <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-blue-400">A product of</span>
+          <a href="https://syasans.com/" target="_blank" rel="noopener noreferrer" className="flex items-center">
+            <img
+              src="/colour BIG.jpg"
+              alt="Syasans Career Analytics"
+              className="h-[26px] sm:h-[30px] w-auto object-contain hover:opacity-80 transition-opacity"
+              style={{ maxWidth: '180px' }}
+            />
+          </a>
+          <div className="w-8 h-px bg-gradient-to-l from-transparent to-orange-300" />
+        </motion.div>
+
         {/* SignIn Component */}
         <AnimatePresence>
           {isSignInModalOpen && (
@@ -772,7 +783,7 @@ const socialLinks = [
         </AnimatePresence>
 
         {/* Hero Section */}
-        <main className="pt-16">
+        <main className="pt-[72px] sm:pt-[88px]">
           <div className="relative pt-12 sm:pt-16 md:pt-24 pb-12 sm:pb-16 md:pb-20 px-4 sm:px-6 overflow-hidden bg-brand-mesh">
             <motion.div
               className="absolute top-0 right-0 w-72 sm:w-96 h-72 sm:h-96 bg-brand-300 rounded-full filter blur-3xl opacity-30 -z-10"
@@ -801,36 +812,52 @@ const socialLinks = [
             />
 
             <div className="max-w-7xl mx-auto text-center">
+              {/* Hero eyebrow — Syasans parentage pill */}
               <motion.div
-                className="mb-5 flex justify-center"
-                initial={{ opacity: 0, y: 12 }}
+                className="mb-8 flex justify-center"
+                initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
               >
-                <span className="eyebrow">
-                  <span className="w-1.5 h-1.5 rounded-full bg-accent-500" />
-                  A product of Syasans
-                </span>
+                <a
+                  href="https://syasans.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group inline-flex items-center gap-3 px-5 py-2.5 bg-white rounded-2xl border border-gray-200 shadow-md hover:shadow-xl hover:border-blue-200 transition-all duration-300"
+                >
+                  <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-gray-400 group-hover:text-blue-500 transition-colors">A product of</span>
+                  <div className="w-px h-5 bg-gray-200" />
+                  <img
+                    src="/colour BIG.jpg"
+                    alt="Syasans Career Analytics"
+                    className="h-8 w-auto object-contain"
+                    style={{ maxWidth: '160px' }}
+                  />
+                </a>
               </motion.div>
 
+              {/* Hero H1 — stronger scale */}
               <motion.h1
-                className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-fg mb-4 sm:mb-6 leading-tight px-2"
-                initial={{ opacity: 0, y: 20 }}
+                className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-fg mb-5 sm:mb-7 leading-[1.08] tracking-tight px-2"
+                initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7 }}
               >
-                Track Your Coding Journey With{" "}
+                Track Your Coding
+                <br className="hidden sm:block" />
+                Journey With{" "}
                 <span className="gradient-text">Precision</span>
               </motion.h1>
+
+              {/* Hero sub-text — more contrast and larger */}
               <motion.p
-                className="text-base sm:text-lg md:text-xl text-fg-muted mb-6 sm:mb-8 leading-relaxed px-4 sm:px-6 max-w-3xl mx-auto"
+                className="text-lg sm:text-xl md:text-2xl font-medium text-gray-500 mb-8 sm:mb-10 leading-relaxed px-4 sm:px-6 max-w-2xl mx-auto"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 0.2 }}
               >
                 Unified dashboard for all your competitive programming profiles.
-                Real-time analytics, AI insights, and career growth tools in one
-                place.
+                <span className="block mt-1 text-base sm:text-lg text-gray-400 font-normal">Real-time analytics, AI insights, and career growth tools — all in one place.</span>
               </motion.p>
               
               {/* Primary calls to action */}
@@ -896,27 +923,32 @@ const socialLinks = [
           {/* Features Section */}
           <motion.div
             id="features"
-            className="py-16 sm:py-20 md:py-24 px-4 sm:px-6 bg-surface-2"
+            className="py-20 sm:py-24 md:py-28 px-4 sm:px-6 bg-surface-2"
             variants={fadeInUpVariants}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, amount: 0.1 }}
           >
             <div className="max-w-7xl mx-auto">
-              <div className="text-center mb-10 sm:mb-16">
+              <div className="text-center mb-12 sm:mb-16">
+                <motion.p
+                  className="text-[11px] font-bold uppercase tracking-[0.2em] text-blue-500 mb-3"
+                  variants={fadeInUpVariants}
+                >
+                  What You Get
+                </motion.p>
                 <motion.h2
-                  className="text-2xl sm:text-3xl md:text-4xl font-bold text-fg mb-3 sm:mb-4"
+                  className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-fg mb-4 sm:mb-5 leading-tight tracking-tight"
                   variants={fadeInUpVariants}
                 >
                   Powerful Features for{" "}
-                  <span className="text-blue-600">Coding Professionals</span>
+                  <span className="gradient-text">Coding Professionals</span>
                 </motion.h2>
                 <motion.p
-                  className="text-base sm:text-lg md:text-xl text-fg-muted max-w-3xl mx-auto px-2"
+                  className="text-lg sm:text-xl text-gray-500 max-w-2xl mx-auto px-2 font-medium"
                   variants={fadeInUpVariants}
                 >
-                  Everything you need to track and grow your coding career, all
-                  in one intuitive platform
+                  Everything you need to track, grow and showcase your coding career.
                 </motion.p>
               </div>
               <motion.div
@@ -945,9 +977,64 @@ const socialLinks = [
             </div>
           </motion.div>
 
-          {/* Stats Section */}
-          
-           
+          {/* Syasans Parentage Showcase */}
+          <motion.div
+            className="py-16 sm:py-20 px-4 sm:px-6 bg-white"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.8 }}
+          >
+            <div className="max-w-4xl mx-auto">
+              <motion.div
+                className="relative rounded-3xl overflow-hidden border border-gray-100 shadow-2xl"
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.7, delay: 0.1 }}
+              >
+                {/* Card gradient background */}
+                <div className="absolute inset-0 bg-gradient-to-br from-[#EBF2FF] via-[#F8FAFF] to-[#FFF3EC]" />
+                {/* Decorative blobs */}
+                <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-blue-200/30 blur-3xl" />
+                <div className="absolute -bottom-12 -left-12 w-48 h-48 rounded-full bg-orange-200/30 blur-3xl" />
+
+                <div className="relative z-10 px-8 sm:px-14 py-10 sm:py-14 flex flex-col sm:flex-row items-center gap-8 sm:gap-12">
+                  {/* Left: label + logo */}
+                  <div className="flex flex-col items-center sm:items-start gap-3 shrink-0">
+                    <p className="text-[10px] font-black uppercase tracking-[0.25em] text-blue-400">A product of</p>
+                    <a href="https://syasans.com/" target="_blank" rel="noopener noreferrer">
+                      <motion.img
+                        src="/colour BIG.jpg"
+                        alt="Syasans Career Analytics"
+                        className="h-16 sm:h-20 w-auto object-contain"
+                        style={{ maxWidth: '280px' }}
+                        whileHover={{ scale: 1.04 }}
+                        transition={{ type: 'spring', stiffness: 300 }}
+                      />
+                    </a>
+                  </div>
+
+                  {/* Divider */}
+                  <div className="hidden sm:block w-px self-stretch bg-gradient-to-b from-transparent via-gray-300 to-transparent" />
+                  <div className="sm:hidden w-full h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
+
+                  {/* Right: tagline */}
+                  <div className="text-center sm:text-left">
+                    <p className="text-xl sm:text-2xl font-bold text-gray-800 leading-snug mb-2">
+                      Propelled by Professionals,
+                      <br />
+                      <span className="text-blue-600">Mentored by Masters</span>
+                    </p>
+                    <p className="text-sm sm:text-base text-gray-500 leading-relaxed">
+                      Syasans Career Analytics brings institutional-grade career tracking
+                      to every student — powering CodeKrack's analytics engine.
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </motion.div>
 
           {/* Contests Section - Circular Carousel */}
           <motion.div
@@ -959,15 +1046,21 @@ const socialLinks = [
             viewport={{ once: true, amount: 0.1 }}
           >
             <div className="max-w-7xl mx-auto">
-              <div className="text-center mb-8 sm:mb-12">
+              <div className="text-center mb-10 sm:mb-14">
+                <motion.p
+                  className="text-[11px] font-bold uppercase tracking-[0.2em] text-orange-400 mb-3"
+                  variants={fadeInUpVariants}
+                >
+                  Stay Competitive
+                </motion.p>
                 <motion.h2
-                  className="text-2xl sm:text-3xl md:text-4xl font-bold text-fg mb-2 sm:mb-3"
+                  className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-fg mb-3 sm:mb-4 leading-tight tracking-tight"
                   variants={fadeInUpVariants}
                 >
                   Upcoming Coding Contests
                 </motion.h2>
                 <motion.p
-                  className="text-base sm:text-lg md:text-xl text-fg-muted"
+                  className="text-lg sm:text-xl text-gray-500 font-medium"
                   variants={fadeInUpVariants}
                 >
                   Never miss another competitive programming opportunity
@@ -1533,6 +1626,20 @@ const socialLinks = [
                 variants={itemVariants}
               >
                 <div className="relative z-10">
+                  <motion.div
+                    className="flex justify-center mb-6"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.1 }}
+                    viewport={{ once: true }}
+                  >
+                    <img
+                      src="/Codekrack - Big.jpg"
+                      alt="CodeKrack"
+                      className="h-16 sm:h-20 w-auto object-contain bg-white/10 rounded-xl px-4 py-2"
+                      style={{ maxWidth: '240px', backdropFilter: 'blur(4px)' }}
+                    />
+                  </motion.div>
                   <motion.h2
                     className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4 sm:mb-6"
                     initial={{ opacity: 0, y: 20 }}
@@ -1552,6 +1659,21 @@ const socialLinks = [
 
 Learning Data Structures and Algorithms (DSA) strengthens problem-solving skills, boosts placement performance by preparing you for coding interviews, and helps you write efficient, optimized code essential for real-world software development.
                   </motion.p>
+                  <motion.div
+                    className="flex items-center justify-center gap-2 mt-6"
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    transition={{ delay: 0.6 }}
+                    viewport={{ once: true }}
+                  >
+                    <span className="text-white/50 text-xs">Powered by</span>
+                    <img
+                      src="/colour BIG.jpg"
+                      alt="Syasans Career Analytics"
+                      className="h-5 w-auto object-contain opacity-60 hover:opacity-90 transition-opacity"
+                      style={{ maxWidth: '120px', filter: 'brightness(0) invert(1)' }}
+                    />
+                  </motion.div>
                 </div>
               </motion.div>
             </div>
@@ -1585,18 +1707,18 @@ Learning Data Structures and Algorithms (DSA) strengthens problem-solving skills
             className="col-span-2 sm:col-span-2 md:col-span-1"
             variants={columnVariants}
           >
-            <div className="flex items-center space-x-2 mb-4 sm:mb-5">
-              <motion.div
-                className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-xs sm:text-base shadow-lg"
-                whileHover={{ scale: 1.1, rotate: -10 }}
-                transition={{ type: 'spring', stiffness: 300 }}
-              >
-                CK
-              </motion.div>
-              <span className="text-lg sm:text-xl font-bold text-fg">
-                Code<span className="text-orange-500">Krack</span>
-              </span>
-            </div>
+            <motion.div
+              className="mb-4 sm:mb-5"
+              whileHover={{ scale: 1.03 }}
+              transition={{ type: 'spring', stiffness: 300 }}
+            >
+              <img
+                src="/Codekrack - Big.jpg"
+                alt="CodeKrack"
+                className="h-10 sm:h-12 w-auto object-contain"
+                style={{ maxWidth: '170px' }}
+              />
+            </motion.div>
             <p className="text-sm sm:text-base text-fg-muted mb-4 sm:mb-6">
               Empowering developers to track and grow their coding careers
               through unified analytics and insights.
@@ -1690,7 +1812,21 @@ Learning Data Structures and Algorithms (DSA) strengthens problem-solving skills
           viewport={{ once: true }}
           transition={{ duration: 0.8, delay: 0.5 }}
         >
-          <p>&copy; 2025 CodeKrack — a product of <a href="https://syasans.com/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Syasans</a>. All rights reserved.</p>
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
+            <p className="text-xs sm:text-sm text-fg-muted">&copy; 2025 CodeKrack. All rights reserved.</p>
+            <span className="hidden sm:inline text-fg-subtle">·</span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-fg-subtle">A product of</span>
+              <a href="https://syasans.com/" target="_blank" rel="noopener noreferrer">
+                <img
+                  src="/colour BIG.jpg"
+                  alt="Syasans Career Analytics"
+                  className="h-5 sm:h-6 w-auto object-contain opacity-80 hover:opacity-100 transition-opacity"
+                  style={{ maxWidth: '110px' }}
+                />
+              </a>
+            </div>
+          </div>
           <div className="flex space-x-4 sm:space-x-6 mt-4 md:mt-0">
             <a href="#" className="hover:text-blue-600 transition-colors">
               Privacy Policy

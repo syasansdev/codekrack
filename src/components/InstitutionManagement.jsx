@@ -6,12 +6,15 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
+import { Download, Loader2 } from 'lucide-react';
 import {
   useInstitutions,
   useCreateInstitution,
   useUpdateInstitution,
   useDeleteInstitution,
 } from '../hooks/queries/useInstitutions';
+import { studentsApi } from '../services/api';
+import { exportToExcel, buildInstitutionStudentRows } from '../utils/excelExport';
 
 const emptyForm = {
   name: '',
@@ -28,6 +31,10 @@ const InstitutionManagement = () => {
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState(null);
   const [createdCreds, setCreatedCreds] = useState(null);
+  // Which institution's export is in flight — the students are fetched on demand
+  // (the list here only carries a COUNT, not the roster), so the button shows a
+  // spinner while that request runs.
+  const [exportingId, setExportingId] = useState(null);
 
   // Student counts come from the institutions endpoint (a COUNT in SQL). The old
   // code called getAllStudents() — fetching EVERY student in the system to the
@@ -132,6 +139,32 @@ const InstitutionManagement = () => {
       adminPassword: '',
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleExport = async (inst) => {
+    if (exportingId) return; // one at a time
+    setExportingId(inst.id);
+    try {
+      // The roster isn't in the institutions list (that's a COUNT only), so
+      // fetch it now. As a super-admin, institutionId is honoured server-side.
+      const students = await studentsApi.list({ institutionId: inst.id });
+      if (!students?.length) {
+        toast.info(`${inst.name} has no students to export`);
+        return;
+      }
+      const rows = buildInstitutionStudentRows(students);
+      // A filesystem-safe base name from the code (or the name as a fallback);
+      // exportToExcel appends the date and the .xlsx extension.
+      const base =
+        (inst.code || inst.name || 'institution').replace(/[^a-z0-9]+/gi, '-').toLowerCase() +
+        '-students';
+      exportToExcel(rows, base);
+      toast.success(`Exported ${rows.length} student(s) from ${inst.name}`);
+    } catch (e) {
+      toast.error(`Export failed: ${e.message}`);
+    } finally {
+      setExportingId(null);
+    }
   };
 
   const handleDelete = async (inst) => {
@@ -389,6 +422,25 @@ const InstitutionManagement = () => {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => handleExport(inst)}
+                          disabled={exportingId === inst.id || !(inst.studentCount > 0)}
+                          title={
+                            inst.studentCount > 0
+                              ? `Download all ${inst.studentCount} student(s) as Excel`
+                              : 'No students to export'
+                          }
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md font-medium
+                                     text-emerald-600 hover:bg-emerald-50
+                                     disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                        >
+                          {exportingId === inst.id ? (
+                            <Loader2 size={15} className="animate-spin" />
+                          ) : (
+                            <Download size={15} />
+                          )}
+                          {exportingId === inst.id ? 'Exporting…' : 'Excel'}
+                        </button>
                         <button
                           onClick={() => handleEdit(inst)}
                           className="px-3 py-1.5 rounded-md text-blue-600 hover:bg-blue-50 font-medium"

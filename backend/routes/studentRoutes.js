@@ -22,11 +22,10 @@ import {
   PLATFORMS,
   LINK_KEYS,
 } from '../utils/serialize.js';
+import { isValidEmail, normalizeEmail, undeliverableDomainReason } from '../utils/email.js';
 import logger from '../utils/logger.js';
 
 const router = express.Router();
-
-const isValidEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(e || ''));
 const isUuid = (v) =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(v || ''));
 
@@ -229,7 +228,10 @@ router.post('/', verifyAdmin, async (req, res) => {
   if (!name || !String(name).trim()) {
     return res.status(400).json({ success: false, error: 'Name is required' });
   }
-  if (!isValidEmail(email)) {
+  // Normalise BEFORE validating, so " Asha@Gmail.com " is accepted (trimmed and
+  // lowercased) rather than rejected for a trailing space the admin can't see.
+  const lower = normalizeEmail(email);
+  if (!isValidEmail(lower)) {
     return res.status(400).json({ success: false, error: 'A valid email is required' });
   }
 
@@ -244,10 +246,19 @@ router.post('/', verifyAdmin, async (req, res) => {
   );
   if (!inst) return res.status(400).json({ success: false, error: 'Institution not found' });
 
-  const lower = String(email).toLowerCase().trim();
   const dupe = await one('select id from public.profiles where lower(email) = $1', [lower]);
   if (dupe) {
     return res.status(400).json({ success: false, error: 'That email is already registered' });
+  }
+
+  // Catch a mistyped DOMAIN before we create an auth account and fire an invite
+  // that can only bounce. This checks the domain can receive mail at all; it
+  // can't vouch for the mailbox (that's the receiving server's to reject, and
+  // mailer.js now reports it clearly). Non-blocking on DNS trouble — an
+  // unreachable resolver must not stop an admin adding a student.
+  const badDomain = await undeliverableDomainReason(lower);
+  if (badDomain) {
+    return res.status(400).json({ success: false, error: badDomain });
   }
 
   let authUser;
@@ -362,7 +373,7 @@ router.patch('/:id', verifyAdmin, async (req, res) => {
     const institutionId = scopeFor(req, null);
     const scopeParams = institutionId === null ? [req.params.id] : [req.params.id, institutionId];
     const target = await one(
-      `select id from public.profiles
+      `select id, email from public.profiles
         where id = $1 and role = 'student'
         ${institutionId === null ? '' : 'and institution_id = $2'}`,
       scopeParams
@@ -401,9 +412,72 @@ router.patch('/:id', verifyAdmin, async (req, res) => {
       sets.push(`institution_id = $${params.length}`);
     }
 
+    // Email change. NOT in EDITABLE because it is not just a profile column —
+    // it is the student's LOGIN, which lives in Supabase auth. Moving only the
+    // profile copy is exactly the desync this used to avoid by refusing the edit:
+    // the student would keep signing in with the old address while every screen
+    // showed the new one. So we move the auth login too, and only then the
+    // profile column, reverting the login if the profile write fails so the two
+    // can never disagree.
+    let emailRevert = null;
+    if ('email' in (req.body || {})) {
+      const newEmail = normalizeEmail(req.body.email);
+      if (!isValidEmail(newEmail)) {
+        return res.status(400).json({ success: false, error: 'A valid email is required' });
+      }
+      // Only act on a real change — re-saving the form with the same email is a
+      // no-op, not an auth round-trip.
+      if (newEmail !== normalizeEmail(target.email || '')) {
+        const badDomain = await undeliverableDomainReason(newEmail);
+        if (badDomain) return res.status(400).json({ success: false, error: badDomain });
+
+        const clash = await one(
+          'select id from public.profiles where lower(email) = $1 and id <> $2',
+          [newEmail, req.params.id]
+        );
+        if (clash) {
+          return res.status(400).json({ success: false, error: 'That email is already registered' });
+        }
+
+        // Move the login first (the source of truth). email_confirm keeps it
+        // usable immediately — an admin-initiated change, on a domain we just
+        // confirmed resolves, doesn't need the student to re-confirm.
+        const { error: authErr } = await supabaseAdmin.auth.admin.updateUserById(req.params.id, {
+          email: newEmail,
+          email_confirm: true,
+        });
+        if (authErr) {
+          // Usually: the address is already taken by an auth user (possibly one
+          // with no profile row, which the check above can't see).
+          return res
+            .status(400)
+            .json({ success: false, error: `Could not change login email: ${authErr.message}` });
+        }
+        emailRevert = target.email; // put the login back if the profile write fails
+        params.push(newEmail);
+        sets.push(`email = $${params.length}`);
+      }
+    }
+
     if (sets.length) {
       params.push(req.params.id);
-      await query(`update public.profiles set ${sets.join(', ')} where id = $${params.length}`, params);
+      try {
+        await query(
+          `update public.profiles set ${sets.join(', ')} where id = $${params.length}`,
+          params
+        );
+      } catch (e) {
+        // The login already moved but the profile didn't — undo the login so the
+        // two stay in agreement, then surface the original failure.
+        if (emailRevert) {
+          await supabaseAdmin.auth.admin
+            .updateUserById(req.params.id, { email: emailRevert, email_confirm: true })
+            .catch((revertErr) =>
+              logger.error(`Could not revert login email after failed profile update: ${revertErr.message}`)
+            );
+        }
+        throw e;
+      }
     }
 
     // Platform URLs, when supplied. Upsert so re-saving a form does not

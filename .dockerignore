@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-fly.toml
-=======
 # .dockerignore — CodeKrack API
 #
 # Controls two different things, and the second one is the important one:
@@ -72,4 +69,3 @@ backend/logs
 .github
 .vscode
 .idea
->>>>>>> 686b449 (Add Fly deployment configuration)

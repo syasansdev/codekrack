@@ -14,11 +14,11 @@ import { supabaseAdmin } from '../config/supabase.js';
 import { query, one, many, tx } from '../config/db.js';
 import { verifyAdmin, verifySuperAdmin, NO_INSTITUTION } from '../middleware/supabaseAuth.js';
 import { serializeInstitution } from '../utils/serialize.js';
+import { isValidEmail, normalizeEmail, undeliverableDomainReason } from '../utils/email.js';
 import logger from '../utils/logger.js';
 
 const router = express.Router();
 
-const isValidEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(e || ''));
 const isUuid = (v) =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(v || ''));
 
@@ -100,7 +100,9 @@ router.post('/', verifySuperAdmin, async (req, res) => {
       error: 'Institution code is required — it identifies the institution if it is ever removed and re-added',
     });
   }
-  if (!isValidEmail(adminEmail)) {
+  // Normalise before validating (trailing space / mixed case), same as students.
+  const lower = normalizeEmail(adminEmail);
+  if (!isValidEmail(lower)) {
     return res.status(400).json({ success: false, error: 'A valid admin email is required' });
   }
   if (!adminPassword || String(adminPassword).length < 8) {
@@ -134,10 +136,18 @@ router.post('/', verifySuperAdmin, async (req, res) => {
     [trimmedCode]
   );
 
-  const lower = String(adminEmail).toLowerCase().trim();
   const dupe = await one('select id from public.profiles where lower(email) = $1', [lower]);
   if (dupe) {
     return res.status(400).json({ success: false, error: 'That admin email is already registered' });
+  }
+
+  // The admin login is created here and its password set directly, so this admin
+  // never receives an invite — but they DO receive password resets and, later,
+  // any admin-facing mail. Catching a dead domain now (this is exactly how
+  // "sjceadmin@edu.com" would slip in) beats a silent bounce later.
+  const badDomain = await undeliverableDomainReason(lower);
+  if (badDomain) {
+    return res.status(400).json({ success: false, error: badDomain });
   }
 
   let authUser;

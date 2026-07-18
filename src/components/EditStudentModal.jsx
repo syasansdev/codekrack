@@ -108,13 +108,14 @@ const EditStudentModal = ({ student, onClose, onUpdate }) => {
 
     try {
       // The server normalises URLs (adds https://), so we send them as typed.
-      // `email` is NOT sent: changing it would have to change the auth login
-      // too, and updateDoc only ever rewrote the profile copy — leaving the
-      // student still signing in with the OLD address while the UI showed the
-      // new one. It's read-only here until there's a proper change-email flow.
+      // `email` IS sent now: the API changes the Supabase login and the profile
+      // together, so a corrected address actually takes effect — the student
+      // then signs in with the new email (their password is unchanged). The
+      // server no-ops if the address is unchanged, so re-saving costs nothing.
       const updated = await updateStudent.mutateAsync({
         id: student.id,
         name: formData.name.trim(),
+        email: formData.email.trim(),
         registerNumber: formData.registerNumber.trim(),
         rollNumber: formData.rollNumber.trim(),
         department: formData.department.trim(),
@@ -256,7 +257,9 @@ const EditStudentModal = ({ student, onClose, onUpdate }) => {
                       className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${errors.email ? 'border-red-400 bg-red-50' : 'border-edge-strong hover:border-edge-strong'}`}
                       placeholder="student@example.com"
                     />
-                    {errors.email && <p className="text-red-500 text-xs mt-2 flex items-center gap-1"><span>⚠️</span>{errors.email}</p>}
+                    {errors.email
+                      ? <p className="text-red-500 text-xs mt-2 flex items-center gap-1"><span>⚠️</span>{errors.email}</p>
+                      : <p className="text-fg-subtle text-xs mt-2">This is the student's sign-in email. Changing it updates their login — they'll use the new address next time.</p>}
                   </div>
 
                   <div>
