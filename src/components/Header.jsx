@@ -336,6 +336,7 @@ const Header = () => {
     { name: 'Dashboard', path: '/dashboard' },
     { name: 'Leaderboard', path: '/leaderboard' },
     { name: 'Activity', path: '/activity' },
+    { name: 'Achievements', path: '/achievements' },
   ];
 
   // Check if current path is active

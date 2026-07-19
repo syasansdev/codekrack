@@ -7,6 +7,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import LandingPage from './pages/LandingPage';
 import HomePage from './pages/HomePage';
 import LeaderboardPage from './pages/LeaderboardPage';
+import AchievementsPage from './pages/AchievementsPage';
 
 // Components
 import Header from './components/Header';
@@ -128,6 +129,13 @@ function App() {
           <Route path="/activity" element={
             <ProtectedRoute>
               <ActivityPage />
+            </ProtectedRoute>
+          } />
+
+          {/* Achievements Page Route */}
+          <Route path="/achievements" element={
+            <ProtectedRoute>
+              <AchievementsPage />
             </ProtectedRoute>
           } />
           
