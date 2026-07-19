@@ -2,8 +2,9 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAdminScope } from '../hooks/useAdminScope';
-import { useLeaderboard } from '../hooks/queries/useDashboard';
+import { useLeaderboard, useDashboardStats } from '../hooks/queries/useDashboard';
 import { useRescrapeStudent } from '../hooks/queries/useStudents';
+import { useInstitutions } from '../hooks/queries/useInstitutions';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-toastify';
 import StudentViewDetails from './StudentViewDetails';
@@ -61,18 +62,25 @@ const AdminLeaderboard = () => {
     }
   ];
 
-  // College options
-  const collegeOptions = [
-    { id: 'all', name: 'All Colleges' },
-    { id: 'Engineering', name: 'Engineering' },
-    { id: 'Technology', name: 'Technology' }
-  ];
-
   // Items per page options
   const itemsPerPageOptions = [10, 20, 50, 100];
 
   // Institution admins only ever see their own institution's students.
   const { institutionId } = useAdminScope();
+
+  // Load institutions and dashboard stats
+  const { data: institutions = [] } = useInstitutions();
+  const { data: statsData } = useDashboardStats({ institutionId });
+  const platformStatsData = statsData?.stats?.platforms;
+
+  // College options dynamically based on onboarded colleges
+  const collegeOptions = useMemo(() => {
+    const base = [{ id: 'all', name: 'All Colleges' }];
+    institutions.forEach(inst => {
+      base.push({ id: inst.name, name: inst.name });
+    });
+    return base;
+  }, [institutions]);
 
   // Live leaderboard, without a Firestore listener.
   //
@@ -182,7 +190,7 @@ const AdminLeaderboard = () => {
   const filteredAndSortedStudents = students
     .filter(s => {
       const departmentMatch = departmentFilter === 'all' || s.department === departmentFilter;
-      const collegeMatch = collegeFilter === 'all' || s.college === collegeFilter;
+      const collegeMatch = collegeFilter === 'all' || s.college === collegeFilter || s.institutionName === collegeFilter;
       return departmentMatch && collegeMatch;
     })
     .map(s => ({
@@ -457,7 +465,9 @@ const AdminLeaderboard = () => {
                   {board.metricLabel}
                 </div>
                 <div className="text-xs text-fg-subtle">
-                  {students.filter(s => getScrapingStatus(s, board.id) === 'completed').length} students
+                  {platformStatsData 
+                    ? (platformStatsData[board.id]?.completed || 0) 
+                    : (activeBoard === board.id ? students.length : 0)} students
                 </div>
               </motion.button>
             ))}

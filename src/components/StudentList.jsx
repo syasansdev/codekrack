@@ -28,7 +28,6 @@ const StudentList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDepartment, setFilterDepartment] = useState('');
   const [filterYear, setFilterYear] = useState('');
-  const [filterCollege, setFilterCollege] = useState('');
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [scrapingStatus, setScrapingStatus] = useState({});
@@ -94,15 +93,18 @@ const handleViewDetails = async (student) => {
       (student.rollNumber && student.rollNumber.toLowerCase().includes(searchTerm.toLowerCase()));
       
     const matchesDepartment = filterDepartment === '' || student.department === filterDepartment;
-    const matchesYear = filterYear === '' || student.year === filterYear;
-    const matchesCollege = filterCollege === '' || student.college === filterCollege;
     
-    return matchesSearch && matchesDepartment && matchesYear && matchesCollege;
+    const matchesYear = filterYear === '' || 
+      (student.year?.toString() === filterYear) ||
+      (filterYear === '1' && student.year?.toString().toLowerCase().includes('1st')) ||
+      (filterYear === '2' && student.year?.toString().toLowerCase().includes('2nd')) ||
+      (filterYear === '3' && student.year?.toString().toLowerCase().includes('3rd')) ||
+      (filterYear === '4' && student.year?.toString().toLowerCase().includes('4th'));
+      
+    return matchesSearch && matchesDepartment && matchesYear;
   });
   
-  const departments = [...new Set(students.map(s => s.department).filter(Boolean))];
-  const years = [...new Set(students.map(s => s.year).filter(Boolean))].sort();
-  const colleges = [...new Set(students.map(s => s.college).filter(Boolean))];
+  const departments = [...new Set(students.map(s => s.department).filter(Boolean))].sort();
 
   const PlatformIcon = ({ platform }) => {
     const icons = {
@@ -203,7 +205,7 @@ const handleViewDetails = async (student) => {
           transition={{ duration: 0.4, delay: 0.3 }}
         >
           <h3 className="text-lg font-bold text-fg mb-4">Filter Students</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label htmlFor="search" className="block text-sm font-semibold text-fg-muted mb-2">
                 Search Students
@@ -220,29 +222,6 @@ const handleViewDetails = async (student) => {
                 <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                   <svg className="w-5 h-5 text-fg-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </div>
-              </motion.div>
-            </div>
-            <div>
-              <label htmlFor="college" className="block text-sm font-semibold text-fg-muted mb-2">
-                Filter by College
-              </label>
-              <motion.div whileHover={{ scale: 1.01 }} className="relative">
-                <select
-                  id="college"
-                  value={filterCollege}
-                  onChange={(e) => setFilterCollege(e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-edge-strong rounded-lg focus:outline-none focus:border-blue-500 transition-colors bg-surface appearance-none"
-                >
-                  <option value="">All Colleges</option>
-                  {colleges.map(college => (
-                    <option key={college} value={college}>{college}</option>
-                  ))}
-                </select>
-                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                  <svg className="w-5 h-5 text-fg-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </div>
               </motion.div>
@@ -284,9 +263,10 @@ const handleViewDetails = async (student) => {
                   className="w-full px-4 py-3 border-2 border-edge-strong rounded-lg focus:outline-none focus:border-blue-500 transition-colors bg-surface appearance-none"
                 >
                   <option value="">All Years</option>
-                  {years.map(year => (
-                    <option key={year} value={year}>Year {year}</option>
-                  ))}
+                  <option value="1">1st Year</option>
+                  <option value="2">2nd Year</option>
+                  <option value="3">3rd Year</option>
+                  <option value="4">4th Year</option>
                 </select>
                 <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                   <svg className="w-5 h-5 text-fg-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -298,7 +278,7 @@ const handleViewDetails = async (student) => {
           </div>
           
           <AnimatePresence>
-            {(searchTerm || filterDepartment || filterYear || filterCollege) && (
+            {(searchTerm || filterDepartment || filterYear) && (
               <motion.div 
                 className="mt-4 flex justify-end"
                 initial={{ opacity: 0, y: -10 }}
@@ -310,7 +290,6 @@ const handleViewDetails = async (student) => {
                     setSearchTerm('');
                     setFilterDepartment('');
                     setFilterYear('');
-                    setFilterCollege('');
                   }}
                   className="px-4 py-2 text-sm font-semibold text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors flex items-center gap-1"
                   whileHover={{ scale: 1.05 }}

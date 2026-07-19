@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useStudentLeaderboard } from '../hooks/queries/useDashboard';
+import { useInstitutions } from '../hooks/queries/useInstitutions';
 import { Link } from 'react-router-dom';
 
 // Student-facing leaderboard.
@@ -67,12 +68,17 @@ const Leaderboard = () => {
     }
   ];
 
-  // College options
-  const collegeOptions = [
-    { id: 'all', name: 'All Colleges' },
-    { id: 'Engineering', name: 'Engineering' },
-    { id: 'Technology', name: 'Technology' }
-  ];
+  // Load onboarded institutions
+  const { data: institutions = [] } = useInstitutions();
+
+  // College options dynamically based on onboarded institutions
+  const collegeOptions = useMemo(() => {
+    const base = [{ id: 'all', name: 'All Colleges' }];
+    institutions.forEach(inst => {
+      base.push({ id: inst.name, name: inst.name });
+    });
+    return base;
+  }, [institutions]);
 
   // Items per page options
   const itemsPerPageOptions = [10, 20, 50, 100];
@@ -180,7 +186,7 @@ const Leaderboard = () => {
       const matchesDepartment = departmentFilter === 'all' || user.department === departmentFilter;
       
       // College filter
-      const matchesCollege = collegeFilter === 'all' || user.college === collegeFilter;
+      const matchesCollege = collegeFilter === 'all' || user.college === collegeFilter || user.institutionName === collegeFilter;
       
       // Platform filter - only show users who have valid data for the selected platform
       const platformMetric = getPlatformMetric(user, selectedPlatform);
