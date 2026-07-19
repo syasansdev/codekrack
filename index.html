@@ -26,12 +26,7 @@
       (function () {
         try {
           var stored = localStorage.getItem('codekrack-theme');
-          // No stored choice means "follow the OS", which is also the default
-          // for a first-time visitor.
-          var dark =
-            stored === 'dark' ||
-            (stored !== 'light' &&
-              window.matchMedia('(prefers-color-scheme: dark)').matches);
+          var dark = stored === 'dark';
           document.documentElement.classList.toggle('dark', dark);
         } catch (e) {
           // Storage can throw in private mode or with cookies blocked. Falling

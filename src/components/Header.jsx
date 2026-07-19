@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { contestsApi } from '../services/api';
+import ThemeToggle from './ui/ThemeToggle';
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -416,6 +417,9 @@ const Header = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             </motion.button>
+            
+            {/* Theme Toggle Button */}
+            <ThemeToggle className="ml-1 shadow-sm border-edge-strong flex shrink-0" />
             
             {user && (
               <div className="relative" ref={dropdownRef}>
@@ -832,17 +836,20 @@ const Header = () => {
                 {/* Header with Close Button */}
                 <div className="flex items-center justify-between p-4 border-b border-edge bg-surface sticky top-0">
                   <h2 className="text-lg font-semibold text-fg">Menu</h2>
-                  <motion.button
-                    onClick={closeMobileMenu}
-                    className="p-2 rounded-full hover:bg-surface-3 transition-colors duration-200"
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    aria-label="Close menu"
-                  >
-                    <svg className="h-5 w-5 text-fg-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </motion.button>
+                  <div className="flex items-center gap-2">
+                    <ThemeToggle className="shadow-sm border-edge-strong" />
+                    <motion.button
+                      onClick={closeMobileMenu}
+                      className="p-2 rounded-full hover:bg-surface-3 transition-colors duration-200"
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      aria-label="Close menu"
+                    >
+                      <svg className="h-5 w-5 text-fg-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </motion.button>
+                  </div>
                 </div>
 
                 <div className="p-4 space-y-4">

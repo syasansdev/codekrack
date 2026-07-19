@@ -85,7 +85,7 @@ export const ThemeProvider = ({ children }) => {
     return () => window.removeEventListener('storage', onStorage);
   }, []);
 
-  const theme = preference ?? (systemDark ? 'dark' : 'light');
+  const theme = preference ?? 'light';
 
   useEffect(() => {
     const isDark = theme === 'dark';
