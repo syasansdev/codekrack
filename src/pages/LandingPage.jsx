@@ -41,6 +41,7 @@ const LandingPage = () => {
 
   // Auth modal state
   const [isSignInModalOpen, setIsSignInModalOpen] = useState(false);
+  const [isOnboardingModalOpen, setIsOnboardingModalOpen] = useState(false);
 
   // The page scrollbar belongs to <html>, which the `theme-light` wrapper below
   // cannot reach — so with the app set to dark, this page rendered white with a
@@ -784,6 +785,58 @@ const socialLinks = [
           )}
         </AnimatePresence>
 
+        {/* Onboarding Modal */}
+        <AnimatePresence>
+          {isOnboardingModalOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+              onClick={() => setIsOnboardingModalOpen(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                transition={{ type: "spring", duration: 0.5 }}
+                className="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl flex flex-col border border-gray-100"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Modal Header */}
+                <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                  <div className="flex items-center gap-3">
+                    <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse" />
+                    <h2 className="text-xl font-bold text-slate-800">Student Onboarding Form</h2>
+                  </div>
+                  <button
+                    onClick={() => setIsOnboardingModalOpen(false)}
+                    className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-200 transition-colors"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Modal Body (Iframe container) */}
+                <div className="flex-1 overflow-y-auto bg-gray-50 p-2 sm:p-4 flex justify-center">
+                  <div className="w-full max-w-3xl bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex justify-center h-full">
+                    <iframe
+                      src="https://docs.google.com/forms/d/e/1FAIpQLScQnkA40NyLSUl1QWtDw-iiklVX8YcvPEkDJOFEiZ1qjPzhsQ/viewform?embedded=true"
+                      width="100%"
+                      height="800"
+                      className="w-full min-h-[70vh] border-0"
+                    >
+                      Loading…
+                    </iframe>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Hero Section */}
         <main className="pt-[72px] sm:pt-[88px]">
           <div className="relative pt-12 sm:pt-16 md:pt-24 pb-12 sm:pb-16 md:pb-20 px-4 sm:px-6 overflow-hidden bg-brand-mesh">
@@ -982,15 +1035,20 @@ const socialLinks = [
                   </div>
 
                   <div className="shrink-0 flex flex-col items-center gap-2.5">
-                    <a
-                      href="https://docs.google.com/forms/d/e/1FAIpQLSfQ3g58H1gS912_codekrack_onboarding/viewform" // Change this to your actual GForm URL
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <button
+                      onClick={() => setIsOnboardingModalOpen(true)}
                       className="btn-accent px-8 py-3.5 font-bold shadow-lg hover:shadow-orange-200/50 hover:bg-accent-600 transition-all duration-300 w-full sm:w-auto text-center"
                     >
                       Onboarding Form →
+                    </button>
+                    <a 
+                      href="https://docs.google.com/forms/d/e/1FAIpQLScQnkA40NyLSUl1QWtDw-iiklVX8YcvPEkDJOFEiZ1qjPzhsQ/viewform"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[11px] text-blue-500 hover:text-blue-700 font-semibold tracking-wide underline transition-colors"
+                    >
+                      Open in new tab instead
                     </a>
-                    <span className="text-[10px] text-gray-400 font-semibold tracking-wide uppercase">Register handles today</span>
                   </div>
                 </div>
               </motion.div>
