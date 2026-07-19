@@ -243,8 +243,8 @@ const Footer = () => {
               </motion.div>
               <p className="text-sm text-fg-muted">for better education.</p>
             </div>
-            <p className="text-xs text-fg-subtle">
-              A product of{" "}
+            <div className="text-xs text-fg-subtle flex flex-col sm:flex-row items-center gap-1.5 justify-center md:justify-start">
+              <span className="font-extrabold tracking-widest text-slate-800">A product of SYASAN'S CAREER ANALYTICS</span>
               <a
                 href="https://syasans.com/"
                 target="_blank"
@@ -254,11 +254,11 @@ const Footer = () => {
                 <img
                   src="/colour BIG.jpg"
                   alt="Syasans Career Analytics"
-                  className="h-5 w-auto object-contain opacity-80 hover:opacity-100 transition-opacity ml-1"
+                  className="h-5 w-auto object-contain opacity-85 hover:opacity-100 transition-all hover:scale-105 ml-1"
                   style={{ maxWidth: '100px' }}
                 />
               </a>
-            </p>
+            </div>
           </div>
           
           <div className="flex items-center space-x-1">

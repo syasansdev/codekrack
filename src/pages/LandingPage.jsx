@@ -757,22 +757,24 @@ const socialLinks = [
 
         {/* Syasans Parent Company Ribbon */}
         <motion.div
-          className="w-full bg-gradient-to-r from-[#e8f0fe] via-[#f8f9ff] to-[#fff4ed] border-b border-blue-100/60 py-2 px-4 flex items-center justify-center gap-4"
+          className="w-full bg-gradient-to-r from-[#e8f0fe] via-[#f8f9ff] to-[#fff4ed] border-b border-blue-100/60 py-3 px-4 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.6, duration: 0.5 }}
         >
-          <div className="w-8 h-px bg-gradient-to-r from-transparent to-blue-300" />
-          <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-blue-400">A product of</span>
+          <div className="flex items-center gap-2 text-center">
+            <span className="text-[11px] font-black uppercase tracking-[0.2em] text-blue-500">A product of</span>
+            <span className="text-xs sm:text-sm font-extrabold tracking-widest text-slate-800">SYASAN'S CAREER ANALYTICS</span>
+          </div>
+          <div className="hidden sm:block w-1.5 h-1.5 rounded-full bg-blue-300" />
           <a href="https://syasans.com/" target="_blank" rel="noopener noreferrer" className="flex items-center">
             <img
               src="/colour BIG.jpg"
               alt="Syasans Career Analytics"
-              className="h-[26px] sm:h-[30px] w-auto object-contain hover:opacity-80 transition-opacity"
-              style={{ maxWidth: '180px' }}
+              className="h-7 sm:h-[32px] w-auto object-contain hover:scale-105 transition-transform duration-200"
+              style={{ maxWidth: '200px' }}
             />
           </a>
-          <div className="w-8 h-px bg-gradient-to-l from-transparent to-orange-300" />
         </motion.div>
 
         {/* SignIn Component */}
@@ -823,15 +825,18 @@ const socialLinks = [
                   href="https://syasans.com/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group inline-flex items-center gap-3 px-5 py-2.5 bg-white rounded-2xl border border-gray-200 shadow-md hover:shadow-xl hover:border-blue-200 transition-all duration-300"
+                  className="group inline-flex flex-col sm:flex-row items-center gap-3 px-6 py-3.5 bg-white rounded-2xl border border-blue-100 shadow-md hover:shadow-2xl hover:border-blue-300 transition-all duration-300"
                 >
-                  <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-gray-400 group-hover:text-blue-500 transition-colors">A product of</span>
-                  <div className="w-px h-5 bg-gray-200" />
+                  <div className="flex flex-col sm:flex-row items-center gap-2">
+                    <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.2em] text-blue-500">A product of</span>
+                    <span className="text-xs sm:text-sm font-extrabold tracking-widest text-slate-800 group-hover:text-blue-600 transition-colors">SYASAN'S CAREER ANALYTICS</span>
+                  </div>
+                  <div className="hidden sm:block w-px h-6 bg-blue-100" />
                   <img
                     src="/colour BIG.jpg"
                     alt="Syasans Career Analytics"
-                    className="h-8 w-auto object-contain"
-                    style={{ maxWidth: '160px' }}
+                    className="h-8 sm:h-9 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+                    style={{ maxWidth: '185px' }}
                   />
                 </a>
               </motion.div>
@@ -951,6 +956,44 @@ const socialLinks = [
                   Everything you need to track, grow and showcase your coding career.
                 </motion.p>
               </div>
+
+              {/* Onboarding Call to Action Banner (Google Onboarding Form) */}
+              <motion.div
+                className="mb-14 max-w-4xl mx-auto"
+                variants={fadeInUpVariants}
+              >
+                <div className="relative overflow-hidden rounded-3xl border border-blue-100 shadow-xl bg-white p-6 sm:p-10 flex flex-col md:flex-row items-center justify-between gap-6 sm:gap-8">
+                  {/* Premium gradient decoration */}
+                  <div className="absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-blue-50/50 to-transparent -z-10" />
+                  <div className="absolute top-0 right-0 w-28 h-28 bg-orange-100/30 rounded-full filter blur-3xl -z-10" />
+
+                  <div className="flex-1 text-center md:text-left">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-bold uppercase tracking-wider mb-3">
+                      <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                      Platform Onboarding
+                    </span>
+                    <h3 className="text-xl sm:text-2xl font-black text-fg mb-3 tracking-tight">
+                      Join Our Coding Dashboard Cohort
+                    </h3>
+                    <p className="text-sm sm:text-base text-gray-500 leading-relaxed max-w-2xl">
+                      We are currently onboarding developers, competitive programmers, and students to set up profile tracking on CodeKrack. 
+                      Register your handles (LeetCode, GitHub, Codeforces, etc.) using our onboarding form to unlock your unified dashboard and placement insights.
+                    </p>
+                  </div>
+
+                  <div className="shrink-0 flex flex-col items-center gap-2.5">
+                    <a
+                      href="https://docs.google.com/forms/d/e/1FAIpQLSfQ3g58H1gS912_codekrack_onboarding/viewform" // Change this to your actual GForm URL
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn-accent px-8 py-3.5 font-bold shadow-lg hover:shadow-orange-200/50 hover:bg-accent-600 transition-all duration-300 w-full sm:w-auto text-center"
+                    >
+                      Onboarding Form →
+                    </a>
+                    <span className="text-[10px] text-gray-400 font-semibold tracking-wide uppercase">Register handles today</span>
+                  </div>
+                </div>
+              </motion.div>
               <motion.div
                 className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 md:gap-8"
                 variants={containerVariants}
@@ -1001,9 +1044,12 @@ const socialLinks = [
 
                 <div className="relative z-10 px-8 sm:px-14 py-10 sm:py-14 flex flex-col sm:flex-row items-center gap-8 sm:gap-12">
                   {/* Left: label + logo */}
-                  <div className="flex flex-col items-center sm:items-start gap-3 shrink-0">
-                    <p className="text-[10px] font-black uppercase tracking-[0.25em] text-blue-400">A product of</p>
-                    <a href="https://syasans.com/" target="_blank" rel="noopener noreferrer">
+                  <div className="flex flex-col items-center sm:items-start gap-2 shrink-0">
+                    <div className="flex flex-col items-center sm:items-start gap-1">
+                      <p className="text-[10px] font-black uppercase tracking-[0.25em] text-blue-500">A product of</p>
+                      <p className="text-xs font-extrabold tracking-widest text-slate-800">SYASAN'S CAREER ANALYTICS</p>
+                    </div>
+                    <a href="https://syasans.com/" target="_blank" rel="noopener noreferrer" className="mt-1">
                       <motion.img
                         src="/colour BIG.jpg"
                         alt="Syasans Career Analytics"
@@ -1815,13 +1861,16 @@ Learning Data Structures and Algorithms (DSA) strengthens problem-solving skills
           <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
             <p className="text-xs sm:text-sm text-fg-muted">&copy; 2025 CodeKrack. All rights reserved.</p>
             <span className="hidden sm:inline text-fg-subtle">·</span>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-fg-subtle">A product of</span>
-              <a href="https://syasans.com/" target="_blank" rel="noopener noreferrer">
+            <div className="flex flex-col sm:flex-row items-center gap-1.5 sm:gap-2">
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-fg-subtle">A product of</span>
+                <span className="text-xs font-extrabold tracking-widest text-slate-800">SYASAN'S CAREER ANALYTICS</span>
+              </div>
+              <a href="https://syasans.com/" target="_blank" rel="noopener noreferrer" className="flex items-center">
                 <img
                   src="/colour BIG.jpg"
                   alt="Syasans Career Analytics"
-                  className="h-5 sm:h-6 w-auto object-contain opacity-80 hover:opacity-100 transition-opacity"
+                  className="h-5 w-auto object-contain opacity-85 hover:opacity-100 transition-all hover:scale-105"
                   style={{ maxWidth: '110px' }}
                 />
               </a>
