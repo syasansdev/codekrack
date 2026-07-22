@@ -823,7 +823,7 @@ const socialLinks = [
                 <div className="flex-1 overflow-y-auto bg-gray-50 p-2 sm:p-4 flex justify-center">
                   <div className="w-full max-w-3xl bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex justify-center h-full">
                     <iframe
-                      src="https://docs.google.com/forms/d/e/1FAIpQLScQnkA40NyLSUl1QWtDw-iiklVX8YcvPEkDJOFEiZ1qjPzhsQ/viewform?embedded=true"
+                      src="https://docs.google.com/forms/d/e/1FAIpQLSdRGmz5JEZJUx3tEM9LQ_lcDsDIl45qHIAuShVG_UrYjctkFg/viewform?embedded=true"
                       width="100%"
                       height="800"
                       className="w-full min-h-[70vh] border-0"
@@ -1042,7 +1042,7 @@ const socialLinks = [
                       Onboarding Form →
                     </button>
                     <a 
-                      href="https://docs.google.com/forms/d/e/1FAIpQLScQnkA40NyLSUl1QWtDw-iiklVX8YcvPEkDJOFEiZ1qjPzhsQ/viewform"
+                      href="https://docs.google.com/forms/d/e/1FAIpQLSdRGmz5JEZJUx3tEM9LQ_lcDsDIl45qHIAuShVG_UrYjctkFg/viewform"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-[11px] text-blue-500 hover:text-blue-700 font-semibold tracking-wide underline transition-colors"
