@@ -34,7 +34,7 @@ if (/@db\.[a-z0-9]+\.supabase\.co/.test(DATABASE_URL)) {
   process.exit(1);
 }
 
-const sha = (s) => crypto.createHash('sha256').update(s).digest('hex').slice(0, 12);
+const sha = (s) => crypto.createHash('sha256').update(s.replace(/\r\n/g, '\n')).digest('hex').slice(0, 12);
 
 const client = new pg.Client({
   connectionString: DATABASE_URL,
@@ -92,20 +92,29 @@ const run = async () => {
       break;
     }
 
+    const cleanSql = sql.replace(/^\uFEFF/, '').trim();
+    const noTransaction = cleanSql.startsWith('-- NO_TRANSACTION');
+
     process.stdout.write(`→ ${filename} ... `);
     try {
-      await client.query('begin');
+      if (!noTransaction) {
+        await client.query('begin');
+      }
       await client.query(sql);
       await client.query(
         'insert into public.schema_migrations (filename, checksum) values ($1, $2)',
         [filename, checksum]
       );
-      await client.query('commit');
+      if (!noTransaction) {
+        await client.query('commit');
+      }
       console.log('ok');
       ran++;
     } catch (e) {
-      await client.query('rollback');
-      console.log('FAILED (rolled back)');
+      if (!noTransaction) {
+        await client.query('rollback');
+      }
+      console.log('FAILED' + (noTransaction ? '' : ' (rolled back)'));
       console.error(`\n  ${e.message}`);
       if (e.position) {
         const upto = sql.slice(0, Number(e.position));

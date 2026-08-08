@@ -20,6 +20,7 @@ const METRIC_LABEL = {
   github: 'Repositories',
   codeforces: 'Problems Solved',
   atcoder: 'Problems Solved',
+  hackerrank: 'Problems Solved',
 };
 
 // =============================================================================

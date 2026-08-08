@@ -142,6 +142,32 @@ const BADGES_CONFIG = [
     color: 'from-slate-700 to-slate-900',
     iconBg: '#F1F5F9',
     textColor: 'text-slate-700'
+  },
+  
+  // HackerRank Series
+  {
+    id: 'hr_star',
+    series: 'hackerrank',
+    title: 'HackerRank Star',
+    threshold: 10,
+    platform: 'HackerRank',
+    description: 'Began the journey on HackerRank. Solved the first 10 coding challenges.',
+    congrats: 'Great start on HackerRank! You have solved 10 challenges and earned your first programming proficiency footprints. Keep it up!',
+    color: 'from-emerald-400 to-green-600',
+    iconBg: '#F0FDF4',
+    textColor: 'text-green-600'
+  },
+  {
+    id: 'hr_pro',
+    series: 'hackerrank',
+    title: 'HackerRank Pro',
+    threshold: 100,
+    platform: 'HackerRank',
+    description: 'Solid coding expertise on HackerRank. Solved 100 coding challenges.',
+    congrats: 'Incredible dedication! Solving 100 challenges on HackerRank demonstrates strong algorithm implementation skills and data structures fluency. Pro tier achieved!',
+    color: 'from-green-500 via-emerald-600 to-teal-700',
+    iconBg: '#DCFCE7',
+    textColor: 'text-emerald-600'
   }
 ];
 
@@ -156,18 +182,20 @@ const AchievementsPage = () => {
 
   // Derived student data
   const studentStats = useMemo(() => {
-    if (!profile) return { leetcode: 0, codeforces: 0, atcoder: 0, github: 0, combined: 0 };
+    if (!profile) return { leetcode: 0, codeforces: 0, atcoder: 0, github: 0, hackerrank: 0, combined: 0 };
     const p = profile.platformData || {};
     const lc = p.leetcode?.totalSolved || 0;
     const cf = p.codeforces?.problemsSolved || 0;
     const ac = p.atcoder?.problemsSolved || 0;
     const gh = p.github?.repositories || 0;
+    const hr = p.hackerrank?.problemsSolved || 0;
     return {
       leetcode: lc,
       codeforces: cf,
       atcoder: ac,
       github: gh,
-      combined: lc + cf + ac
+      hackerrank: hr,
+      combined: lc + cf + ac + hr
     };
   }, [profile]);
 
@@ -194,6 +222,7 @@ const AchievementsPage = () => {
         else if (badge.series === 'codeforces') currentVal = studentStats.codeforces;
         else if (badge.series === 'atcoder') currentVal = studentStats.atcoder;
         else if (badge.series === 'github') currentVal = studentStats.github;
+        else if (badge.series === 'hackerrank') currentVal = studentStats.hackerrank;
         else if (badge.series === 'general') currentVal = studentStats.combined;
 
         const isUnlocked = currentVal >= badge.threshold;
@@ -607,6 +636,16 @@ const AchievementsPage = () => {
                     </div>
                     <div className="h-2 w-full bg-surface-2 rounded-full overflow-hidden">
                       <div className="h-full bg-slate-700 rounded-full" style={{ width: `${Math.min((studentStats.github / 5) * 100, 100)}%` }} />
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between text-xs font-semibold text-fg-subtle mb-1.5">
+                      <span>HackerRank Solved</span>
+                      <span className="text-fg font-bold">{studentStats.hackerrank}</span>
+                    </div>
+                    <div className="h-2 w-full bg-surface-2 rounded-full overflow-hidden">
+                      <div className="h-full bg-green-500 rounded-full" style={{ width: `${Math.min((studentStats.hackerrank / 100) * 100, 100)}%` }} />
                     </div>
                   </div>
                 </div>

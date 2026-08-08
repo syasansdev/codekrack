@@ -319,18 +319,80 @@ const scrapeAtCoder = async (url) => {
 };
 
 /**
+ * HackerRank — official public profile REST API. No API key required.
+ * Reads the list of badges and sums the solved challenges count.
+ */
+const scrapeHackerRank = async (url) => {
+  try {
+    const username = extractUsername(url, /hackerrank\.com\/(?:profile\/)?([^/?]+)/);
+    if (!username) return null;
+
+    const response = await fetch(`https://www.hackerrank.com/rest/hackers/${encodeURIComponent(username)}/badges`, {
+      headers: {
+        'User-Agent': USER_AGENT,
+        'Accept': 'application/json',
+      },
+    });
+
+    if (response.status === 404) {
+      console.log(`HackerRank: user not found: ${username}`);
+      return null;
+    }
+
+    if (!response.ok) {
+      console.log(`HackerRank API HTTP ${response.status} for ${username}`);
+      return null;
+    }
+
+    const json = await response.json();
+    if (!json || !Array.isArray(json.models)) {
+      console.log(`HackerRank: unexpected response payload format for ${username}`);
+      return null;
+    }
+
+    // Sum solved challenge counts across all badges
+    let totalSolved = 0;
+    const badges = [];
+
+    for (const model of json.models) {
+      const solvedCount = Number(model.solved) || 0;
+      totalSolved += solvedCount;
+      badges.push({
+        name: model.badge_name || '',
+        stars: Number(model.stars) || 0,
+        solved: solvedCount,
+        points: Number(model.current_points) || 0,
+      });
+    }
+
+    return {
+      username,
+      problemsSolved: totalSolved,
+      solved: totalSolved,
+      badgesCount: json.models.length,
+      badges,
+      lastUpdated: new Date().toISOString(),
+    };
+  } catch (error) {
+    console.error('HackerRank scraping error:', error.message);
+    return null;
+  }
+};
+
+/**
  * Scrape every platform for one student. Platforms run in parallel; a slow or
  * failing platform can't block the others (Promise.allSettled + per-platform
  * 25s timeout).
  */
 const scrapeAllPlatforms = async (platformUrls) => {
-  const results = { leetcode: null, github: null, codeforces: null, atcoder: null };
+  const results = { leetcode: null, github: null, codeforces: null, atcoder: null, hackerrank: null };
 
   const scrapers = {
     leetcode: scrapeLeetCode,
     github: scrapeGitHub,
     codeforces: scrapeCodeforces,
     atcoder: scrapeAtCoder,
+    hackerrank: scrapeHackerRank,
   };
 
   const tasks = Object.entries(platformUrls).map(async ([platform, url]) => {
@@ -355,6 +417,7 @@ export {
   scrapeGitHub,
   scrapeCodeforces,
   scrapeAtCoder,
+  scrapeHackerRank,
   scrapeAllPlatforms,
   getCodeforcesRank,
   getAtCoderRank,

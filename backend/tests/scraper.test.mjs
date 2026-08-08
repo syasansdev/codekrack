@@ -70,17 +70,18 @@ try {
         github: 'https://github.com/torvalds',
         leetcode: 'https://leetcode.com/u/neal_wu',
         codeforces: 'https://codeforces.com/profile/tourist',
+        hackerrank: 'https://www.hackerrank.com/HarsHa_1',
         // Deliberately bogus: proves a failure keeps old data and records why.
         atcoder: 'https://atcoder.jp/users/zz_definitely_not_a_real_user_9999',
       },
     }),
   });
   const sid = (await r.json()).uid;
-  ok('setup: student with 3 real profiles + 1 deliberately bogus');
+  ok('setup: student with 4 real profiles + 1 deliberately bogus');
 
   const before = await many(`select platform, status, metric from public.platform_stats where user_id=$1 order by platform`, [sid]);
-  before.length === 4 && before.every((x) => x.status === 'pending' && x.metric === 0)
-    ? ok('4 platform rows seeded as pending, metric=0')
+  before.length === 5 && before.every((x) => x.status === 'pending' && x.metric === 0)
+    ? ok('5 platform rows seeded as pending, metric=0')
     : no('seed wrong: ' + JSON.stringify(before));
 
   // --- open an SSE stream, so we can prove the scraper's writes reach a browser
@@ -139,6 +140,11 @@ try {
     ? ok(`codeforces -> completed, ${cf.metric} solved, rating=${cf.rating}, rank=${cf.rank}`)
     : no('codeforces: ' + JSON.stringify({ s: cf?.status, m: cf?.metric, e: cf?.error }));
 
+  const hr = after.find((x) => x.platform === 'hackerrank');
+  hr?.status === 'completed' && hr.metric > 0
+    ? ok(`hackerrank -> completed, ${hr.metric} solved, badgesCount=${hr.data?.badgesCount}`)
+    : no('hackerrank: ' + JSON.stringify({ s: hr?.status, m: hr?.metric, e: hr?.error }));
+
   const ac = after.find((x) => x.platform === 'atcoder');
   ac?.status === 'failed'
     ? ok(`atcoder (bogus user) -> failed, and the reason was recorded: "${String(ac.error).slice(0, 40)}…"`)
@@ -153,9 +159,9 @@ try {
     : no('metric mapping looks wrong');
 
   const totals = await one('select total_solved from public.student_totals where user_id=$1', [sid]);
-  const expected = (lc?.metric || 0) + (cf?.metric || 0);
+  const expected = (lc?.metric || 0) + (cf?.metric || 0) + (hr?.metric || 0);
   totals?.total_solved === expected
-    ? ok(`student_totals = ${totals.total_solved} (leetcode ${lc.metric} + codeforces ${cf.metric}; github repos EXCLUDED, failed atcoder excluded)`)
+    ? ok(`student_totals = ${totals.total_solved} (leetcode ${lc.metric} + codeforces ${cf.metric} + hackerrank ${hr.metric}; github repos EXCLUDED, failed atcoder excluded)`)
     : no(`total_solved=${totals?.total_solved}, expected ${expected}`);
 
   console.log('\n=== did the browser find out? ===');

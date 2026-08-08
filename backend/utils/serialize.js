@@ -10,7 +10,7 @@
 // When the frontend is settled, this is the one file to change.
 
 /** The scraped platforms — these get a platform_stats row each. */
-export const PLATFORMS = ['leetcode', 'github', 'codeforces', 'atcoder'];
+export const PLATFORMS = ['leetcode', 'github', 'codeforces', 'atcoder', 'hackerrank'];
 
 /**
  * Profile URLs that are NOT scraped. They live in profiles.links, because a CV
@@ -18,7 +18,7 @@ export const PLATFORMS = ['leetcode', 'github', 'codeforces', 'atcoder'];
  * On the wire they are merged back into platformUrls, which is the single map
  * the forms and views already use.
  */
-export const LINK_KEYS = ['hackerrank', 'linkedin', 'resume'];
+export const LINK_KEYS = ['linkedin', 'resume'];
 
 /** The SQL that feeds serializeStudent(). Callers add WHERE / ORDER BY / LIMIT. */
 export const STUDENT_SELECT = `

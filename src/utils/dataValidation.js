@@ -173,6 +173,11 @@ export const calculateTotalProblems = (platformData) => {
     total += parseInt(platformData.atcoder.problemsSolved) || 0;
   }
 
+  // HackerRank problems
+  if (platformData.hackerrank?.problemsSolved) {
+    total += parseInt(platformData.hackerrank.problemsSolved) || 0;
+  }
+
   return total;
 };
 

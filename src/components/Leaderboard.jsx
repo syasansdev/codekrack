@@ -65,6 +65,14 @@ const Leaderboard = () => {
       metricLabel: 'Repositories',
       dataField: 'github',
       metricField: 'repositories'
+    },
+    { 
+      id: 'hackerrank', 
+      name: 'HackerRank', 
+      color: 'green',
+      metricLabel: 'Problems Solved',
+      dataField: 'hackerrank',
+      metricField: 'problemsSolved'
     }
   ];
 

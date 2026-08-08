@@ -29,6 +29,7 @@ import {
   scrapeGitHub,
   scrapeCodeforces,
   scrapeAtCoder,
+  scrapeHackerRank,
 } from '../services/scraper/platforms.js';
 
 const SCRAPERS = {
@@ -36,6 +37,7 @@ const SCRAPERS = {
   github: scrapeGitHub,
   codeforces: scrapeCodeforces,
   atcoder: scrapeAtCoder,
+  hackerrank: scrapeHackerRank,
 };
 
 // The platform's headline number — the one both leaderboards sort by. Same
@@ -48,6 +50,7 @@ const metricFor = (platform, data) => {
     case 'github':     return Number(data.repositories) || 0;
     case 'codeforces': return Number(data.problemsSolved) || 0;
     case 'atcoder':    return Number(data.problemsSolved) || 0;
+    case 'hackerrank': return Number(data.problemsSolved) || 0;
     default:           return 0;
   }
 };

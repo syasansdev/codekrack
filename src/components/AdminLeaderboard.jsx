@@ -59,6 +59,14 @@ const AdminLeaderboard = () => {
       statusField: 'atcoderStatus',
       dataField: 'atcoder',
       metricField: 'problemsSolved'
+    },
+    { 
+      id: 'hackerrank', 
+      name: 'HackerRank', 
+      metricLabel: 'Problems Solved',
+      statusField: 'hackerrankStatus',
+      dataField: 'hackerrank',
+      metricField: 'problemsSolved'
     }
   ];
 
@@ -435,7 +443,7 @@ const AdminLeaderboard = () => {
             </div>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             {boards.map((board, index) => (
               <motion.button
                 key={board.id}
