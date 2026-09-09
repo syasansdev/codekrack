@@ -90,6 +90,7 @@ const StudentOnboardingForm = ({ isOpen = true, onClose, onSignIn }) => {
     data: institutions = [],
     isLoading: institutionsLoading,
     error: institutionsError,
+    refetch: refetchInstitutions,
   } = usePublicInstitutions({ enabled: isOpen });
 
   const [form, setForm] = useState(EMPTY);
@@ -211,16 +212,33 @@ const StudentOnboardingForm = ({ isOpen = true, onClose, onSignIn }) => {
 
   if (!isOpen) return null;
 
+  // Two presentations from one component:
+  //
+  //   modal  (landing page)  — onClose given: dark backdrop, click-outside to
+  //                            dismiss, a close button.
+  //   page   (/register)     — no onClose: there is nothing behind it to dim and
+  //                            nothing to dismiss to. A backdrop there is just a
+  //                            grey void, and the fixed overlay scrolls the card
+  //                            under the viewport edge so the heading disappears.
+  //                            So it renders as an ordinary page instead.
+  const asModal = Boolean(onClose);
+
   return (
     <motion.div
-      className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto"
+      className={
+        asModal
+          ? 'fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto'
+          : 'min-h-screen w-full bg-canvas flex justify-center px-4 py-8 sm:py-12'
+      }
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={() => onClose?.()}
     >
       <motion.div
-        className="bg-surface rounded-2xl w-full max-w-3xl shadow-elite-lg my-8 relative"
+        className={`bg-surface rounded-2xl w-full max-w-3xl relative ${
+          asModal ? 'shadow-elite-lg my-8' : 'shadow-sm border border-edge h-fit'
+        }`}
         initial={{ scale: 0.95, y: 20, opacity: 0 }}
         animate={{ scale: 1, y: 0, opacity: 1 }}
         exit={{ scale: 0.95, y: 20, opacity: 0 }}
@@ -330,63 +348,96 @@ const StudentOnboardingForm = ({ isOpen = true, onClose, onSignIn }) => {
                 required
                 hint="Start typing to search. If your college isn't listed, ask your placement cell to have it onboarded."
               >
-                {institutionsError ? (
-                  <p className="text-sm text-red-600">
-                    Could not load the list of colleges. Please refresh and try again.
-                  </p>
-                ) : (
-                  <div className="relative">
-                    <input
-                      className={inputCls}
-                      value={collegeOpen ? collegeQuery : selectedInstitution?.name || ''}
-                      onChange={(e) => {
-                        setCollegeQuery(e.target.value);
-                        setCollegeOpen(true);
-                        // Typing after choosing clears the choice, so what is
-                        // submitted always matches what the box shows.
-                        if (form.institutionId) set('institutionId', '');
-                      }}
-                      onFocus={() => {
-                        setCollegeOpen(true);
-                        setCollegeQuery('');
-                      }}
-                      // A blur that fires before the click would close the list
-                      // out from under the option being clicked.
-                      onBlur={() => setTimeout(() => setCollegeOpen(false), 150)}
-                      placeholder={institutionsLoading ? 'Loading colleges…' : 'Search your college'}
-                      disabled={institutionsLoading}
-                      autoComplete="off"
-                      role="combobox"
-                      aria-expanded={collegeOpen}
-                      aria-autocomplete="list"
-                    />
-                    {collegeOpen && (
-                      <ul className="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-lg border border-edge-strong bg-surface shadow-lg">
-                        {filteredInstitutions.length === 0 ? (
-                          <li className="px-3 py-2.5 text-sm text-fg-subtle">
-                            No college matches “{collegeQuery}”.
-                          </li>
-                        ) : (
-                          filteredInstitutions.map((inst) => (
-                            <li key={inst.id}>
-                              <button
-                                type="button"
-                                className="w-full px-3 py-2.5 text-left text-sm text-fg hover:bg-black/5"
-                                onMouseDown={(e) => e.preventDefault()}
-                                onClick={() => {
-                                  set('institutionId', inst.id);
-                                  setCollegeQuery('');
-                                  setCollegeOpen(false);
-                                }}
-                              >
-                                {inst.name}
-                              </button>
-                            </li>
-                          ))
-                        )}
-                      </ul>
+                <div className="relative">
+                  <input
+                    className={`${inputCls} pr-10 ${
+                      institutionsError ? 'border-red-300 bg-red-50/40' : ''
+                    }`}
+                    value={collegeOpen ? collegeQuery : selectedInstitution?.name || ''}
+                    onChange={(e) => {
+                      setCollegeQuery(e.target.value);
+                      setCollegeOpen(true);
+                      // Typing after choosing clears the choice, so what is
+                      // submitted always matches what the box shows.
+                      if (form.institutionId) set('institutionId', '');
+                    }}
+                    onFocus={() => {
+                      setCollegeOpen(true);
+                      setCollegeQuery('');
+                    }}
+                    // A blur that fires before the click would close the list
+                    // out from under the option being clicked.
+                    onBlur={() => setTimeout(() => setCollegeOpen(false), 150)}
+                    placeholder={
+                      institutionsLoading
+                        ? 'Loading colleges...'
+                        : institutionsError
+                          ? 'Colleges unavailable'
+                          : 'Search your college'
+                    }
+                    // Disabled on error as well as while loading, but STILL
+                    // RENDERED. Showing an error message instead of the input
+                    // collapsed this row and left a labelled gap where a field
+                    // should be, which is what made the form look broken.
+                    disabled={institutionsLoading || Boolean(institutionsError)}
+                    autoComplete="off"
+                    role="combobox"
+                    aria-expanded={collegeOpen}
+                    aria-autocomplete="list"
+                  />
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                    {institutionsLoading ? (
+                      <span className="h-4 w-4 rounded-full border-2 border-edge-strong border-t-orange-500 animate-spin" />
+                    ) : (
+                      <svg className="h-5 w-5 text-fg-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
                     )}
                   </div>
+
+                  {collegeOpen && !institutionsError && (
+                    <ul className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-lg border border-edge-strong bg-surface shadow-lg">
+                      {filteredInstitutions.length === 0 ? (
+                        <li className="px-3 py-2.5 text-sm text-fg-subtle">
+                          No college matches that search.
+                        </li>
+                      ) : (
+                        filteredInstitutions.map((inst) => (
+                          <li key={inst.id}>
+                            <button
+                              type="button"
+                              className={`w-full px-3 py-2.5 text-left text-sm hover:bg-black/5 ${
+                                inst.id === form.institutionId
+                                  ? 'font-semibold text-orange-600'
+                                  : 'text-fg'
+                              }`}
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={() => {
+                                set('institutionId', inst.id);
+                                setCollegeQuery('');
+                                setCollegeOpen(false);
+                              }}
+                            >
+                              {inst.name}
+                            </button>
+                          </li>
+                        ))
+                      )}
+                    </ul>
+                  )}
+                </div>
+
+                {institutionsError && (
+                  <p className="mt-1.5 text-xs text-red-600">
+                    Could not load the list of colleges.{' '}
+                    <button
+                      type="button"
+                      onClick={() => refetchInstitutions()}
+                      className="font-semibold underline hover:text-red-700"
+                    >
+                      Try again
+                    </button>
+                  </p>
                 )}
               </Field>
 
@@ -433,29 +484,36 @@ const StudentOnboardingForm = ({ isOpen = true, onClose, onSignIn }) => {
                     onChange={(e) => set('rollNumber', e.target.value)}
                   />
                 </Field>
-                <Field label="Phone number" error={errors.phoneNumber}>
+                {/* One grid cell per field, all the same width. The two
+                    percentages used to sit in a NESTED two-column grid inside a
+                    single cell, so they rendered half-width and lined up with
+                    nothing — that was the ragged row. */}
+                <Field label="10th percentage" error={errors.tenthPercentage}>
                   <input
                     className={inputCls}
-                    value={form.phoneNumber}
-                    onChange={(e) => set('phoneNumber', e.target.value)}
-                    autoComplete="tel"
+                    inputMode="decimal"
+                    value={form.tenthPercentage}
+                    onChange={(e) => set('tenthPercentage', e.target.value)}
+                    placeholder="e.g. 88.5"
                   />
                 </Field>
-                <div className="grid grid-cols-2 gap-4">
-                  <Field label="10th %" error={errors.tenthPercentage}>
+                <Field label="12th percentage" error={errors.twelfthPercentage}>
+                  <input
+                    className={inputCls}
+                    inputMode="decimal"
+                    value={form.twelfthPercentage}
+                    onChange={(e) => set('twelfthPercentage', e.target.value)}
+                    placeholder="e.g. 91"
+                  />
+                </Field>
+                <div className="sm:col-span-2">
+                  <Field label="Phone number" error={errors.phoneNumber}>
                     <input
                       className={inputCls}
-                      inputMode="decimal"
-                      value={form.tenthPercentage}
-                      onChange={(e) => set('tenthPercentage', e.target.value)}
-                    />
-                  </Field>
-                  <Field label="12th %" error={errors.twelfthPercentage}>
-                    <input
-                      className={inputCls}
-                      inputMode="decimal"
-                      value={form.twelfthPercentage}
-                      onChange={(e) => set('twelfthPercentage', e.target.value)}
+                      value={form.phoneNumber}
+                      onChange={(e) => set('phoneNumber', e.target.value)}
+                      autoComplete="tel"
+                      placeholder="+91 98765 43210"
                     />
                   </Field>
                 </div>
