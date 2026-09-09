@@ -17,6 +17,24 @@ export const useInstitutions = ({ enabled = true } = {}) =>
     enabled,
   });
 
+/**
+ * The colleges shown in the registration dropdown. No session required — this
+ * runs on the public landing page, before the visitor has an account at all.
+ *
+ * staleTime is STALE.static for the same reason as the admin list: a college is
+ * onboarded by a super-admin now and then, not minute to minute.
+ */
+export const usePublicInstitutions = ({ enabled = true } = {}) =>
+  useQuery({
+    queryKey: queryKeys.institutions.public(),
+    queryFn: ({ signal }) => institutionsApi.publicList({ signal }),
+    staleTime: STALE.static,
+    // A visitor who mistypes nothing should not be told to retry three times
+    // because the API is briefly down; the form shows the error and a retry.
+    retry: 1,
+    enabled,
+  });
+
 /** Creates the institution AND its admin login. Returns { id, adminUid, adminEmail }. */
 export const useCreateInstitution = () => {
   const qc = useQueryClient();

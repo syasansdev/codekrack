@@ -74,4 +74,45 @@ export const emailSendLimiter = rateLimit({
   },
 });
 
+/**
+ * Public student registration.
+ *
+ * This is the only unauthenticated write in the API, so it is the only endpoint
+ * an anonymous caller can use to make the server do work: a DNS lookup, a
+ * Supabase admin call and three inserts, per request. Three things it therefore
+ * has to be sized against:
+ *
+ *   - account flooding. Every accepted request is a real auth user and a real
+ *     student on somebody's leaderboard, and cleaning them up is manual.
+ *   - email enumeration. "That email is already registered" is genuinely useful
+ *     to a student who forgot they signed up, and genuinely useful to someone
+ *     probing for addresses. A ceiling of 5/hr makes the second use worthless
+ *     (a list of any size would take years) while never troubling the first.
+ *   - Supabase's own admin API quota, which a loop here would otherwise spend.
+ *
+ * Keyed by IP because there is no authenticated identity to key on. A shared
+ * campus NAT is the known cost: 5 students registering from one network in the
+ * same hour is plausible, and the 6th is asked to wait. Sized up rather than
+ * down for exactly that reason — the failure mode of a tighter limit is a
+ * student who cannot sign up at all.
+ */
+export const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  // Every attempt counts, including the ones that fail. skipFailedRequests
+  // would be the obvious kindness here and it is exactly wrong: a probe for
+  // existing addresses gets back 409s, so not counting failures would hand an
+  // enumerator an unlimited budget for the only request they care about.
+  handler: (req, res) => {
+    logger.warn(`Registration limit exceeded: ${req.ip}`);
+    res.status(429).json({
+      success: false,
+      error: 'Too many registration attempts from this network. Please try again in an hour.',
+      code: 'REGISTER_RATE_LIMITED',
+    });
+  },
+});
+
 export default apiLimiter;

@@ -10,17 +10,31 @@
 //                         can talk an admin into another institution's data.
 // scopeFor() (middleware/supabaseAuth.js) is the only place that decides this.
 import express from 'express';
-import crypto from 'crypto';
 import { supabaseAdmin } from '../config/supabase.js';
 import { query, one, many, tx } from '../config/db.js';
-import { verifyAdmin, verifyToken, scopeFor, NO_INSTITUTION } from '../middleware/supabaseAuth.js';
+import {
+  verifyAdmin,
+  verifySuperAdmin,
+  verifyToken,
+  scopeFor,
+  NO_INSTITUTION,
+} from '../middleware/supabaseAuth.js';
+import { registerLimiter } from '../middleware/rateLimiter.js';
 import { sendSetPasswordEmail } from '../services/inviteService.js';
+import {
+  provisionStudent,
+  splitPlatformUrls,
+  normalizeUrl,
+  numOrNull,
+  ProvisioningError,
+  MIN_PASSWORD_LENGTH,
+  VALID_YEARS,
+} from '../services/studentProvisioning.js';
 import {
   STUDENT_SELECT,
   serializeStudent,
   serializeStudents,
   PLATFORMS,
-  LINK_KEYS,
 } from '../utils/serialize.js';
 import { isValidEmail, normalizeEmail, undeliverableDomainReason } from '../utils/email.js';
 import logger from '../utils/logger.js';
@@ -28,52 +42,6 @@ import logger from '../utils/logger.js';
 const router = express.Router();
 const isUuid = (v) =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(v || ''));
-
-/**
- * A password that is deliberately impossible to use or to know.
- *
- * This is NOT a temporary password to be handed over. Nothing reads it back,
- * nothing prints it, nothing stores it. Supabase requires the field to have a
- * value; this fills it with 64 hex characters of CSPRNG output that are then
- * immediately forgotten. The account is unreachable until the student sets
- * their own password through the emailed link.
- *
- * The property we want is negative: after this function returns, no human and
- * no row anywhere holds a credential for this account. You cannot leak what you
- * never kept.
- */
-const unusablePassword = () => crypto.randomBytes(32).toString('hex');
-
-const normalizeUrl = (v) => {
-  const u = String(v || '').trim();
-  if (!u) return '';
-  return /^https?:\/\//i.test(u) ? u : `https://${u}`;
-};
-
-/**
- * The client sends ONE platformUrls map holding all seven keys. Storage splits
- * them: the four scraped platforms become platform_stats rows; the rest
- * (resume/linkedin/hackerrank) become profiles.links.
- *
- * Anything outside both lists is dropped rather than stored, so a client cannot
- * grow this column arbitrarily by inventing keys.
- */
-const splitPlatformUrls = (platformUrls = {}) => {
-  const scraped = {};
-  const links = {};
-  for (const [key, raw] of Object.entries(platformUrls || {})) {
-    const url = normalizeUrl(raw);
-    if (PLATFORMS.includes(key)) scraped[key] = url;
-    else if (LINK_KEYS.includes(key)) links[key] = url;
-  }
-  return { scraped, links };
-};
-
-const numOrNull = (v) => {
-  if (v === null || v === undefined || String(v).trim() === '') return null;
-  const n = Number(v);
-  return Number.isFinite(n) ? n : null;
-};
 
 /**
  * Builds the WHERE clause for a scoped student list.
@@ -118,7 +86,7 @@ router.get('/', verifyAdmin, async (req, res) => {
 // =============================================================================
 const ACCESS_SELECT = `
   select p.id, p.name, p.email, p.role, p.institution_id, p.roll_number,
-         p.department, p.invited_at, p.created_at,
+         p.department, p.invited_at, p.created_at, p.deactivated_at, p.expires_at,
          i.name as institution_name,
          au.last_sign_in_at
     from public.profiles p
@@ -138,7 +106,18 @@ const serializeAccess = (r) => ({
   invitedAt: r.invited_at ? new Date(r.invited_at).toISOString() : null,
   lastSignInAt: r.last_sign_in_at ? new Date(r.last_sign_in_at).toISOString() : null,
   createdAt: r.created_at ? new Date(r.created_at).toISOString() : null,
-  accessState: r.last_sign_in_at ? 'active' : r.invited_at ? 'invited' : 'never_invited',
+  deactivatedAt: r.deactivated_at ? new Date(r.deactivated_at).toISOString() : null,
+  expiresAt: r.expires_at ? new Date(r.expires_at).toISOString() : null,
+  isActive: !r.deactivated_at,
+  // A deactivated account cannot sign in whatever its invite history says, so
+  // that fact outranks the other three states rather than sitting beside them.
+  accessState: r.deactivated_at
+    ? 'deactivated'
+    : r.last_sign_in_at
+      ? 'active'
+      : r.invited_at
+        ? 'invited'
+        : 'never_invited',
 });
 
 router.get('/access', verifyAdmin, async (req, res) => {
@@ -202,152 +181,162 @@ router.get('/:id', verifyAdmin, async (req, res) => {
 
 // =============================================================================
 // POST /api/students   (any admin)
-// Creates the Auth account + profile + platform rows, and returns the temp
-// password so the admin can hand it over.
+// Creates the Auth account + profile + platform rows, then emails a
+// set-password link. No password is chosen here and none is returned — see
+// services/studentProvisioning.js.
 //
 // Must be server-side: the client SDK's sign-up signs the CALLER in as the new
 // student, destroying the admin's session (and, during bulk import, doing so
 // once per row).
+//
+// The body of this route used to be ~130 lines of provisioning. It now shares
+// provisionStudent() with public registration, so an admin-created student and
+// a self-registered one are the same thing by construction rather than by two
+// implementations agreeing.
 // =============================================================================
 router.post('/', verifyAdmin, async (req, res) => {
-  const {
-    name,
-    email,
-    phoneNumber = '',
-    registerNumber = '',
-    rollNumber = '',
-    department = '',
-    year = '',
-    college = '',
-    tenthPercentage = '',
-    twelfthPercentage = '',
-    platformUrls = {},
-    institutionId: requestedInstitutionId,
-  } = req.body || {};
-
-  if (!name || !String(name).trim()) {
-    return res.status(400).json({ success: false, error: 'Name is required' });
-  }
-  // Normalise BEFORE validating, so " Asha@Gmail.com " is accepted (trimmed and
-  // lowercased) rather than rejected for a trailing space the admin can't see.
-  const lower = normalizeEmail(email);
-  if (!isValidEmail(lower)) {
-    return res.status(400).json({ success: false, error: 'A valid email is required' });
-  }
-
-  const institutionId = scopeFor(req, requestedInstitutionId);
-  if (!institutionId || institutionId === NO_INSTITUTION) {
-    return res.status(400).json({ success: false, error: 'An institution is required' });
-  }
-
-  const inst = await one(
-    'select id from public.institutions where id = $1 and deleted_at is null',
-    [institutionId]
-  );
-  if (!inst) return res.status(400).json({ success: false, error: 'Institution not found' });
-
-  const dupe = await one('select id from public.profiles where lower(email) = $1', [lower]);
-  if (dupe) {
-    return res.status(400).json({ success: false, error: 'That email is already registered' });
-  }
-
-  // Catch a mistyped DOMAIN before we create an auth account and fire an invite
-  // that can only bounce. This checks the domain can receive mail at all; it
-  // can't vouch for the mailbox (that's the receiving server's to reject, and
-  // mailer.js now reports it clearly). Non-blocking on DNS trouble — an
-  // unreachable resolver must not stop an admin adding a student.
-  const badDomain = await undeliverableDomainReason(lower);
-  if (badDomain) {
-    return res.status(400).json({ success: false, error: badDomain });
-  }
-
-  let authUser;
-
   try {
-    const { data, error } = await supabaseAdmin.auth.admin.createUser({
-      email: lower,
-      // A password nobody will ever know — not the student, not the admin, not
-      // us, not a log. It exists only because the account needs *something* in
-      // the field; it is never transmitted and never usable. The student gets in
-      // by setting their own via the emailed link.
-      password: unusablePassword(),
-      // The account is admin-provisioned, so the address is taken as verified —
-      // and the set-password link we send doubles as proof they can read it.
-      email_confirm: true,
-      user_metadata: { name: String(name).trim() },
-    });
-    if (error) {
-      if (/already/i.test(error.message)) {
-        return res.status(400).json({ success: false, error: 'That email is already registered' });
-      }
-      throw error;
+    // scopeFor() is what stops an institution admin creating students in
+    // somebody else's college: the requested id is a hint for super-admins and
+    // is ignored for everyone else.
+    const institutionId = scopeFor(req, req.body?.institutionId);
+    if (!institutionId || institutionId === NO_INSTITUTION) {
+      return res.status(400).json({ success: false, error: 'An institution is required' });
     }
-    authUser = data.user;
+
+    const result = await provisionStudent({
+      ...(req.body || {}),
+      institutionId,
+      // Admin-created accounts get an unusable password and an invite email;
+      // the student chooses their own password from the link.
+      password: null,
+      sendInvite: true,
+      createdBy: req.user.uid,
+    });
+
+    logger.info(
+      `Student created: ${normalizeEmail(req.body?.email)} (institution ${institutionId}) ` +
+        `invite=${result.invited ? 'sent' : 'FAILED'}`
+    );
+    return res.status(201).json({
+      success: true,
+      uid: result.id,
+      id: result.id,
+      institutionId: result.institutionId,
+      invited: result.invited,
+      inviteError: result.inviteError,
+    });
   } catch (e) {
-    logger.error('Student createUser failed:', e);
+    if (e instanceof ProvisioningError) {
+      return res.status(e.status).json({ success: false, error: e.message });
+    }
+    logger.error('Create student failed:', e);
     return res.status(500).json({ success: false, error: e.message });
   }
+});
 
+// =============================================================================
+// POST /api/students/register   (PUBLIC — no token)
+//
+// Self-registration. The student picks their own password and can sign in
+// immediately; there is no approval step, no verification email and no invite.
+//
+// This is the only unauthenticated write in the API, so everything that
+// normally comes from an admin's session has to be either validated or refused
+// here:
+//
+//   institutionId  must name a LIVE institution. It is an id, never a name:
+//                  the client picks from GET /api/institutions/public, so every
+//                  student at one college lands on the same institution row
+//                  instead of eleven spellings of it.
+//   college        is NOT taken from the body. It is copied from the chosen
+//                  institution's name, so the free-text column can no longer
+//                  disagree with the institution the student is actually in.
+//   role           is not reachable at all — provisionStudent() hard-codes
+//                  'student', so no request body can mint an admin.
+//
+// ON EMAIL ENUMERATION. A duplicate address answers "That email is already
+// registered", which does confirm the address exists. The alternative — a
+// uniform success response — silently drops a real student's registration and
+// leaves them with an account they cannot access and no idea why. The mitigation
+// is registerLimiter (5/hr/IP, failures included), which makes probing a list of
+// any useful size take years while costing a genuine student nothing.
+// =============================================================================
+router.post('/register', registerLimiter, async (req, res) => {
   try {
-    const { scraped, links } = splitPlatformUrls(platformUrls);
+    const {
+      institutionId,
+      password,
+      year,
+      // A field no human sees and no browser fills. Anything in it came from a
+      // bot walking the form, so the request is dropped.
+      website: honeypot = '',
+    } = req.body || {};
 
-    // Profile + platform rows land together or not at all.
-    await tx(async (c) => {
-      await c.query(
-        `insert into public.profiles
-           (id, email, name, display_name, phone_number, register_number, roll_number,
-            department, year, college, tenth_percentage, twelfth_percentage,
-            role, institution_id, links, created_by)
-         values ($1,$2,$3,$3,$4,$5,$6,$7,$8,$9,$10,$11,'student',$12,$13,$14)`,
-        [
-          authUser.id, lower, String(name).trim(),
-          String(phoneNumber || '').trim(), String(registerNumber || '').trim(),
-          String(rollNumber || '').trim(), department || '', String(year || ''),
-          college || '', numOrNull(tenthPercentage), numOrNull(twelfthPercentage),
-          institutionId, JSON.stringify(links), req.user.uid,
-        ]
-      );
+    if (String(honeypot).trim() !== '') {
+      logger.warn(`Registration honeypot tripped from ${req.ip}`);
+      // Deliberately indistinguishable from success: telling a bot which check
+      // caught it is telling it what to change.
+      return res.status(201).json({ success: true });
+    }
 
-      for (const p of PLATFORMS) {
-        if (!scraped[p]) continue;
-        await c.query(
-          `insert into public.platform_stats (user_id, platform, profile_url, status)
-           values ($1, $2, $3, 'pending')`,
-          [authUser.id, p, scraped[p]]
-        );
-      }
+    if (!password || String(password).length < MIN_PASSWORD_LENGTH) {
+      return res.status(400).json({
+        success: false,
+        error: `Password must be at least ${MIN_PASSWORD_LENGTH} characters`,
+      });
+    }
+    if (!institutionId || !isUuid(institutionId)) {
+      return res.status(400).json({ success: false, error: 'Please select your college' });
+    }
+    if (!year || !VALID_YEARS.includes(String(year))) {
+      return res.status(400).json({ success: false, error: 'Please select your year of study' });
+    }
+
+    // Resolve the institution here rather than trusting a name from the body.
+    // provisionStudent() checks it exists too; this second read is what supplies
+    // the canonical college name, so the two are one lookup apart, not two
+    // sources of truth.
+    const inst = await one(
+      'select id, name from public.institutions where id = $1 and deleted_at is null',
+      [institutionId]
+    );
+    if (!inst) {
+      return res.status(400).json({ success: false, error: 'Please select your college' });
+    }
+
+    await provisionStudent({
+      name: req.body?.name,
+      email: req.body?.email,
+      password,
+      phoneNumber: req.body?.phoneNumber,
+      registerNumber: req.body?.registerNumber,
+      rollNumber: req.body?.rollNumber,
+      department: req.body?.department,
+      year,
+      // Server-supplied, not client-supplied. See the header note.
+      college: inst.name,
+      tenthPercentage: req.body?.tenthPercentage,
+      twelfthPercentage: req.body?.twelfthPercentage,
+      platformUrls: req.body?.platformUrls,
+      institutionId: inst.id,
+      // No email, no invite: the student already has the password they chose.
+      sendInvite: false,
+      createdBy: null,
     });
-  } catch (error) {
-    // Roll back the Auth user so we never strand a login without a profile.
-    await supabaseAdmin.auth.admin.deleteUser(authUser.id).catch(() => {});
-    logger.error('Error writing student profile:', error);
-    return res.status(500).json({ success: false, error: error.message });
-  }
 
-  // The account exists and is correct; only the email might not have gone out.
-  // So this is NOT inside the rollback above — failing to send is not a reason
-  // to delete a student the admin just successfully created. Report it instead,
-  // and let them re-send from the Access screen.
-  let invited = false;
-  let inviteError = null;
-  try {
-    await sendSetPasswordEmail({ email: lower, name: String(name).trim(), isNew: true });
-    await query('update public.profiles set invited_at = now() where id = $1', [authUser.id]);
-    invited = true;
+    logger.info(`Student self-registered at institution ${inst.id}`);
+    // Nothing about the created row comes back. The client's next step is the
+    // sign-in form, which needs no id, and an unauthenticated response is not
+    // the place to start handing out profile data.
+    return res.status(201).json({ success: true });
   } catch (e) {
-    inviteError = e.message;
-    logger.error(`Student ${lower} created but the invite email failed: ${e.message}`);
+    if (e instanceof ProvisioningError) {
+      return res.status(e.status).json({ success: false, error: e.message });
+    }
+    logger.error('Student registration failed:', e);
+    return res.status(500).json({ success: false, error: 'Could not create your account. Please try again.' });
   }
-
-  logger.info(`Student created: ${lower} (institution ${institutionId}) invite=${invited ? 'sent' : 'FAILED'}`);
-  return res.status(201).json({
-    success: true,
-    uid: authUser.id,
-    id: authUser.id,
-    institutionId,
-    invited,
-    inviteError,
-  });
 });
 
 // =============================================================================
@@ -360,7 +349,10 @@ const EDITABLE = {
   rollNumber: 'roll_number',
   department: 'department',
   year: 'year',
-  college: 'college',
+  // `college` is deliberately NOT editable. It is a copy of the institution's
+  // name, maintained below whenever a student is moved, so that one college is
+  // one string everywhere. Letting it be typed here would reintroduce exactly
+  // the spelling drift that binding students to an institution removes.
   tenthPercentage: 'tenth_percentage',
   twelfthPercentage: 'twelfth_percentage',
 };
@@ -401,15 +393,24 @@ router.patch('/:id', verifyAdmin, async (req, res) => {
       if (dest && !isUuid(dest)) {
         return res.status(400).json({ success: false, error: 'Invalid institutionId' });
       }
+      let destName = '';
       if (dest) {
         const exists = await one(
-          'select id from public.institutions where id = $1 and deleted_at is null',
+          'select id, name from public.institutions where id = $1 and deleted_at is null',
           [dest]
         );
         if (!exists) return res.status(400).json({ success: false, error: 'Institution not found' });
+        destName = exists.name;
       }
       params.push(dest || null);
       sets.push(`institution_id = $${params.length}`);
+      // Move the college name with the student. Without this the two disagree
+      // the moment anyone is transferred: institution_id says one college and
+      // the column every filter and leaderboard groups on still says the old
+      // one, which is invisible until someone asks why a student appears under
+      // a college they left.
+      params.push(destName);
+      sets.push(`college = $${params.length}`);
     }
 
     // Email change. NOT in EDITABLE because it is not just a profile column —
@@ -645,6 +646,132 @@ router.post('/:id/rescrape', verifyAdmin, async (req, res) => {
 });
 
 // =============================================================================
+// POST /api/students/:id/set-password   (SUPER-ADMIN only)
+//
+// Sets a student's password directly, for the cases a recovery link cannot
+// reach: a student whose email has stopped working, or one standing next to you
+// who needs access now.
+//
+// This is a WRITE, never a read. There is no endpoint anywhere that returns an
+// existing password, because no readable copy of one exists — Supabase holds a
+// hash and nothing else does. A super-admin can REPLACE a credential; they can
+// never LEARN one, and nothing here changes that.
+//
+// Super-admin only, deliberately. Institution admins have send-invite, which is
+// an offer the student can ignore; setting a password is taking the account
+// over, and that is a narrower privilege than "any admin".
+//
+// The new password is not logged, not returned and not stored outside Supabase.
+// =============================================================================
+router.post('/:id/set-password', verifySuperAdmin, async (req, res) => {
+  try {
+    if (!isUuid(req.params.id)) {
+      return res.status(400).json({ success: false, error: 'Invalid student id' });
+    }
+    const { password } = req.body || {};
+    if (!password || String(password).length < MIN_PASSWORD_LENGTH) {
+      return res.status(400).json({
+        success: false,
+        error: `Password must be at least ${MIN_PASSWORD_LENGTH} characters`,
+      });
+    }
+
+    // role = 'student' in the WHERE, not checked afterwards: this endpoint must
+    // not be a way to take over an admin account.
+    const target = await one(
+      `select id, email from public.profiles where id = $1 and role = 'student'`,
+      [req.params.id]
+    );
+    if (!target) return res.status(404).json({ success: false, error: 'Student not found' });
+
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(target.id, { password });
+    if (error) throw error;
+
+    // Kill every existing session so the old password stops working right away,
+    // rather than lingering until its token expires. Same rule the institution
+    // admin reset already follows.
+    await supabaseAdmin.auth.admin.signOut(target.id, 'global').catch((e) => {
+      logger.warn(`Could not revoke sessions for ${target.email}: ${e.message}`);
+    });
+
+    logger.info(`Student password set by ${req.user.email} for ${target.email}`);
+    res.json({ success: true, email: target.email });
+  } catch (e) {
+    logger.error('Set student password failed:', e);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// =============================================================================
+// POST /api/students/:id/status   (any admin, institution-scoped)
+// Body: { active: boolean }
+//
+// Switches an account off without destroying it. Deactivating BANS the Supabase
+// login and revokes live sessions, so the student cannot sign in — but the
+// profile, the platform rows and every scraped number survive and come back
+// exactly as they were on reactivation.
+//
+// The ban is the load-bearing half. profiles.deactivated_at alone would be
+// decoration: middleware/supabaseAuth.js resolves identity through
+// supabaseAdmin.auth.getUser(), and an account that is only flagged in our own
+// table would keep signing in perfectly. Banning is what supabase.auth.getUser()
+// actually rejects.
+//
+// Scoped like every other write here: an institution admin can only reach their
+// own students, and role = 'student' keeps admins out of it entirely.
+// =============================================================================
+router.post('/:id/status', verifyAdmin, async (req, res) => {
+  try {
+    if (!isUuid(req.params.id)) {
+      return res.status(400).json({ success: false, error: 'Invalid student id' });
+    }
+    if (typeof req.body?.active !== 'boolean') {
+      return res.status(400).json({ success: false, error: '`active` must be true or false' });
+    }
+    const active = req.body.active;
+
+    const institutionId = scopeFor(req, null);
+    const params = institutionId === null ? [req.params.id] : [req.params.id, institutionId];
+    const target = await one(
+      `select id, email from public.profiles
+        where id = $1 and role = 'student'
+        ${institutionId === null ? '' : 'and institution_id = $2'}`,
+      params
+    );
+    if (!target) return res.status(404).json({ success: false, error: 'Student not found' });
+
+    // 'none' lifts a ban; a long duration is how Supabase expresses "indefinite".
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(target.id, {
+      ban_duration: active ? 'none' : '876000h', // ~100 years
+    });
+    if (error) throw error;
+
+    if (!active) {
+      // Being banned stops the NEXT token check; an access token already in the
+      // student's browser is valid until it expires. Revoking sessions makes the
+      // deactivation take effect now rather than within the hour.
+      await supabaseAdmin.auth.admin.signOut(target.id, 'global').catch((e) => {
+        logger.warn(`Could not revoke sessions for ${target.email}: ${e.message}`);
+      });
+    }
+
+    await query(
+      `update public.profiles set deactivated_at = ${active ? 'null' : 'now()'} where id = $1`,
+      [target.id]
+    );
+
+    logger.info(
+      `Student ${active ? 'activated' : 'deactivated'}: ${target.email} by ${req.user.email}`
+    );
+    const row = await one(`${STUDENT_SELECT} where p.id = $1`, [target.id]);
+    res.json({ success: true, student: serializeStudent(row) });
+  } catch (e) {
+    logger.error('Set student status failed:', e);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// =============================================================================
 // GET /api/students/me/profile   (any signed-in user)
 // A student reading their OWN record. Note verifyToken, not verifyAdmin: this
 // is the one student-facing read, and it is keyed to req.user.uid so it cannot
@@ -676,7 +803,11 @@ const SELF_EDITABLE = {
   phoneNumber: 'phone_number',
   department: 'department',
   year: 'year',
-  college: 'college',
+  // No `college`. It mirrors the institution the student was registered under,
+  // and a student typing over it is precisely how one college becomes several
+  // spellings on the same leaderboard. Moving a student to a different college
+  // is a super-admin action (PATCH /api/students/:id with institutionId), which
+  // updates both fields together.
 };
 
 router.patch('/me/profile', verifyToken, async (req, res) => {

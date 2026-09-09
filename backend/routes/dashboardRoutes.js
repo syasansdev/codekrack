@@ -117,7 +117,11 @@ router.get('/stats', verifyAdmin, async (req, res) => {
 const leaderboardQuery = async (platform, institutionId, limit) => {
   const scoped = institutionId !== null;
   const params = [platform];
-  let where = `where p.role = 'student' and ps.platform = $1 and ps.status = 'completed'`;
+  // deactivated_at is null: a switched-off account keeps its history but stops
+  // appearing on the board, which is the visible half of what deactivating one
+  // is for. It comes back untouched if the account is reactivated.
+  let where = `where p.role = 'student' and p.deactivated_at is null
+                 and ps.platform = $1 and ps.status = 'completed'`;
   if (scoped) {
     params.push(institutionId);
     where += ` and p.institution_id = $${params.length}`;

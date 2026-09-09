@@ -37,6 +37,11 @@ export const queryKeys = {
     all: ['institutions'],
     lists: () => ['institutions', 'list'],
     list: () => ['institutions', 'list'],
+    // The registration dropdown's list. A separate key because it is fetched
+    // WITHOUT a session and returns a narrower shape — sharing the admin key
+    // would let a signed-out visitor's two-field response overwrite the admin
+    // cache entry, and every institution screen would render blanks.
+    public: () => ['institutions', 'public'],
   },
 
   // --- dashboard ------------------------------------------------------------

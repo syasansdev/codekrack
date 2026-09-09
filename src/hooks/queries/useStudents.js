@@ -136,6 +136,34 @@ export const useSendInvite = () => {
   });
 };
 
+/**
+ * Super-admin only. Sets a student's password directly.
+ *
+ * No cache invalidation: a password is not part of any query's data (nothing
+ * reads one), so there is nothing on screen that this makes stale.
+ */
+export const useSetStudentPassword = () =>
+  useMutation({
+    mutationFn: ({ id, password }) => studentsApi.setPassword(id, password),
+  });
+
+/** Activates or deactivates a student account. */
+export const useSetStudentStatus = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, active }) => studentsApi.setStatus(id, active),
+    onSuccess: (student, { id }) => {
+      if (student) qc.setQueryData(queryKeys.students.detail(id), student);
+      // students.all covers the Access screen, which renders the state pill.
+      qc.invalidateQueries({ queryKey: queryKeys.students.all });
+      // A deactivated student drops off the leaderboards and comes back on
+      // reactivation, so both boards are now wrong.
+      qc.invalidateQueries({ queryKey: queryKeys.leaderboard.all });
+      qc.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+    },
+  });
+};
+
 export const useRescrapeStudent = () => {
   const qc = useQueryClient();
   return useMutation({

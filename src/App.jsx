@@ -31,11 +31,10 @@ import AdminLeaderboard from './components/AdminLeaderboard';
 import Profile from './components/Profile';
 import ChangePassword from './components/ChangePassword';
 import StudentPasswordManager from './components/StudentPasswordManager';
+import StudentOnboardingForm from './components/StudentOnboardingForm';
 import SuperAdminRoute from './components/SuperAdminRoute';
 import InstitutionManagement from './components/InstitutionManagement';
 
-// QueryBot (AI query assistant)
-import QueryBot from './components/QueryBot';
 
 // Auth Context
 import { AuthProvider } from './contexts/AuthContext';
@@ -101,6 +100,10 @@ function App() {
           {/* Public Routes */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/signin" element={<SignIn isOpen={true} />} />
+          {/* Registration has its own URL as well as the landing-page modal, so
+              a college can circulate a direct link. Public by definition: the
+              person arriving has no account yet. */}
+          <Route path="/register" element={<StudentOnboardingForm isOpen={true} />} />
           <Route path="/admin/signin" element={<AdminSignIn isOpen={true} />} />
           {/* Where the set-password email lands. Public by necessity: the whole
               point is that the person arriving here has no password yet. Their
@@ -198,7 +201,6 @@ function App() {
             <Route path="scraping-status" element={<ScrapingStatus />} />
             <Route path="leaderboard" element={<AdminLeaderboard />} />
             <Route path="passwords" element={<StudentPasswordManager />} />
-            <Route path="querybot" element={<QueryBot />} />
             <Route path="notifications" element={<ContestNotifications />} />
             <Route path="scheduler" element={<WeeklyScheduler />} />
           </Route>

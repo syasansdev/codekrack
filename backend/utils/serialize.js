@@ -29,6 +29,7 @@ export const STUDENT_SELECT = `
     p.college, p.tenth_percentage, p.twelfth_percentage,
     p.streak, p.last_activity_date, p.links, p.invited_at,
     p.created_at, p.updated_at, p.last_login_at, p.created_by,
+    p.expires_at, p.deactivated_at,
     i.name as institution_name,
     coalesce(st.total_solved, 0) as total_solved,
     st.last_scraped_at,
@@ -133,6 +134,14 @@ export const serializeStudent = (row) => {
     // When the set-password email was last sent. Whether they've USED it is
     // auth.users.last_sign_in_at, reported by GET /api/students/access.
     invitedAt: iso(row.invited_at),
+
+    // Lifecycle (009). expiresAt is the 1-year retention deadline, measured
+    // from account creation; deactivatedAt is null while the account is live.
+    // isActive is derived rather than stored so the two can never disagree.
+    expiresAt: iso(row.expires_at),
+    deactivatedAt: iso(row.deactivated_at),
+    isActive: !row.deactivated_at,
+
     createdAt: iso(row.created_at),
     updatedAt: iso(row.updated_at),
     lastLoginAt: iso(row.last_login_at),

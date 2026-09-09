@@ -132,6 +132,16 @@ export const studentsApi = {
    */
   create: (data) => post('/api/students', data),
 
+  /**
+   * Public self-registration. auth:false — there is no session yet; this is the
+   * request that creates the account the student will sign in with.
+   *
+   * Takes institutionId (chosen from institutionsApi.publicList) and a password
+   * the student typed. Returns { success } and nothing else: no id, no token,
+   * no profile. The next step is the sign-in form, which needs none of that.
+   */
+  register: (data) => request('POST', '/api/students/register', { body: data, auth: false }),
+
   update: async (id, data) => (await patch(`/api/students/${id}`, data)).student,
 
   remove: (id) => del(`/api/students/${id}`),
@@ -145,6 +155,21 @@ export const studentsApi = {
    * admin clicked it. A recovery link is an offer; ignoring it changes nothing.
    */
   sendInvite: (id) => post(`/api/students/${id}/send-invite`),
+
+  /**
+   * Super-admin only. Sets a student's password directly, for when a recovery
+   * link cannot reach them. There is no matching read — no endpoint anywhere
+   * returns an existing password, because no readable copy of one exists.
+   */
+  setPassword: (id, password) => post(`/api/students/${id}/set-password`, { password }),
+
+  /**
+   * Switches an account on or off. Deactivating bans the login and ends live
+   * sessions; nothing is deleted, and reactivating restores access with the
+   * student's own password intact.
+   */
+  setStatus: async (id, active) =>
+    (await post(`/api/students/${id}/status`, { active })).student,
 
   /** Marks the student's platforms pending for the next scraper run. */
   rescrape: (id) => post(`/api/students/${id}/rescrape`),
@@ -164,6 +189,15 @@ export const studentsApi = {
 // =============================================================================
 export const institutionsApi = {
   list: async ({ signal } = {}) => (await get('/api/institutions', { signal })).institutions,
+
+  /**
+   * The colleges a student can register under — { id, name } only, and no token
+   * required. Institutions are created by the super-admin; this list is the
+   * only way one reaches the registration form, so a student can pick a college
+   * but never invent one.
+   */
+  publicList: async ({ signal } = {}) =>
+    (await request('GET', '/api/institutions/public', { signal, auth: false })).institutions,
 
   /** Creates the institution AND its admin login. Super-admin only. */
   create: (data) => post('/api/institutions', data),

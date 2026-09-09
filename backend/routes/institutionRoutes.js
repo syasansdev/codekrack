@@ -46,6 +46,38 @@ const INSTITUTION_SELECT = `
 `;
 
 // =============================================================================
+// GET /api/institutions/public   (PUBLIC — no token)
+//
+// The list behind the college dropdown on the registration form. Registration
+// submits an institution_id chosen from THIS list, never a typed college name,
+// which is the whole reason it exists: one canonical row per college instead of
+// eleven spellings of the same one, and no way for a student to invent a
+// college that no super-admin has onboarded.
+//
+// Deliberately not the admin list. That one carries the institution's admin
+// email, its address, its contact address and its student count — none of which
+// an anonymous visitor has any business reading. This returns the two fields a
+// dropdown renders and nothing else, so widening the admin query later cannot
+// quietly widen this one.
+//
+// Archived institutions are excluded by INSTITUTION_SELECT's own
+// , so a college that has been removed stops being
+// a destination for new students the moment it is archived.
+// =============================================================================
+router.get('/public', async (_req, res) => {
+  try {
+    const rows = await many(
+      `select i.id, i.name from public.institutions i
+        where i.deleted_at is null order by i.name asc`
+    );
+    res.json({ success: true, institutions: rows.map((r) => ({ id: r.id, name: r.name })) });
+  } catch (e) {
+    logger.error('List public institutions failed:', e);
+    res.status(500).json({ success: false, error: 'Could not load colleges.' });
+  }
+});
+
+// =============================================================================
 // GET /api/institutions   (any admin)
 // Super-admins see every institution; an institution admin sees only their own.
 // =============================================================================

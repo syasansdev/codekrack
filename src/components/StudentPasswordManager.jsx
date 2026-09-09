@@ -20,7 +20,12 @@
 // because nothing anywhere knows it.
 import { useState, useEffect, useMemo } from 'react';
 import { useAdminScope } from '../hooks/useAdminScope';
-import { useStudentAccess, useSendInvite } from '../hooks/queries/useStudents';
+import {
+  useStudentAccess,
+  useSendInvite,
+  useSetStudentPassword,
+  useSetStudentStatus,
+} from '../hooks/queries/useStudents';
 import { useInstitutions, useUpdateInstitution } from '../hooks/queries/useInstitutions';
 
 const timeAgo = (iso) => {
@@ -39,6 +44,7 @@ const STATE_STYLES = {
   active: { label: 'Active', cls: 'bg-green-50 text-green-700 ring-green-600/20' },
   invited: { label: 'Invited', cls: 'bg-blue-50 text-blue-700 ring-blue-600/20' },
   never_invited: { label: 'No invite sent', cls: 'bg-red-50 text-red-700 ring-red-600/20' },
+  deactivated: { label: 'Deactivated', cls: 'bg-gray-100 text-gray-600 ring-gray-500/20' },
 };
 
 const StatusPill = ({ state }) => {
@@ -54,6 +60,8 @@ const StudentPasswordManager = () => {
   const { institutionId, isSuperAdmin } = useAdminScope();
   const { data, isLoading, isFetching, refetch } = useStudentAccess({ institutionId });
   const sendInvite = useSendInvite();
+  const setStudentPassword = useSetStudentPassword();
+  const setStudentStatus = useSetStudentStatus();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [sendingId, setSendingId] = useState(null);
@@ -65,6 +73,13 @@ const StudentPasswordManager = () => {
   const updateInstitution = useUpdateInstitution();
   const [adminPwInput, setAdminPwInput] = useState({});
   const [resettingAdminId, setResettingAdminId] = useState(null);
+
+  // Super-admin overrides, per student. `studentPwInput` is transient component
+  // state and nothing more: it is cleared the moment the request succeeds, is
+  // never written to storage, and has no query cache entry to linger in.
+  const [studentPwInput, setStudentPwInput] = useState({});
+  const [pwStudentId, setPwStudentId] = useState(null);
+  const [busyStudentId, setBusyStudentId] = useState(null);
 
   const students = data?.students || [];
   const adminAccounts = data?.admins || [];
@@ -113,7 +128,9 @@ const StudentPasswordManager = () => {
   // students: mailing a reset link to someone who is already signed in and
   // happy is confusing at best and looks like a phishing attempt at worst.
   const handleSendAllPending = async () => {
-    const targets = students.filter((s) => s.accessState !== 'active');
+    // Deactivated accounts are excluded too: their login is banned, so a
+    // set-password link would take them to a page that cannot help them.
+    const targets = students.filter((s) => s.accessState !== 'active' && s.isActive);
     if (!targets.length) {
       setMessage({ type: 'success', text: 'Everyone has already signed in — nothing to send.' });
       return;
@@ -134,6 +151,51 @@ const StudentPasswordManager = () => {
       type: failed ? 'error' : 'success',
       text: `Sent ${sent} invite${sent === 1 ? '' : 's'}${failed ? `, ${failed} failed` : ''}.`,
     });
+  };
+
+  const handleSetStudentPassword = async (student) => {
+    const newPassword = (studentPwInput[student.id] || '').trim();
+    if (newPassword.length < 8) {
+      setMessage({ type: 'error', text: 'New password must be at least 8 characters' });
+      return;
+    }
+    setBusyStudentId(student.id);
+    try {
+      await setStudentPassword.mutateAsync({ id: student.id, password: newPassword });
+      setStudentPwInput((p) => ({ ...p, [student.id]: '' }));
+      setPwStudentId(null);
+      setMessage({
+        type: 'success',
+        text: `Password set for ${student.email}. Their existing sessions were revoked — hand them the new password directly.`,
+      });
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message || 'Failed to set password' });
+    } finally {
+      setBusyStudentId(null);
+    }
+  };
+
+  const handleToggleActive = async (student) => {
+    const nextActive = !student.isActive;
+    if (!nextActive && !window.confirm(
+      `Deactivate ${student.name || student.email}? They will not be able to sign in. ` +
+        'Nothing is deleted — their profile and scraped history stay, and reactivating restores access.'
+    )) return;
+
+    setBusyStudentId(student.id);
+    try {
+      await setStudentStatus.mutateAsync({ id: student.id, active: nextActive });
+      setMessage({
+        type: 'success',
+        text: nextActive
+          ? `${student.email} can sign in again.`
+          : `${student.email} has been deactivated and signed out everywhere.`,
+      });
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message || 'Failed to change account status' });
+    } finally {
+      setBusyStudentId(null);
+    }
   };
 
   const handleAdminPasswordReset = async (inst) => {
@@ -172,8 +234,9 @@ const StudentPasswordManager = () => {
         <div>
           <h1 className="font-display text-2xl md:text-3xl font-bold text-fg">Student Access</h1>
           <p className="text-fg-subtle mt-1 max-w-2xl">
-            Students set their own passwords through an emailed link. Nobody — including you — can
-            see a student&apos;s password, so this shows whether they can sign in instead.
+            Students choose their own password when they register, or set one from an emailed link.
+            Nobody — including you — can see an existing password, so this shows whether they can
+            sign in, and lets you replace a password or switch an account off.
           </p>
         </div>
         <div className="flex gap-2">
@@ -261,17 +324,62 @@ const StudentPasswordManager = () => {
                   <td className="text-sm text-fg-subtle">{timeAgo(s.invitedAt) || '—'}</td>
                   <td className="text-sm text-fg-subtle">{timeAgo(s.lastSignInAt) || 'Never'}</td>
                   <td className="text-right">
-                    <button
-                      onClick={() => handleSend(s)}
-                      disabled={sendingId === s.id || bulkSending}
-                      className="btn-ghost text-sm"
-                    >
-                      {sendingId === s.id
-                        ? 'Sending…'
-                        : s.accessState === 'active'
-                          ? 'Send reset link'
-                          : 'Send invite'}
-                    </button>
+                    <div className="flex flex-wrap items-center justify-end gap-2">
+                      <button
+                        onClick={() => handleSend(s)}
+                        disabled={sendingId === s.id || bulkSending}
+                        className="btn-ghost text-sm"
+                      >
+                        {sendingId === s.id
+                          ? 'Sending…'
+                          : s.accessState === 'active'
+                            ? 'Send reset link'
+                            : 'Send invite'}
+                      </button>
+
+                      <button
+                        onClick={() => handleToggleActive(s)}
+                        disabled={busyStudentId === s.id}
+                        className="btn-ghost text-sm"
+                      >
+                        {s.isActive ? 'Deactivate' : 'Activate'}
+                      </button>
+
+                      {/* Setting a password directly is a super-admin power.
+                          Institution admins have the invite/reset link, which
+                          the student chooses to act on; this takes the account
+                          over, which is a narrower thing to hand out. */}
+                      {isSuperAdmin && (
+                        <button
+                          onClick={() => setPwStudentId(pwStudentId === s.id ? null : s.id)}
+                          className="btn-ghost text-sm"
+                        >
+                          {pwStudentId === s.id ? 'Cancel' : 'Set password'}
+                        </button>
+                      )}
+                    </div>
+
+                    {isSuperAdmin && pwStudentId === s.id && (
+                      <div className="mt-2 flex flex-wrap items-center justify-end gap-2">
+                        <input
+                          type="password"
+                          value={studentPwInput[s.id] || ''}
+                          onChange={(e) =>
+                            setStudentPwInput((p) => ({ ...p, [s.id]: e.target.value }))
+                          }
+                          placeholder="New password (min 8 chars)"
+                          autoComplete="new-password"
+                          className="px-3 py-1.5 text-sm border border-edge-strong rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
+                        />
+                        <button
+                          onClick={() => handleSetStudentPassword(s)}
+                          disabled={busyStudentId === s.id}
+                          className="btn-accent text-sm"
+                        >
+                          {busyStudentId === s.id ? 'Setting…' : 'Set'}
+                        </button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}

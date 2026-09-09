@@ -16,7 +16,6 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Bell,
-  Bot,
   Building2,
   CalendarClock,
   ChevronDown,
@@ -61,7 +60,6 @@ const NAV = [
     items: [
       { to: '/admin/leaderboard', label: 'Leaderboard', icon: Trophy },
       { to: '/admin/scraping-status', label: 'Scraping', icon: Radar },
-      { to: '/admin/querybot', label: 'QueryBot', icon: Bot },
     ],
   },
   {

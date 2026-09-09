@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';import * as XLSX from 'xlsx';
+import { toast } from 'react-toastify';
+import * as XLSX from 'xlsx';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { useAdminScope } from '../hooks/useAdminScope';
 import { useInstitutions } from '../hooks/queries/useInstitutions';
@@ -41,7 +42,6 @@ const AdminUserCreation = () => {
     rollNumber: '',
     department: '',
     year: '',
-    college: '',
     tenthPercentage: '',
     twelfthPercentage: '',
     platformUrls: {
@@ -77,7 +77,6 @@ Analyze this Excel data and extract student information. Map the data to these e
 - rollNumber (roll number)
 - department (department/branch)
 - year (year of study, convert to number 1-4)
-- college (college name)
 - tenthPercentage (10th percentage, number only)
 - twelfthPercentage (12th percentage, number only)
 - github (GitHub URL, extract from any text)
@@ -125,7 +124,6 @@ ${JSON.stringify(excelData, null, 2)}
       rollNumber: ['roll', 'roll number', 'roll_no', 'rollno', 'roll no', 'student roll', 'student_roll', 'admission', 'admission number', 'student id', 'id', 'student number'],
       department: ['department', 'dept', 'branch', 'stream', 'course'],
       year: ['year', 'academic year', 'study year', 'class', 'yr', 'sem', 'semester', 'batch'],
-      college: ['college', 'institution', 'university', 'school'],
       tenthPercentage: ['10th', 'tenth', '10th percentage', 'sslc', '10th%'],
       twelfthPercentage: ['12th', 'twelfth', '12th percentage', 'hsc', 'puc', '12th%'],
       github: ['github', 'git', 'github profile', 'github url', 'github link'],
@@ -327,7 +325,9 @@ ${JSON.stringify(excelData, null, 2)}
           rollNumber: student.rollNumber?.toString().trim() || '',
           department: student.department || '',
           year: student.year?.toString() || '',
-          college: student.college || '',
+          // No `college`: the server names it from the institution this import
+          // is scoped to, so a spreadsheet's spelling of the college can't
+          // fragment it into several.
           tenthPercentage: student.tenthPercentage?.toString() || '',
           twelfthPercentage: student.twelfthPercentage?.toString() || '',
           platformUrls,
@@ -339,7 +339,6 @@ ${JSON.stringify(excelData, null, 2)}
           email: student.email,
           rollNumber: student.rollNumber,
           department: student.department,
-          college: student.college,
           // The account is fine either way; `invited` only says whether the
           // email went out. A false here is worth surfacing — that student can't
           // sign in until someone re-sends from Student Access.
@@ -390,7 +389,6 @@ ${JSON.stringify(excelData, null, 2)}
       Email: s.email,
       'Roll Number': s.rollNumber || '',
       Department: s.department || '',
-      College: s.college || '',
       'Invite emailed': s.invited ? 'Yes' : 'NO — re-send from Student Access',
     }));
     const ws = XLSX.utils.json_to_sheet(data);
@@ -623,7 +621,6 @@ ${JSON.stringify(excelData, null, 2)}
         rollNumber: studentData.rollNumber.trim() || '',
         department: studentData.department || '',
         year: studentData.year || '',
-        college: studentData.college || '',
         tenthPercentage: studentData.tenthPercentage || '',
         twelfthPercentage: studentData.twelfthPercentage || '',
         platformUrls: formattedUrls,
@@ -689,7 +686,6 @@ ${JSON.stringify(excelData, null, 2)}
       rollNumber: '',
       department: '',
       year: '',
-      college: '',
       tenthPercentage: '',
       twelfthPercentage: '',
       platformUrls: {
@@ -766,7 +762,8 @@ ${JSON.stringify(excelData, null, 2)}
 
   return (
     <div>
-      <div className="container mx-auto max-w-5xl h-full flex flex-col">        <div className="bg-surface rounded-xl overflow-hidden shadow-md border border-edge flex-1 flex flex-col max-h-[calc(100vh-2rem)]">
+      <div className="container mx-auto max-w-5xl h-full flex flex-col">
+        <div className="bg-surface rounded-xl overflow-hidden shadow-md border border-edge flex-1 flex flex-col max-h-[calc(100vh-2rem)]">
         {/* Header */}
         <div className="p-5 sm:p-6 border-b border-edge bg-surface-2">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -909,30 +906,6 @@ ${JSON.stringify(excelData, null, 2)}
                     />
                   </div>
 
-                  <div>
-                    <label htmlFor="college" className="block text-sm font-medium text-fg-muted mb-2">
-                      College
-                    </label>
-                    <div className="relative">
-                      <select
-                        id="college"
-                        name="college"
-                        value={studentData.college}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-edge-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 appearance-none pr-10"
-                      >
-                        <option value="">Select College</option>
-                        <option value="Engineering">Engineering</option>
-                        <option value="Technology">Technology</option>
-                      </select>
-                      <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                        <svg className="w-5 h-5 text-fg-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-                  
                   <div>
                     <label htmlFor="department" className="block text-sm font-medium text-fg-muted mb-2">
                       Department
@@ -1377,7 +1350,6 @@ ${JSON.stringify(excelData, null, 2)}
                               <div><strong>Roll No:</strong> {student.rollNumber || 'N/A'}</div>
                               <div><strong>Department:</strong> {student.department || 'N/A'}</div>
                               <div><strong>Year:</strong> {student.year || 'N/A'}</div>
-                              <div><strong>College:</strong> {student.college || 'N/A'}</div>
                               <div><strong>10th %:</strong> {student.tenthPercentage || 'N/A'}</div>
                               <div><strong>12th %:</strong> {student.twelfthPercentage || 'N/A'}</div>
                             </div>

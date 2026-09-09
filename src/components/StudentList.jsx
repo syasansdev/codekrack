@@ -28,6 +28,7 @@ const StudentList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDepartment, setFilterDepartment] = useState('');
   const [filterYear, setFilterYear] = useState('');
+  const [filterCollege, setFilterCollege] = useState('');
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [scrapingStatus, setScrapingStatus] = useState({});
@@ -101,10 +102,24 @@ const handleViewDetails = async (student) => {
       (filterYear === '3' && student.year?.toString().toLowerCase().includes('3rd')) ||
       (filterYear === '4' && student.year?.toString().toLowerCase().includes('4th'));
       
-    return matchesSearch && matchesDepartment && matchesYear;
+    // Match on the INSTITUTION's name, falling back to the free-text college
+    // column for students imported before registration bound them to one. The
+    // options below are built from the same expression, so anything selectable
+    // here always matches something.
+    const matchesCollege =
+      filterCollege === '' || (student.institutionName || student.college || '') === filterCollege;
+
+    return matchesSearch && matchesDepartment && matchesYear && matchesCollege;
   });
   
   const departments = [...new Set(students.map(s => s.department).filter(Boolean))].sort();
+
+  // Built from the students actually in view rather than from the institutions
+  // list: a super-admin filtering by a college with no students would otherwise
+  // get an option that can only ever return an empty table.
+  const colleges = [
+    ...new Set(students.map((s) => s.institutionName || s.college).filter(Boolean)),
+  ].sort();
 
   const PlatformIcon = ({ platform }) => {
     const icons = {
@@ -205,7 +220,7 @@ const handleViewDetails = async (student) => {
           transition={{ duration: 0.4, delay: 0.3 }}
         >
           <h3 className="text-lg font-bold text-fg mb-4">Filter Students</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
             <div>
               <label htmlFor="search" className="block text-sm font-semibold text-fg-muted mb-2">
                 Search Students
@@ -252,6 +267,30 @@ const handleViewDetails = async (student) => {
             </div>
             
             <div>
+              <label htmlFor="college" className="block text-sm font-semibold text-fg-muted mb-2">
+                Filter by College
+              </label>
+              <motion.div whileHover={{ scale: 1.01 }} className="relative">
+                <select
+                  id="college"
+                  value={filterCollege}
+                  onChange={(e) => setFilterCollege(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-edge-strong rounded-lg focus:outline-none focus:border-blue-500 transition-colors bg-surface appearance-none"
+                >
+                  <option value="">All Colleges</option>
+                  {colleges.map(college => (
+                    <option key={college} value={college}>{college}</option>
+                  ))}
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  <svg className="w-5 h-5 text-fg-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </motion.div>
+            </div>
+
+            <div>
               <label htmlFor="year" className="block text-sm font-semibold text-fg-muted mb-2">
                 Filter by Year
               </label>
@@ -278,7 +317,7 @@ const handleViewDetails = async (student) => {
           </div>
           
           <AnimatePresence>
-            {(searchTerm || filterDepartment || filterYear) && (
+            {(searchTerm || filterDepartment || filterYear || filterCollege) && (
               <motion.div 
                 className="mt-4 flex justify-end"
                 initial={{ opacity: 0, y: -10 }}
@@ -290,6 +329,7 @@ const handleViewDetails = async (student) => {
                     setSearchTerm('');
                     setFilterDepartment('');
                     setFilterYear('');
+                    setFilterCollege('');
                   }}
                   className="px-4 py-2 text-sm font-semibold text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors flex items-center gap-1"
                   whileHover={{ scale: 1.05 }}

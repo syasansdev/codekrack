@@ -84,7 +84,6 @@ const Profile = () => {
         name: formData.name,
         department: formData.department,
         year: formData.year,
-        college: formData.college,
         phoneNumber: formData.phoneNumber,
         platformUrls: { resume: formData.resumeUrl },
       });
@@ -276,13 +275,18 @@ const Profile = () => {
                           <label className="block text-sm font-medium text-fg-muted mb-2">
                             College
                           </label>
-                          <input 
-                            type="text" 
-                            name="college" 
-                            value={formData.college} 
-                            onChange={handleInputChange}
-                            className="w-full px-4 py-3 border border-edge-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                            placeholder="Enter your college name"
+                          {/* Read-only: your college is the institution you
+                              registered under, not free text. Ask your admin to
+                              move you if it is wrong. */}
+                          <input
+                            type="text"
+                            name="college"
+                            value={userData?.institutionName || formData.college}
+                            readOnly
+                            disabled
+                            title="Set by your institution — contact your administrator to change it"
+                            className="w-full px-4 py-3 border border-edge-strong rounded-lg bg-black/5 text-fg-subtle cursor-not-allowed"
+                            placeholder="Not set"
                           />
                         </div>
                         <div>

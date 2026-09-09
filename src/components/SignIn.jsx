@@ -8,13 +8,12 @@ import { queryKeys } from '../lib/queryKeys';
 
 // Sign-in modal (students + admins).
 //
-// GOOGLE SIGN-IN WAS REMOVED, not ported. Every account here is provisioned by
-// an admin, and the profile is keyed to the uid that provisioning created.
-// Signing in with Google mints a DIFFERENT uid, so the profile lookup could
-// never match — the old button's only possible outcome was "User profile not
-// found. Please contact administrator." It cannot work under an
-// admin-provisioned model, and on Supabase it would 403 with NO_PROFILE.
-// If you want it back, it needs an invite/linking flow, not a button.
+// EMAIL AND PASSWORD, AND NOTHING ELSE. There is no social or federated option
+// here and there is no place for one: a profile row is keyed to the uid its
+// account was created with, so a second identity provider would mint a
+// different uid for the same person and the profile lookup would fail with
+// NO_PROFILE — an account that authenticates perfectly and can reach nothing.
+// Adding one needs an identity-linking flow, not a button.
 
 const SignIn = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
@@ -163,7 +162,17 @@ const SignIn = ({ isOpen, onClose }) => {
 
         <div className="text-center mt-4">
           <p className="text-sm text-fg-subtle">
-            Don&apos;t have an account? Please contact your administrator.
+            Don&apos;t have an account?{' '}
+            <button
+              type="button"
+              onClick={() => {
+                handleClose();
+                navigate('/register');
+              }}
+              className="font-semibold text-blue-600 hover:underline"
+            >
+              Create one
+            </button>
           </p>
         </div>
       </motion.div>
