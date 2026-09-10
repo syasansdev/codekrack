@@ -54,7 +54,8 @@ export const useUpdateInstitution = () => {
     mutationFn: ({ id, ...data }) => institutionsApi.update(id, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.institutions.all });
-      // A password reset changes what /admin/passwords shows.
+      // Resetting the institution admin's password changes the admin login
+      // shown alongside its students.
       qc.invalidateQueries({ queryKey: queryKeys.students.all });
     },
   });

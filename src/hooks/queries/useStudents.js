@@ -39,20 +39,6 @@ export const useMyProfile = ({ enabled = true } = {}) =>
     enabled,
   });
 
-/**
- * Who can actually sign in — students AND institution admins, with their invite
- * status. There are no passwords to read any more; this reports access, not
- * secrets. staleTime 0 because an admin lands here right after sending an
- * invite and needs to see it reflected.
- */
-export const useStudentAccess = ({ institutionId = null, enabled = true } = {}) =>
-  useQuery({
-    queryKey: queryKeys.students.access(institutionId),
-    queryFn: ({ signal }) => studentsApi.access({ institutionId, signal }),
-    staleTime: 0,
-    enabled,
-  });
-
 // ---- mutations -------------------------------------------------------------
 
 /** The signed-in student editing their own profile. */

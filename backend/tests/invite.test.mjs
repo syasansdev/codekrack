@@ -127,15 +127,16 @@ try {
   const leaked = JSON.stringify(r.body).match(/password/i);
   !leaked ? ok('GET /students/:id mentions no password at all') : no('*** "password" appears in the payload');
 
-  r = await call('GET', '/api/students/access', aTok);
+  r = await call('GET', '/api/students', aTok);
   const me = (r.body?.students || []).find((s) => s.id === sid);
   me && !('tempPassword' in me)
-    ? ok('GET /students/access returns access state, not secrets')
-    : no('access payload wrong: ' + JSON.stringify(me));
-  me?.accessState === 'invited'
-    ? ok(`accessState = 'invited' (emailed, not yet signed in)`)
-    : no('accessState: ' + me?.accessState);
-  me?.lastSignInAt === null ? ok('lastSignInAt = null (never signed in)') : no('lastSignInAt: ' + me?.lastSignInAt);
+    ? ok('GET /students returns state, not secrets')
+    : no('student payload wrong: ' + JSON.stringify(me));
+  me?.invitedAt
+    ? ok('invitedAt stamped (the set-password email went out)')
+    : no('invitedAt: ' + me?.invitedAt);
+  me?.lastLoginAt == null ? ok('lastLoginAt empty (never signed in)') : no('lastLoginAt: ' + me?.lastLoginAt);
+  me?.isActive === true ? ok('account is active') : no('isActive: ' + me?.isActive);
 
   const gone = await call('GET', '/api/students/passwords', aTok);
   gone.status === 400 || gone.status === 404
@@ -179,12 +180,11 @@ try {
     ? ok('student signs in with the password THEY chose')
     : no('sign-in failed: ' + tok);
 
-  r = await call('GET', '/api/students/access', aTok);
+  r = await call('GET', '/api/students', aTok);
   const after = (r.body?.students || []).find((s) => s.id === sid);
-  after?.accessState === 'active'
-    ? ok(`accessState flipped to 'active' — read from auth.users, nothing to keep in sync`)
-    : no('accessState after sign-in: ' + after?.accessState);
-  after?.lastSignInAt ? ok('lastSignInAt now populated') : no('lastSignInAt still null');
+  after?.isActive === true
+    ? ok('the account they just signed in with is active')
+    : no('isActive after sign-in: ' + after?.isActive);
 
   console.log('\n=== RE-SENDING DOES NOT LOCK THEM OUT ===');
   // The OLD reset endpoint minted a new password, so clicking it revoked the
@@ -212,10 +212,10 @@ try {
   r.status === 404
     ? ok("another institution's admin cannot send an invite to our student (404)")
     : no('*** cross-institution invite -> ' + r.status);
-  r = await call('GET', '/api/students/access', bTok);
+  r = await call('GET', '/api/students', bTok);
   !(r.body?.students || []).some((s) => s.id === sid)
-    ? ok("another institution's admin sees nothing of our student on /access")
-    : no('*** access list leaked across institutions');
+    ? ok("another institution's admin sees nothing of our student on /students")
+    : no('*** student list leaked across institutions');
 
 } catch (e) {
   no('threw: ' + e.message + '\n    ' + (e.stack?.split('\n')[1] || ''));

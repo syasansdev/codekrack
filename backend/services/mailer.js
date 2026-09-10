@@ -12,6 +12,10 @@
 //
 // One transport cannot disagree with itself.
 //
+// emailService.js has since been deleted with the contest-notification feature,
+// so inviteService.js is currently the only sender. The rule still stands: the
+// next sender imports THIS file rather than calling createTransport again.
+//
 // `import 'dotenv/config'` FIRST, and it is load-bearing. ES module imports are
 // hoisted and evaluated before ANY statement in the importing module — including
 // server.js's own dotenv.config(). Without this line, everything below reads an
@@ -65,7 +69,7 @@ if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
   // would be a worse failure than degraded invites. But say so once, clearly —
   // the alternative is silence and a support ticket about missing emails.
   logger.warn(
-    'EMAIL_USER / EMAIL_PASS are not set — invite and contest emails will fail. ' +
+    'EMAIL_USER / EMAIL_PASS are not set — invite and set-password emails will fail. ' +
       'Use a Gmail App Password (Google Account -> Security -> 2-Step Verification -> App passwords).'
   );
 }

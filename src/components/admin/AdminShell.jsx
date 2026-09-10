@@ -15,11 +15,8 @@ import { useEffect, useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  Bell,
   Building2,
-  CalendarClock,
   ChevronDown,
-  KeyRound,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -52,7 +49,6 @@ const NAV = [
       { to: '/admin/students', label: 'Directory', icon: Users },
       { to: '/admin/manage-students', label: 'Manage', icon: UserCog },
       { to: '/admin/add-student', label: 'Add student', icon: UserPlus },
-      { to: '/admin/passwords', label: 'Access', icon: KeyRound },
     ],
   },
   {
@@ -66,8 +62,6 @@ const NAV = [
     section: 'Organisation',
     items: [
       { to: '/admin/institutions', label: 'Institutions', icon: Building2, superOnly: true },
-      { to: '/admin/notifications', label: 'Notifications', icon: Bell },
-      { to: '/admin/scheduler', label: 'Scheduler', icon: CalendarClock },
     ],
   },
 ];

@@ -45,36 +45,6 @@ export const apiLimiter = rateLimit({
 });
 
 /**
- * Strict ceiling for anything that SENDS EMAIL.
- *
- * Auth (SEC-01) stops anonymous abuse, but not a compromised or careless admin
- * session looping "send to everyone" — and each of those is N emails from a Gmail
- * account with a hard daily quota. Exceed it and the account is suspended: no
- * invites, no notifications, nothing, until Google lets it back.
- *
- * 5/hr is generous for a real workflow (the weekly send is a cron job, not a
- * human) and far below anything that could threaten the account's standing.
- */
-export const emailSendLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000,
-  max: 5,
-  standardHeaders: true,
-  legacyHeaders: false,
-  // Key on the authenticated user, not the IP. These routes sit behind
-  // verifyAdmin so req.user exists — and a per-IP key would let one office of
-  // admins exhaust each other's quota from a shared NAT address.
-  keyGenerator: (req) => req.user?.uid || req.ip,
-  handler: (req, res) => {
-    logger.warn(`Email send limit exceeded: ${req.user?.email || req.ip} ${req.originalUrl}`);
-    res.status(429).json({
-      success: false,
-      error: 'Too many email sends. Please wait an hour before trying again.',
-      code: 'EMAIL_RATE_LIMITED',
-    });
-  },
-});
-
-/**
  * Public student registration.
  *
  * This is the only unauthenticated write in the API, so it is the only endpoint

@@ -225,11 +225,19 @@ const StudentViewDetails = ({ student, onClose, onStudentUpdate, isAdminView = f
   const [isAutoScraping, setIsAutoScraping] = useState(false);
   const rescrape = useRescrapeStudent();
   const [showEditModal, setShowEditModal] = useState(false);
+  // Every platform in `platformOrder` needs an entry here. getPlatformData()
+  // reads `platformData[platform].loading` unguarded, so a platform that is
+  // rendered but missing from this map throws
+  // "Cannot read properties of undefined (reading 'loading')" and takes the
+  // whole detail view down. hackerrank was added to platformOrder (and to the
+  // scraper) without being added here, so opening any student who has a
+  // HackerRank profile link crashed this component.
   const [platformData, setPlatformData] = useState({
     leetcode: { loading: false, data: null, error: null },
     github: { loading: false, data: null, error: null },
     codeforces: { loading: false, data: null, error: null },
-    atcoder: { loading: false, data: null, error: null }
+    atcoder: { loading: false, data: null, error: null },
+    hackerrank: { loading: false, data: null, error: null }
   });
 
   useEffect(() => {
@@ -306,7 +314,9 @@ const StudentViewDetails = ({ student, onClose, onStudentUpdate, isAdminView = f
 
   const getPlatformData = (platform) => {
     // Use real-time data if available, otherwise use stored data
-    const realTimeData = platformData[platform];
+    // Default rather than index blindly: adding a platform to platformOrder
+    // should show it as "not fetched", never crash the whole view.
+    const realTimeData = platformData[platform] || { loading: false, data: null, error: null };
     const storedData = currentStudent.platformData?.[platform] || currentStudent.stats?.[platform];
     const scrapingStatusValue = currentStudent.scrapingStatus?.[platform] || 'pending';
 

@@ -29,7 +29,6 @@ export const queryKeys = {
     list: (institutionId = null) => ['students', 'list', institutionId ?? 'all'],
     details: () => ['students', 'detail'],
     detail: (id) => ['students', 'detail', id],
-    access: (institutionId = null) => ['students', 'access', institutionId ?? 'all'],
   },
 
   // --- institutions ---------------------------------------------------------

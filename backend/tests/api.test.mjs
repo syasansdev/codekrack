@@ -14,7 +14,7 @@
 import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
 import { supabaseAdmin } from '../config/supabase.js';
-import { query, many, closePool } from '../config/db.js';
+import { query, one, many, closePool } from '../config/db.js';
 import { readFileSync } from 'node:fs';
 
 const API = 'http://localhost:5001';
@@ -161,28 +161,21 @@ try {
   st?.tenthPercentage === 92.5 ? ok('tenthPercentage is a number (92.5), not the string Firestore stored') : no('tenth: ' + JSON.stringify(st?.tenthPercentage));
   st?.tempPassword === undefined ? ok('no tempPassword on GET /students/:id') : no('*** tempPassword leaked into GET /students/:id ***');
 
-  console.log('\n=== ACCESS STATUS (replaces the temp-password screen) ===');
-  r = await call('GET', '/api/students/access', aTok);
-  const acc = r.body?.students || [];
-  acc.length === 2 && acc.every((s) => s.institutionId === instA)
-    ? ok("admin A sees only A's students on /access")
-    : no('access scope: ' + acc.length);
-  acc.every((s) => !('tempPassword' in s))
-    ? ok('/access exposes NO password field — it reports access, not secrets')
-    : no('*** /access leaked a password field ***');
-  ['invited', 'active', 'never_invited'].includes(acc[0]?.accessState)
-    ? ok('/access reports accessState (' + acc[0].accessState + ')')
-    : no('accessState missing: ' + JSON.stringify(acc[0]));
-  (r.body?.admins || []).length === 1 && r.body.admins[0].institutionId === instA
-    ? ok("admin A sees their own institution's admin account")
-    : no('admins in scope: ' + JSON.stringify((r.body?.admins || []).length));
-  r = await call('GET', '/api/students/access', suTok);
-  // Count only OUR admins: the database may hold real institutions too, and a
-  // test that assumes an empty DB starts failing the moment the app is used.
-  const ourAdmins = (r.body?.admins || []).filter((a) => a.email.startsWith(TAG));
-  ourAdmins.length === 2
-    ? ok('super-admin sees BOTH institution admins (the tracking requirement)')
-    : no('super admins: ' + ourAdmins.length);
+  console.log('\n=== NO ENDPOINT RETURNS A PASSWORD ===');
+  // GET /students/access is gone with the Student Access screen; the roster now
+  // reads GET /students. The property that mattered was never the endpoint, it
+  // was that nothing anywhere returns a credential — so assert it on the list.
+  r = await call('GET', '/api/students', aTok);
+  const roster = r.body?.students || [];
+  roster.length === 2 && roster.every((s) => s.institutionId === instA)
+    ? ok("admin A sees only A's students on /students")
+    : no('roster scope: ' + roster.length);
+  roster.every((s) => !('tempPassword' in s) && !('password' in s))
+    ? ok('/students exposes NO password field — it reports state, not secrets')
+    : no('*** /students leaked a password field ***');
+  roster.every((s) => 'isActive' in s && 'expiresAt' in s)
+    ? ok('/students carries the lifecycle fields the roster renders')
+    : no('lifecycle fields missing: ' + JSON.stringify(Object.keys(roster[0] || {})));
 
   console.log('\n=== UPDATE: privilege escalation attempts ===');
   r = await call('PATCH', `/api/students/${s1}`, aTok, {
@@ -260,13 +253,109 @@ try {
     ? ok('summary counts: completed=1 pending=1') : no('summary: ' + JSON.stringify(r.body?.summary));
 
   console.log('\n=== AUTHZ ON EVERY NEW ROUTE ===');
-  for (const [m, p] of [['GET','/api/students'],['GET','/api/students/access'],['GET','/api/dashboard/stats'],['GET','/api/dashboard/scraping-status'],['GET','/api/institutions']]) {
+  for (const [m, p] of [['GET','/api/students'],['GET','/api/dashboard/stats'],['GET','/api/dashboard/scraping-status'],['GET','/api/institutions']]) {
     const un = await call(m, p, null);
     const bad = await call(m, p, 'garbage.token.here');
     un.status === 401 && bad.status === 401 ? ok(`${p} -> 401 unauthenticated + 401 bad token`) : no(`${p} -> ${un.status}/${bad.status}`);
   }
   r = await call('POST', '/api/institutions', aTok, { name: 'x', adminEmail: 'x@y.co', adminPassword: 'Password1!' });
   r.status === 403 ? ok('institution admin creating an institution -> 403 NOT_SUPERADMIN') : no('inst create by admin -> ' + r.status);
+
+  // =========================================================================
+  // The capabilities that moved off the deleted Student Access page. They now
+  // live on the student's own row (Manage students, and the institution
+  // roster), so they need the coverage that page's endpoint used to carry.
+  // =========================================================================
+  console.log('\n=== REMOVED ROUTES ARE ACTUALLY GONE ===');
+  for (const p of [
+    '/api/email/upcoming-contests',
+    '/api/email/weekly-contests',
+    '/api/email/scheduler/status',
+    '/api/email/send-contest-notifications',
+  ]) {
+    const dead = await call('GET', p, suTok);
+    dead.status === 404 ? ok(`${p} -> 404`) : no(`*** ${p} still answers ${dead.status}`);
+  }
+  // /students/access was removed; the path now falls through to GET /:id, which
+  // rejects it as a malformed id rather than returning anyone's access list.
+  r = await call('GET', '/api/students/access', aTok);
+  r.status === 400 && !r.body?.students
+    ? ok('/api/students/access no longer returns an access list (400, not data)')
+    : no(`*** /students/access -> ${r.status} ${JSON.stringify(r.body).slice(0, 80)}`);
+
+  console.log('\n=== SET PASSWORD (super-admin only) ===');
+  // An earlier section changes s1's login email on purpose, so read the
+  // current address instead of rebuilding the one it was created with.
+  const s1Email = (await one('select email from public.profiles where id = $1', [s1])).email;
+  r = await call('POST', `/api/students/${s1}/set-password`, aTok, { password: 'NotAllowed12345' });
+  r.status === 403
+    ? ok('institution admin setting a student password -> 403')
+    : no('*** institution admin could set a password: ' + r.status);
+  r = await call('POST', `/api/students/${s1}/set-password`, suTok, { password: 'short' });
+  r.status === 400 ? ok('password under 8 chars -> 400') : no('short password -> ' + r.status);
+  r = await call('POST', `/api/students/${s1}/set-password`, suTok, { password: 'ZzReset#Pass1' });
+  r.status === 200 ? ok('super-admin set-password -> 200') : no('set-password -> ' + r.status);
+  !JSON.stringify(r.body).match(/password"\s*:\s*"/)
+    ? ok('set-password response echoes NO password back')
+    : no('*** the new password came back in the response ***');
+  const newPw = await signIn(s1Email, 'ZzReset#Pass1').catch((e) => e.message);
+  newPw.startsWith('eyJ')
+    ? ok('the student can sign in with the password the super-admin set')
+    : no('sign-in with new password failed: ' + newPw);
+  // An admin account must not be reachable through a student endpoint.
+  const adminProfile = await one(
+    `select id from public.profiles where email = '${TAG}-alpha@codekrack.invalid'`
+  );
+  r = await call('POST', `/api/students/${adminProfile.id}/set-password`, suTok, { password: 'ZzTakeover#1' });
+  r.status === 404
+    ? ok('set-password against an ADMIN account -> 404 (role=student is in the WHERE)')
+    : no('*** an admin account was reachable via set-password: ' + r.status);
+
+  console.log('\n=== ACTIVATE / DEACTIVATE ===');
+  r = await call('POST', `/api/students/${s1}/status`, aTok, { active: false });
+  r.status === 200 && r.body?.student?.isActive === false
+    ? ok('deactivate -> 200, isActive false')
+    : no('deactivate -> ' + r.status + ' ' + JSON.stringify(r.body?.student?.isActive));
+  // signIn() THROWS on refusal and the caller catches the message — which is
+  // itself long — so "length > 40" cannot tell a token from a refusal. Access
+  // tokens are JWTs, so test for that shape.
+  const isJwt = (v) => typeof v === 'string' && v.startsWith('eyJ');
+  const banned = await signIn(s1Email, 'ZzReset#Pass1').catch((e) => e.message);
+  isJwt(banned)
+    ? no('*** a deactivated student could still sign in ***')
+    : ok('a deactivated student cannot sign in (' + String(banned).split(': ').pop().slice(0, 24) + ')');
+  // A deactivated student must drop off the board but keep their history.
+  r = await call('GET', '/api/dashboard/leaderboard?platform=leetcode', aTok);
+  !(r.body?.leaderboard || []).some((x) => x.id === s1)
+    ? ok('a deactivated student is excluded from the leaderboard')
+    : no('*** deactivated student still on the leaderboard');
+  r = await call('POST', `/api/students/${s1}/status`, bTok, { active: true });
+  r.status === 404
+    ? ok("another institution's admin cannot reactivate our student (404)")
+    : no('*** cross-institution status change -> ' + r.status);
+  r = await call('POST', `/api/students/${s1}/status`, aTok, { active: true });
+  r.status === 200 && r.body?.student?.isActive === true
+    ? ok('reactivate -> 200, isActive true')
+    : no('reactivate -> ' + r.status);
+  const restored = await signIn(s1Email, 'ZzReset#Pass1').catch((e) => e.message);
+  isJwt(restored)
+    ? ok('reactivation restores sign-in with the SAME password (nothing was destroyed)')
+    : no('sign-in after reactivation failed: ' + restored);
+  r = await call('POST', `/api/students/${s1}/status`, aTok, { active: 'yes' });
+  r.status === 400 ? ok('non-boolean `active` -> 400') : no('bad active -> ' + r.status);
+
+  console.log('\n=== ROSTER PAYLOAD (what the institution table renders) ===');
+  r = await call('GET', `/api/students?institutionId=${instA}`, suTok);
+  const rosterRow = (r.body?.students || []).find((x) => x.id === s1);
+  rosterRow && rosterRow.platformMetrics && typeof rosterRow.platformMetrics === 'object'
+    ? ok('students carry platformMetrics (the same column the leaderboard sorts on)')
+    : no('platformMetrics missing: ' + JSON.stringify(Object.keys(rosterRow || {})));
+  rosterRow?.scrapingStatus && rosterRow?.platformUrls
+    ? ok('students carry scrapingStatus + platformUrls, so —/…/failed/0 stay distinguishable')
+    : no('state fields missing for the platform cells');
+  !JSON.stringify(r.body).match(/"(tempPassword|password)"/)
+    ? ok('the roster payload contains no password field of any kind')
+    : no('*** a password field appeared in the roster payload ***');
 
   console.log('\n=== DELETE (the orphaned-Auth-account fix) ===');
   r = await call('DELETE', `/api/students/${smuggled}`, aTok);

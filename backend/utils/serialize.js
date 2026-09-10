@@ -72,6 +72,7 @@ export const serializeStudent = (row) => {
 
   const platformUrls = {};
   const platformData = {};
+  const platformMetrics = {};
   const scrapingStatus = {};
   let lastUpdated = null;
 
@@ -87,6 +88,13 @@ export const serializeStudent = (row) => {
     // `data` holds the scraper's own payload verbatim, which is what the
     // components read (data.totalSolved, data.repositories, ...).
     platformData[p.platform] = p.data && Object.keys(p.data).length ? p.data : null;
+    // The typed column, not a field dug out of `data`. This is the exact number
+    // the leaderboard sorts on (platform_stats.metric), so anything rendering
+    // per-platform figures agrees with the board by construction rather than by
+    // two places independently picking the right key out of a jsonb blob.
+    // Present whenever the row is, so a completed scrape that reported nothing
+    // is a real 0 rather than an absence.
+    platformMetrics[p.platform] = Number(p.metric) || 0;
     const t = iso(p.last_attempt_at);
     if (t && (!lastUpdated || t > lastUpdated)) lastUpdated = t;
   }
@@ -122,6 +130,7 @@ export const serializeStudent = (row) => {
 
     platformUrls,
     platformData,
+    platformMetrics,
     scrapingStatus,
 
     // Now a real number summed from platform_stats, rather than Firestore's
@@ -131,8 +140,9 @@ export const serializeStudent = (row) => {
     streak: row.streak ?? 0,
     lastActivityDate: iso(row.last_activity_date),
 
-    // When the set-password email was last sent. Whether they've USED it is
-    // auth.users.last_sign_in_at, reported by GET /api/students/access.
+    // When the set-password email was last sent. Only ever stamped for
+    // admin-created accounts — a self-registered student chooses their own
+    // password and is never invited.
     invitedAt: iso(row.invited_at),
 
     // Lifecycle (009). expiresAt is the 1-year retention deadline, measured

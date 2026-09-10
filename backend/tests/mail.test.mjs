@@ -38,10 +38,11 @@ try {
     ? ok('exactly one createTransport, in mailer.js')
     : no(`*** ${creators.length} transports: ${creators.join(', ')} — they WILL drift ***`);
 
+  // emailService.js is gone with the contest-notification feature; inviteService
+  // is now the only sender, which is why the createTransport count above must
+  // stay at exactly one.
   const invite = readFileSync('services/inviteService.js', 'utf8');
-  const email = readFileSync('services/emailService.js', 'utf8');
   /from '\.\/mailer\.js'/.test(invite) ? ok('inviteService uses the shared mailer') : no('inviteService has its own transport');
-  /from '\.\/mailer\.js'/.test(email) ? ok('emailService uses the shared mailer') : no('emailService has its own transport');
 
   console.log('\n=== dotenv is loaded at import time ===');
   const mailerSrc = readFileSync('services/mailer.js', 'utf8');
@@ -65,12 +66,12 @@ try {
       ? ok('SMTP connects and authenticates (no mail sent)')
       : no('*** SMTP verify failed — see the log line above for the reason ***');
 
-    // Both services must resolve to the SAME object. If someone reintroduces a
+    // inviteService must resolve to the SAME object. If someone reintroduces a
     // second transport, this catches it even if the file-level check is fooled.
-    const es = (await import('../services/emailService.js')).default;
-    es.transporter === transporter
-      ? ok('emailService.transporter IS the shared transport (same object)')
-      : no('*** emailService holds a DIFFERENT transport object ***');
+    const { sendMail } = await import('../services/mailer.js');
+    typeof sendMail === 'function'
+      ? ok('mailer exports the shared sendMail used by inviteService')
+      : no('*** mailer.sendMail is missing ***');
   }
 
   console.log('\n=== the prod guard on the TLS bypass ===');

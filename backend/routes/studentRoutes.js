@@ -37,6 +37,7 @@ import {
   PLATFORMS,
 } from '../utils/serialize.js';
 import { isValidEmail, normalizeEmail, undeliverableDomainReason } from '../utils/email.js';
+import { firstProfileUrlError } from '../utils/profileUrls.js';
 import logger from '../utils/logger.js';
 
 const router = express.Router();
@@ -64,89 +65,6 @@ router.get('/', verifyAdmin, async (req, res) => {
     res.json({ success: true, students: serializeStudents(rows), scopedTo: institutionId });
   } catch (e) {
     logger.error('List students failed:', e);
-    res.status(500).json({ success: false, error: e.message });
-  }
-});
-
-// =============================================================================
-// GET /api/students/access   (any admin)
-//
-// Replaces GET /api/students/passwords, which existed to display every
-// student's password in plaintext. There are no passwords to display any more —
-// none are stored, and none are knowable. What an admin actually needs is
-// whether each student can get IN, so this reports:
-//
-//   invitedAt      when the set-password email was last sent
-//   lastSignInAt   whether they've ever used it   (from auth.users)
-//   accessState    invited | active | never_invited
-//
-// `lastSignInAt` is read from auth.users rather than mirrored into profiles: a
-// copy would need maintaining on every login and would be wrong the moment that
-// failed. Supabase owns that fact; we join to it.
-// =============================================================================
-const ACCESS_SELECT = `
-  select p.id, p.name, p.email, p.role, p.institution_id, p.roll_number,
-         p.department, p.invited_at, p.created_at, p.deactivated_at, p.expires_at,
-         i.name as institution_name,
-         au.last_sign_in_at
-    from public.profiles p
-    left join public.institutions i on i.id = p.institution_id
-    join auth.users au on au.id = p.id
-`;
-
-const serializeAccess = (r) => ({
-  id: r.id,
-  name: r.name,
-  email: r.email,
-  role: r.role,
-  rollNumber: r.roll_number,
-  department: r.department,
-  institutionId: r.institution_id,
-  institutionName: r.institution_name,
-  invitedAt: r.invited_at ? new Date(r.invited_at).toISOString() : null,
-  lastSignInAt: r.last_sign_in_at ? new Date(r.last_sign_in_at).toISOString() : null,
-  createdAt: r.created_at ? new Date(r.created_at).toISOString() : null,
-  deactivatedAt: r.deactivated_at ? new Date(r.deactivated_at).toISOString() : null,
-  expiresAt: r.expires_at ? new Date(r.expires_at).toISOString() : null,
-  isActive: !r.deactivated_at,
-  // A deactivated account cannot sign in whatever its invite history says, so
-  // that fact outranks the other three states rather than sitting beside them.
-  accessState: r.deactivated_at
-    ? 'deactivated'
-    : r.last_sign_in_at
-      ? 'active'
-      : r.invited_at
-        ? 'invited'
-        : 'never_invited',
-});
-
-router.get('/access', verifyAdmin, async (req, res) => {
-  try {
-    const institutionId = scopeFor(req, req.query.institutionId);
-    const scoped = institutionId !== null;
-    const params = scoped ? [institutionId] : [];
-
-    const students = await many(
-      `${ACCESS_SELECT} where p.role = 'student' ${scoped ? 'and p.institution_id = $1' : ''} order by p.name asc`,
-      params
-    );
-
-    // Institution admins. A super-admin sees every institution's; an institution
-    // admin sees only their own. Their password is set by the super-admin and
-    // isn't stored either, so this is a sign-in record, not a secret.
-    const admins = await many(
-      `${ACCESS_SELECT} where p.role = 'admin' ${scoped ? 'and p.institution_id = $1' : ''} order by p.name asc`,
-      params
-    );
-
-    res.json({
-      success: true,
-      students: students.map(serializeAccess),
-      admins: admins.map(serializeAccess),
-      scopedTo: institutionId,
-    });
-  } catch (e) {
-    logger.error('List access failed:', e);
     res.status(500).json({ success: false, error: e.message });
   }
 });
@@ -291,6 +209,16 @@ router.post('/register', registerLimiter, async (req, res) => {
     }
     if (!year || !VALID_YEARS.includes(String(year))) {
       return res.status(400).json({ success: false, error: 'Please select your year of study' });
+    }
+
+    // Profile links, when supplied. Checked HERE rather than inside
+    // provisionStudent() on purpose: the admin create and bulk-import paths go
+    // through that same function, and spreadsheets full of hand-typed links
+    // would start failing rows that have always been accepted. This is the
+    // public form's own rule, so it is enforced on the public form's own route.
+    const badUrl = firstProfileUrlError(req.body?.platformUrls);
+    if (badUrl) {
+      return res.status(400).json({ success: false, error: badUrl });
     }
 
     // Resolve the institution here rather than trusting a name from the body.

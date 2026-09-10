@@ -113,18 +113,6 @@ export const studentsApi = {
   detail: async (id, { signal } = {}) => (await get(`/api/students/${id}`, { signal })).student,
 
   /**
-   * Who can actually get in. Returns { students, admins }, each carrying
-   * invitedAt / lastSignInAt / accessState.
-   *
-   * Replaces `passwords`, which returned every student's plaintext password.
-   * No password is stored any more, so there is nothing of that kind to fetch.
-   */
-  access: async ({ institutionId, signal } = {}) => {
-    const r = await get('/api/students/access', { params: { institutionId }, signal });
-    return { students: r.students, admins: r.admins };
-  },
-
-  /**
    * Returns { uid, institutionId, invited, inviteError }.
    * No password comes back — the account is created with an unusable one and the
    * student sets their own via the emailed link. `invited: false` means the
@@ -226,38 +214,5 @@ export const dashboardApi = {
     get('/api/dashboard/scraping-status', { params: { institutionId }, signal }),
 };
 
-// =============================================================================
-// Contests & the email scheduler
-//
-// These endpoints used to be called with a bare fetch() straight from five
-// components, with no Authorization header — because the routes had no auth at
-// all (SEC-01). They do now, so the calls belong here like everything else: one
-// place that attaches the token, one place that shapes errors.
-//
-// Note the split in who may call what. /upcoming-contests is verifyToken because
-// the student Header renders a contest calendar; everything else is verifyAdmin.
-// =============================================================================
-export const contestsApi = {
-  /** Any signed-in user — the student Header shows these. */
-  upcoming: async ({ signal } = {}) => {
-    const r = await get('/api/email/upcoming-contests', { signal });
-    return r.contests || r.data || [];
-  },
-
-  /** Admin only. */
-  weekly: ({ signal } = {}) => get('/api/email/weekly-contests', { signal }),
-
-  schedulerStatus: ({ signal } = {}) => get('/api/email/scheduler/status', { signal }),
-
-  /** Admin only. Rate limited to 5/hr per admin — it emails every student. */
-  sendNotifications: () => post('/api/email/send-contest-notifications'),
-
-  startScheduler: () => post('/api/email/scheduler/start'),
-  stopScheduler: () => post('/api/email/scheduler/stop'),
-
-  /** Admin only. Rate limited — fires the weekly send immediately. */
-  triggerScheduler: () => post('/api/email/scheduler/trigger'),
-};
-
-export const api = { studentsApi, institutionsApi, dashboardApi, contestsApi, request, BASE_URL };
+export const api = { studentsApi, institutionsApi, dashboardApi, request, BASE_URL };
 export default api;

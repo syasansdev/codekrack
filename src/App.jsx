@@ -30,7 +30,6 @@ import ScrapingStatus from './components/ScrapingStatus';
 import AdminLeaderboard from './components/AdminLeaderboard';
 import Profile from './components/Profile';
 import ChangePassword from './components/ChangePassword';
-import StudentPasswordManager from './components/StudentPasswordManager';
 import StudentOnboardingForm from './components/StudentOnboardingForm';
 import SuperAdminRoute from './components/SuperAdminRoute';
 import InstitutionManagement from './components/InstitutionManagement';
@@ -39,8 +38,6 @@ import InstitutionManagement from './components/InstitutionManagement';
 // Auth Context
 import { AuthProvider } from './contexts/AuthContext';
 import { useTheme } from './contexts/ThemeContext';
-import ContestNotifications from './components/ContestNotifications';
-import WeeklyScheduler from './components/WeeklyScheduler';
 
 // NOTE: ProtectedRoute now lives in ./components/ProtectedRoute and actually
 // checks for a session. The version that used to be defined right here was
@@ -200,9 +197,6 @@ function App() {
             <Route path="add-student" element={<AdminUserCreation />} />
             <Route path="scraping-status" element={<ScrapingStatus />} />
             <Route path="leaderboard" element={<AdminLeaderboard />} />
-            <Route path="passwords" element={<StudentPasswordManager />} />
-            <Route path="notifications" element={<ContestNotifications />} />
-            <Route path="scheduler" element={<WeeklyScheduler />} />
           </Route>
           
           {/* Legacy alias for /admin/dashboard.

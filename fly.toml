@@ -17,12 +17,13 @@
 # Fly's default is to stop machines when idle. That default breaks this app in
 # two ways that produce NO error message:
 #
-#   1. The weekly contest email is in-process node-cron ('0 9 * * 1'). A stopped
-#      machine runs no cron. At 09:00 Monday nothing happens, nothing logs, and
-#      you find out when a student mentions they never got an email.
-#   2. SSE + the Postgres LISTEN connection both need a live process. A stopped
+#   1. SSE + the Postgres LISTEN connection both need a live process. A stopped
 #      machine drops every open stream and the leaderboard silently stops being
 #      live.
+#
+# (There used to be a second reason — an in-process node-cron sending the weekly
+# contest email. That feature is gone, along with emailRoutes/schedulerService.
+# The SSE reason alone is still sufficient, so these settings stay.)
 #
 # A scale-to-zero backend is fine for a request/response API. This is not one.
 # ---------------------------------------------------------------------------

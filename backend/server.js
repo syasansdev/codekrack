@@ -6,12 +6,10 @@ import morgan from "morgan";
 import helmet from "helmet";
 import compression from "compression";
 
-import emailRoutes from "./routes/emailRoutes.js";
 import institutionRoutes from "./routes/institutionRoutes.js";
 import studentRoutes from "./routes/studentRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import eventsRoutes from "./routes/eventsRoutes.js";
-import schedulerService from "./services/schedulerService.js";
 import { startRealtime, stopRealtime } from "./services/realtime.js";
 import { verifyMailer } from "./services/mailer.js";
 
@@ -107,6 +105,11 @@ app.use(morgan("dev")); // HTTP request logger
 //                       every deletion 404'd and orphaned an Auth login.
 //   /api/achievements/* the achievements UI ranked students by a field nothing
 //                       ever wrote, so every rank was computed from 0.
+//   /api/email/*        contest notifications and the weekly scheduler. The
+//                       product no longer emails students about contests, so the
+//                       routes, the node-cron job and emailService/schedulerService
+//                       went with the feature. mailer.js STAYS — invite and
+//                       set-password emails still go through it.
 // SSE is mounted BEFORE the rate limiter, deliberately.
 //
 // /api/events is one long-lived stream per client that reconnects on a 3s
@@ -122,7 +125,6 @@ app.use("/api", apiLimiter);
 app.use("/api/institutions", institutionRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/dashboard", dashboardRoutes);
-app.use("/api/email", emailRoutes);
 
 // Health check route
 app.get("/health", (req, res) => {
@@ -172,11 +174,6 @@ const server = app.listen(PORT, () => {
   // is a student saying they never got their invite. This surfaces a broken mail
   // setup in the startup log, where someone will actually see it.
   verifyMailer();
-
-  // Start the weekly email scheduler
-  setTimeout(() => {
-    schedulerService.startScheduler();
-  }, 2000); // Wait 2 seconds for server to fully start
 });
 
 // SSE connections are long-lived by design, so Node's default 2-minute socket

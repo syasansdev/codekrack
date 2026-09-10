@@ -21,6 +21,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { usePublicInstitutions } from '../hooks/queries/useInstitutions';
 import { studentsApi } from '../services/api';
+import { validateProfileUrl, validateProfileUrls } from '../lib/profileUrls';
 
 const YEARS = [
   { value: '1', label: '1st Year' },
@@ -84,6 +85,14 @@ const Field = ({ label, error, required, children, hint }) => (
 const inputCls =
   'w-full px-3 py-2 border border-edge-strong rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition bg-surface text-fg';
 
+/** Set or clear one platform's message inside the errors object. */
+const withPlatformError = (errors, key, message) => {
+  const platformUrls = { ...(errors.platformUrls || {}) };
+  if (message) platformUrls[key] = message;
+  else delete platformUrls[key];
+  return { ...errors, platformUrls };
+};
+
 const StudentOnboardingForm = ({ isOpen = true, onClose, onSignIn }) => {
   const navigate = useNavigate();
   const {
@@ -127,8 +136,21 @@ const StudentOnboardingForm = ({ isOpen = true, onClose, onSignIn }) => {
     setErrors((e) => (e[key] ? { ...e, [key]: undefined } : e));
   };
 
-  const setPlatform = (key, value) =>
+  const setPlatform = (key, value) => {
     setForm((f) => ({ ...f, platformUrls: { ...f.platformUrls, [key]: value } }));
+    // Clear the message the moment they start fixing it. Leaving a stale red
+    // line under a field someone is actively correcting reads as "still wrong"
+    // when it only means "was wrong a keystroke ago".
+    setErrors((e) => (e.platformUrls?.[key] ? withPlatformError(e, key, undefined) : e));
+  };
+
+  // Re-check on blur, so a wrong link is flagged when the student leaves the
+  // field rather than only when they hit Create account at the bottom of a long
+  // form and have to scroll back up to find it.
+  const checkPlatform = (key) => {
+    const message = validateProfileUrl(key, form.platformUrls[key]);
+    setErrors((e) => withPlatformError(e, key, message || undefined));
+  };
 
   const validate = () => {
     const e = {};
@@ -155,6 +177,12 @@ const StudentOnboardingForm = ({ isOpen = true, onClose, onSignIn }) => {
       const n = Number(raw);
       if (!Number.isFinite(n) || n < 0 || n > 100) e[key] = 'Enter a percentage between 0 and 100';
     }
+
+    // Profile links: empty is fine, but anything typed must be a full link to
+    // that platform. The commonest error this catches is a link pasted into the
+    // wrong box, which no generic "is it a URL" check would notice.
+    const platformUrls = validateProfileUrls(form.platformUrls);
+    if (Object.keys(platformUrls).length) e.platformUrls = platformUrls;
 
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -290,7 +318,7 @@ const StudentOnboardingForm = ({ isOpen = true, onClose, onSignIn }) => {
               <h3 className="text-sm font-bold uppercase tracking-wider text-fg-subtle">
                 Your account
               </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
                 <Field label="Full name" error={errors.name} required>
                   <input
                     className={inputCls}
@@ -441,7 +469,7 @@ const StudentOnboardingForm = ({ isOpen = true, onClose, onSignIn }) => {
                 )}
               </Field>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
                 <Field label="Department" error={errors.department} required>
                   <select
                     className={inputCls}
@@ -487,7 +515,13 @@ const StudentOnboardingForm = ({ isOpen = true, onClose, onSignIn }) => {
                 {/* One grid cell per field, all the same width. The two
                     percentages used to sit in a NESTED two-column grid inside a
                     single cell, so they rendered half-width and lined up with
-                    nothing — that was the ragged row. */}
+                    nothing — that was the ragged row.
+
+                    The two-column breakpoint is md (768px), not sm (640px).
+                    This form lives inside a modal with its own padding, so at
+                    640-760px two columns leave ~300px per field — technically
+                    responsive, visibly cramped. One comfortable column beats two
+                    narrow ones on a tablet or a half-width desktop window. */}
                 <Field label="10th percentage" error={errors.tenthPercentage}>
                   <input
                     className={inputCls}
@@ -506,7 +540,7 @@ const StudentOnboardingForm = ({ isOpen = true, onClose, onSignIn }) => {
                     placeholder="e.g. 91"
                   />
                 </Field>
-                <div className="sm:col-span-2">
+                <div className="md:col-span-2">
                   <Field label="Phone number" error={errors.phoneNumber}>
                     <input
                       className={inputCls}
@@ -529,17 +563,24 @@ const StudentOnboardingForm = ({ isOpen = true, onClose, onSignIn }) => {
                 Optional, and you can add them later from your profile. Whatever you add here starts
                 being tracked on the next scraper run.
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {PLATFORM_FIELDS.map((f) => (
-                  <Field key={f.key} label={f.label}>
-                    <input
-                      className={inputCls}
-                      value={form.platformUrls[f.key]}
-                      onChange={(e) => setPlatform(f.key, e.target.value)}
-                      placeholder={f.placeholder}
-                    />
-                  </Field>
-                ))}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
+                {PLATFORM_FIELDS.map((f) => {
+                  const fieldError = errors.platformUrls?.[f.key];
+                  return (
+                    <Field key={f.key} label={f.label} error={fieldError}>
+                      <input
+                        className={`${inputCls} ${
+                          fieldError ? 'border-red-400 focus:ring-red-400 focus:border-red-400' : ''
+                        }`}
+                        value={form.platformUrls[f.key]}
+                        onChange={(e) => setPlatform(f.key, e.target.value)}
+                        onBlur={() => checkPlatform(f.key)}
+                        placeholder={f.placeholder}
+                        aria-invalid={Boolean(fieldError)}
+                      />
+                    </Field>
+                  );
+                })}
               </div>
             </section>
 
@@ -556,6 +597,12 @@ const StudentOnboardingForm = ({ isOpen = true, onClose, onSignIn }) => {
                 onChange={(e) => setHoneypot(e.target.value)}
               />
             </div>
+
+            {Object.keys(errors).length > 0 && !submitError && (
+              <div role="alert" className="p-3 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg">
+                Please fix the highlighted fields before creating your account.
+              </div>
+            )}
 
             {submitError && (
               <div role="alert" className="p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg">

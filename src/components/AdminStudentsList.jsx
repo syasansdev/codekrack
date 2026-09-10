@@ -1,6 +1,11 @@
 import { useState } from 'react';
 import { useAdminScope } from '../hooks/useAdminScope';
-import { useStudents, useDeleteStudent } from '../hooks/queries/useStudents';
+import {
+  useStudents,
+  useDeleteStudent,
+  useSendInvite,
+  useSetStudentStatus,
+} from '../hooks/queries/useStudents';
 import { toast } from 'react-toastify';
 import { motion, AnimatePresence } from 'framer-motion';
 import StudentViewDetails from './StudentViewDetails';
@@ -16,6 +21,44 @@ const AdminStudentsList = () => {
   // Already sorted by name, and scoped by the server.
   const { data: students = [], isLoading: loading } = useStudents({ institutionId });
   const deleteStudent = useDeleteStudent();
+  const sendInvite = useSendInvite();
+  const setStudentStatus = useSetStudentStatus();
+  const [busyId, setBusyId] = useState(null);
+
+  // Both actions moved here from the deleted Student Access screen.
+  const handleSendInvite = async (student) => {
+    setBusyId(student.id);
+    try {
+      await sendInvite.mutateAsync(student.id);
+      toast.success(`Set-password email sent to ${student.email}`);
+    } catch (error) {
+      toast.error(`Could not send to ${student.email}: ${error.message}`);
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleToggleActive = async (student) => {
+    const next = !student.isActive;
+    if (
+      !next &&
+      !window.confirm(
+        `Deactivate ${student.name || student.email}? They will not be able to sign in. ` +
+          'Nothing is deleted — reactivating restores access with their own password.'
+      )
+    ) {
+      return;
+    }
+    setBusyId(student.id);
+    try {
+      await setStudentStatus.mutateAsync({ id: student.id, active: next });
+      toast.success(next ? `${student.email} can sign in again` : `${student.email} deactivated`);
+    } catch (error) {
+      toast.error(`Could not change account status: ${error.message}`);
+    } finally {
+      setBusyId(null);
+    }
+  };
   const deleting = deleteStudent.isPending;
 
   // DELETION IS NOW ONE OPERATION, and it actually works.
@@ -162,12 +205,18 @@ const AdminStudentsList = () => {
                           sign-in record. */}
                       <span
                         className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          student.invitedAt
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-red-100 text-red-800'
+                          !student.isActive
+                            ? 'bg-gray-100 text-gray-700'
+                            : student.invitedAt
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-green-100 text-green-800'
                         }`}
                       >
-                        {student.invitedAt ? 'Invited' : 'No invite sent'}
+                        {!student.isActive
+                          ? 'Deactivated'
+                          : student.invitedAt
+                            ? 'Invited'
+                            : 'Registered'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -189,6 +238,30 @@ const AdminStudentsList = () => {
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleSendInvite(student)}
+                          disabled={busyId === student.id}
+                          className="text-indigo-600 hover:text-indigo-900 transition-colors p-1 rounded hover:bg-indigo-50 disabled:opacity-40"
+                          title="Email a set-password link. Does not change their current password."
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleToggleActive(student)}
+                          disabled={busyId === student.id}
+                          className={`transition-colors p-1 rounded disabled:opacity-40 ${
+                            student.isActive
+                              ? 'text-amber-600 hover:text-amber-900 hover:bg-amber-50'
+                              : 'text-emerald-600 hover:text-emerald-900 hover:bg-emerald-50'
+                          }`}
+                          title={student.isActive ? 'Deactivate account' : 'Reactivate account'}
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636a9 9 0 11-12.728 0M12 3v9" />
                           </svg>
                         </button>
                         <button

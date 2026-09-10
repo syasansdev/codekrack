@@ -2,11 +2,11 @@
 // Super-admin screen: add / edit / delete institutions. Creating an institution
 // also provisions its admin login (email + password set here), via the backend.
 // Guarded by SuperAdminRoute in App.jsx.
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
-import { Download, Loader2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, Download, Loader2 } from 'lucide-react';
 import {
   useInstitutions,
   useCreateInstitution,
@@ -15,6 +15,8 @@ import {
 } from '../hooks/queries/useInstitutions';
 import { studentsApi } from '../services/api';
 import { exportToExcel, buildInstitutionStudentRows } from '../utils/excelExport';
+import InstitutionStudents from './InstitutionStudents';
+import StudentViewDetails from './StudentViewDetails';
 
 const emptyForm = {
   name: '',
@@ -35,6 +37,12 @@ const InstitutionManagement = () => {
   // (the list here only carries a COUNT, not the roster), so the button shows a
   // spinner while that request runs.
   const [exportingId, setExportingId] = useState(null);
+
+  // Which institution's roster is open. One at a time, not a Set: two open
+  // rosters means two tables of different widths stacked on one screen, and the
+  // columns stop lining up — which is the whole reason this is a table.
+  const [expandedId, setExpandedId] = useState(null);
+  const [viewingStudent, setViewingStudent] = useState(null);
 
   // Student counts come from the institutions endpoint (a COUNT in SQL). The old
   // code called getAllStudents() — fetching EVERY student in the system to the
@@ -397,6 +405,7 @@ const InstitutionManagement = () => {
             <table className="w-full text-sm">
               <thead className="bg-surface-2 text-fg-muted">
                 <tr>
+                  <th className="w-10 px-2 py-3" aria-label="Expand" />
                   <th className="text-left px-6 py-3 font-medium">Name</th>
                   <th className="text-left px-6 py-3 font-medium">Code</th>
                   <th className="text-left px-6 py-3 font-medium">Admin login ID</th>
@@ -405,8 +414,26 @@ const InstitutionManagement = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-edge">
-                {institutions.map((inst) => (
-                  <tr key={inst.id} className="hover:bg-surface-2">
+                {institutions.map((inst) => {
+                  const expanded = expandedId === inst.id;
+                  const toggle = () => setExpandedId(expanded ? null : inst.id);
+                  return (
+                  <Fragment key={inst.id}>
+                  <tr
+                    className="hover:bg-surface-2 cursor-pointer"
+                    onClick={toggle}
+                  >
+                    <td className="px-2 py-4 text-fg-subtle">
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); toggle(); }}
+                        aria-expanded={expanded}
+                        aria-label={expanded ? `Hide students in ${inst.name}` : `Show students in ${inst.name}`}
+                        className="p-1 rounded hover:bg-surface-3"
+                      >
+                        {expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                      </button>
+                    </td>
                     <td className="px-6 py-4">
                       <div className="font-medium text-fg">{inst.name}</div>
                       {inst.address && <div className="text-xs text-fg-subtle">{inst.address}</div>}
@@ -420,7 +447,7 @@ const InstitutionManagement = () => {
                         {inst.studentCount || 0}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                       <div className="flex justify-end gap-2">
                         <button
                           onClick={() => handleExport(inst)}
@@ -456,12 +483,37 @@ const InstitutionManagement = () => {
                       </div>
                     </td>
                   </tr>
-                ))}
+
+                  {expanded && (
+                    <tr className="bg-surface-2/40">
+                      {/* colSpan covers every column: the toggle, the four data
+                          columns and the actions column. */}
+                      <td colSpan={6} className="p-0 border-t border-edge">
+                        <InstitutionStudents
+                          institution={inst}
+                          onViewStudent={setViewingStudent}
+                        />
+                      </td>
+                    </tr>
+                  )}
+                  </Fragment>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         )}
       </div>
+
+      {/* Clicking a student's name opens the existing detail view, so this
+          screen can answer "how is the college doing" AND "tell me about Arun"
+          without a second page for the second question. */}
+      {viewingStudent && (
+        <StudentViewDetails
+          student={viewingStudent}
+          onClose={() => setViewingStudent(null)}
+        />
+      )}
     </div>
   );
 };
