@@ -133,13 +133,19 @@ const SidebarContent = ({ isSuperAdmin, scopeLabel, onNavigate }) => (
       onClick={onNavigate}
       className="flex items-center gap-3 px-5 py-5"
     >
-      <span className="grid h-9 w-9 place-items-center rounded-xl bg-brand-gradient text-sm font-bold text-white shadow-glow-blue">
-        CK
-      </span>
-      <span className="leading-tight">
-        <span className="block font-display text-[15px] font-bold text-fg">CodeKrack</span>
-        <span className="block text-[11px] font-medium text-fg-subtle">by Syasans</span>
-      </span>
+      {/* The real brand lockup, not a "CK" monogram placeholder. The artwork
+          already contains "SYASAN'S code KRACK", so there is no text beside it —
+          repeating the name next to a wordmark reads as a mistake.
+
+          It is drawn on white, so it keeps an explicit white plate rather than
+          inheriting the surface: on the dark theme a transparent-looking logo
+          would sit on a dark panel with its own white background showing
+          through as a ragged rectangle. */}
+      <img
+        src="/Codekrack - Big.jpg"
+        alt="CodeKrack, by Syasans"
+        className="w-full rounded-lg bg-white object-contain"
+      />
     </Link>
 
     {/* Scope. A super-admin's numbers span every institution and an institution
