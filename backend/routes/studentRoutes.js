@@ -38,6 +38,7 @@ import {
 } from '../utils/serialize.js';
 import { isValidEmail, normalizeEmail, undeliverableDomainReason } from '../utils/email.js';
 import { firstProfileUrlError } from '../utils/profileUrls.js';
+import { canonicalDepartment } from '../utils/departments.js';
 import logger from '../utils/logger.js';
 
 const router = express.Router();
@@ -211,6 +212,16 @@ router.post('/register', registerLimiter, async (req, res) => {
       return res.status(400).json({ success: false, error: 'Please select your year of study' });
     }
 
+    // Department must be ON the list. Strict here and NOT inside
+    // provisionStudent() for the same reason as the profile links below: admin
+    // create and bulk import share that function, and spreadsheets carry
+    // department names nobody has standardised. The public form is the one
+    // place we fully control, so it is the one place that refuses.
+    const department = canonicalDepartment(req.body?.department);
+    if (!department) {
+      return res.status(400).json({ success: false, error: 'Please choose your department from the list' });
+    }
+
     // Profile links, when supplied. Checked HERE rather than inside
     // provisionStudent() on purpose: the admin create and bulk-import paths go
     // through that same function, and spreadsheets full of hand-typed links
@@ -240,7 +251,9 @@ router.post('/register', registerLimiter, async (req, res) => {
       phoneNumber: req.body?.phoneNumber,
       registerNumber: req.body?.registerNumber,
       rollNumber: req.body?.rollNumber,
-      department: req.body?.department,
+      // The canonical spelling, so casing/spacing differences cannot create a
+      // second variant of a department that is already on the list.
+      department,
       year,
       // Server-supplied, not client-supplied. See the header note.
       college: inst.name,

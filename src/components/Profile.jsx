@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUpdateMyProfile } from '../hooks/queries/useStudents';
+import { DEPARTMENT_GROUPS } from '../lib/departments';
+import SearchableSelect from './ui/SearchableSelect';
 import ChangePassword from '../components/ChangePassword';
 
 // --- Reusable SVG Icons for Tabs ---
@@ -235,20 +237,23 @@ const Profile = () => {
                           <label className="block text-sm font-medium text-fg-muted mb-2">
                             Department
                           </label>
-                          <select 
-                            name="department" 
-                            value={formData.department} 
-                            onChange={handleInputChange}
-                            className="w-full px-4 py-3 border border-edge-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                          >
-                            <option value="">Select Department</option>
-                            <option value="Computer Science">Computer Science</option>
-                            <option value="Information Technology">Information Technology</option>
-                            <option value="Computer Engineering">Computer Engineering</option>
-                            <option value="Electronics and Communication">Electronics and Communication</option>
-                            <option value="Mechanical Engineering">Mechanical Engineering</option>
-                            <option value="Civil Engineering">Civil Engineering</option>
-                          </select>
+                          {/* The shared 380-entry list, not a third hardcoded
+                              set. This select used to offer its OWN six values
+                              ("Computer Science", "Electronics and
+                              Communication") which matched neither the
+                              registration form nor the admin form — three
+                              screens writing three vocabularies into one
+                              column is how it ended up holding twenty
+                              spellings of eight departments. */}
+                          <SearchableSelect
+                            value={formData.department}
+                            onChange={(d) =>
+                              handleInputChange({ target: { name: 'department', value: d } })
+                            }
+                            groups={DEPARTMENT_GROUPS}
+                            placeholder="Search your department"
+                            emptyMessage="No department matches that search."
+                          />
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-fg-muted mb-2">

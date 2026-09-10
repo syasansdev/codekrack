@@ -22,25 +22,14 @@ import { useNavigate } from 'react-router-dom';
 import { usePublicInstitutions } from '../hooks/queries/useInstitutions';
 import { studentsApi } from '../services/api';
 import { validateProfileUrl, validateProfileUrls } from '../lib/profileUrls';
+import { DEPARTMENT_GROUPS, isKnownDepartment } from '../lib/departments';
+import SearchableSelect from './ui/SearchableSelect';
 
 const YEARS = [
   { value: '1', label: '1st Year' },
   { value: '2', label: '2nd Year' },
   { value: '3', label: '3rd Year' },
   { value: '4', label: '4th Year' },
-];
-
-// Same list the admin create form offers, so a self-registered student and an
-// admin-created one are filterable together rather than nearly-together.
-const DEPARTMENTS = [
-  { value: 'CSE', label: 'Computer Science & Engineering' },
-  { value: 'IT', label: 'Information Technology' },
-  { value: 'ECE', label: 'Electronics & Communication' },
-  { value: 'EEE', label: 'Electrical & Electronics' },
-  { value: 'MECH', label: 'Mechanical Engineering' },
-  { value: 'CIVIL', label: 'Civil Engineering' },
-  { value: 'AI', label: 'AI & ML' },
-  { value: 'ADS', label: 'ADS' },
 ];
 
 const PLATFORM_FIELDS = [
@@ -113,23 +102,12 @@ const StudentOnboardingForm = ({ isOpen = true, onClose, onSignIn }) => {
   // styling rather than type="hidden" so a naive form-filler still finds it.
   const [honeypot, setHoneypot] = useState('');
 
-  // The college picker is a search box over the list, not a bare <select>: with
-  // a few dozen colleges onboarded, scrolling a native dropdown on a phone is
-  // the step people give up on. What gets submitted is still an id from the
-  // list — typing filters, it never creates.
-  const [collegeQuery, setCollegeQuery] = useState('');
-  const [collegeOpen, setCollegeOpen] = useState(false);
-
+  // Both long lists (colleges, and 380 departments) use the same picker. The
+  // search/open state lives inside it; this component only holds the choice.
   const selectedInstitution = useMemo(
     () => institutions.find((i) => i.id === form.institutionId) || null,
     [institutions, form.institutionId]
   );
-
-  const filteredInstitutions = useMemo(() => {
-    const q = collegeQuery.trim().toLowerCase();
-    if (!q) return institutions;
-    return institutions.filter((i) => i.name.toLowerCase().includes(q));
-  }, [institutions, collegeQuery]);
 
   const set = (key, value) => {
     setForm((f) => ({ ...f, [key]: value }));
@@ -166,6 +144,11 @@ const StudentOnboardingForm = ({ isOpen = true, onClose, onSignIn }) => {
 
     if (!form.institutionId) e.institutionId = 'Select your college from the list';
     if (!form.department) e.department = 'Select your department';
+    // Must be a value from the list, not something typed. The picker only ever
+    // emits list items, so this catches a stale value rather than a typo — but
+    // the server checks the same thing, because a form is not a control.
+    else if (!isKnownDepartment(form.department))
+      e.department = 'Choose a department from the list';
     if (!form.year) e.year = 'Select your year';
 
     if (form.phoneNumber && !/^[0-9+\-\s()]{6,20}$/.test(form.phoneNumber.trim()))
@@ -253,19 +236,37 @@ const StudentOnboardingForm = ({ isOpen = true, onClose, onSignIn }) => {
 
   return (
     <motion.div
+      // THE SCROLL CONTAINER, and nothing else. It used to also be the centring
+      // flex container, which is what clipped this form: with `items-center`,
+      // a panel taller than the viewport is centred about the midpoint, so its
+      // top half is laid out at a NEGATIVE offset — above the scroll origin,
+      // where no amount of scrolling can reach it. The header and the first
+      // fields were simply unreachable on a short window.
+      //
+      // Splitting the two jobs fixes it: this element scrolls, and the wrapper
+      // below centres inside a box that is at least the viewport tall. When the
+      // form is short it sits centred; when it is tall the wrapper grows past
+      // 100% and the overflow scrolls from the very top.
       className={
         asModal
-          ? 'fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto'
-          : 'min-h-screen w-full bg-canvas flex justify-center px-4 py-8 sm:py-12'
+          ? 'fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-black/60 backdrop-blur-sm'
+          : 'min-h-screen w-full bg-canvas'
       }
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={() => onClose?.()}
     >
+      <div
+        className={
+          asModal
+            ? 'flex min-h-full items-center justify-center px-4 py-8'
+            : 'flex justify-center px-4 py-8 sm:py-12'
+        }
+      >
       <motion.div
         className={`bg-surface rounded-2xl w-full max-w-3xl relative ${
-          asModal ? 'shadow-elite-lg my-8' : 'shadow-sm border border-edge h-fit'
+          asModal ? 'shadow-elite-lg' : 'shadow-sm border border-edge h-fit'
         }`}
         initial={{ scale: 0.95, y: 20, opacity: 0 }}
         animate={{ scale: 1, y: 0, opacity: 1 }}
@@ -376,84 +377,26 @@ const StudentOnboardingForm = ({ isOpen = true, onClose, onSignIn }) => {
                 required
                 hint="Start typing to search. If your college isn't listed, ask your placement cell to have it onboarded."
               >
-                <div className="relative">
-                  <input
-                    className={`${inputCls} pr-10 ${
-                      institutionsError ? 'border-red-300 bg-red-50/40' : ''
-                    }`}
-                    value={collegeOpen ? collegeQuery : selectedInstitution?.name || ''}
-                    onChange={(e) => {
-                      setCollegeQuery(e.target.value);
-                      setCollegeOpen(true);
-                      // Typing after choosing clears the choice, so what is
-                      // submitted always matches what the box shows.
-                      if (form.institutionId) set('institutionId', '');
-                    }}
-                    onFocus={() => {
-                      setCollegeOpen(true);
-                      setCollegeQuery('');
-                    }}
-                    // A blur that fires before the click would close the list
-                    // out from under the option being clicked.
-                    onBlur={() => setTimeout(() => setCollegeOpen(false), 150)}
-                    placeholder={
-                      institutionsLoading
-                        ? 'Loading colleges...'
-                        : institutionsError
-                          ? 'Colleges unavailable'
-                          : 'Search your college'
-                    }
-                    // Disabled on error as well as while loading, but STILL
-                    // RENDERED. Showing an error message instead of the input
-                    // collapsed this row and left a labelled gap where a field
-                    // should be, which is what made the form look broken.
-                    disabled={institutionsLoading || Boolean(institutionsError)}
-                    autoComplete="off"
-                    role="combobox"
-                    aria-expanded={collegeOpen}
-                    aria-autocomplete="list"
-                  />
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                    {institutionsLoading ? (
-                      <span className="h-4 w-4 rounded-full border-2 border-edge-strong border-t-orange-500 animate-spin" />
-                    ) : (
-                      <svg className="h-5 w-5 text-fg-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    )}
-                  </div>
-
-                  {collegeOpen && !institutionsError && (
-                    <ul className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-lg border border-edge-strong bg-surface shadow-lg">
-                      {filteredInstitutions.length === 0 ? (
-                        <li className="px-3 py-2.5 text-sm text-fg-subtle">
-                          No college matches that search.
-                        </li>
-                      ) : (
-                        filteredInstitutions.map((inst) => (
-                          <li key={inst.id}>
-                            <button
-                              type="button"
-                              className={`w-full px-3 py-2.5 text-left text-sm hover:bg-black/5 ${
-                                inst.id === form.institutionId
-                                  ? 'font-semibold text-orange-600'
-                                  : 'text-fg'
-                              }`}
-                              onMouseDown={(e) => e.preventDefault()}
-                              onClick={() => {
-                                set('institutionId', inst.id);
-                                setCollegeQuery('');
-                                setCollegeOpen(false);
-                              }}
-                            >
-                              {inst.name}
-                            </button>
-                          </li>
-                        ))
-                      )}
-                    </ul>
-                  )}
-                </div>
+                <SearchableSelect
+                  id="college"
+                  value={selectedInstitution?.name || ''}
+                  onChange={(name) => {
+                    // The picker deals in names; the form submits the id.
+                    const inst = institutions.find((i) => i.name === name);
+                    set('institutionId', inst ? inst.id : '');
+                  }}
+                  options={institutions.map((i) => i.name)}
+                  disabled={institutionsLoading || Boolean(institutionsError)}
+                  invalid={Boolean(errors.institutionId) || Boolean(institutionsError)}
+                  placeholder={
+                    institutionsLoading
+                      ? 'Loading colleges...'
+                      : institutionsError
+                        ? 'Colleges unavailable'
+                        : 'Search your college'
+                  }
+                  emptyMessage="No college matches that search."
+                />
 
                 {institutionsError && (
                   <p className="mt-1.5 text-xs text-red-600">
@@ -470,19 +413,21 @@ const StudentOnboardingForm = ({ isOpen = true, onClose, onSignIn }) => {
               </Field>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
-                <Field label="Department" error={errors.department} required>
-                  <select
-                    className={inputCls}
+                <Field
+                  label="Department"
+                  error={errors.department}
+                  required
+                  hint="Start typing to search — e.g. “data”, “mech”, “BCA”."
+                >
+                  <SearchableSelect
+                    id="department"
                     value={form.department}
-                    onChange={(e) => set('department', e.target.value)}
-                  >
-                    <option value="">Select department</option>
-                    {DEPARTMENTS.map((d) => (
-                      <option key={d.value} value={d.value}>
-                        {d.label}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(d) => set('department', d)}
+                    groups={DEPARTMENT_GROUPS}
+                    invalid={Boolean(errors.department)}
+                    placeholder="Search your department"
+                    emptyMessage="No department matches that search."
+                  />
                 </Field>
                 <Field label="Year of study" error={errors.year} required>
                   <select
@@ -628,6 +573,7 @@ const StudentOnboardingForm = ({ isOpen = true, onClose, onSignIn }) => {
           </form>
         )}
       </motion.div>
+      </div>
     </motion.div>
   );
 };

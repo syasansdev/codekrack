@@ -6,6 +6,8 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { useAdminScope } from '../hooks/useAdminScope';
 import { useInstitutions } from '../hooks/queries/useInstitutions';
 import { useCreateStudent } from '../hooks/queries/useStudents';
+import { DEPARTMENT_GROUPS, canonicalDepartment } from '../lib/departments';
+import SearchableSelect from './ui/SearchableSelect';
 
 const AdminUserCreation = () => {
   const navigate = useNavigate();
@@ -323,7 +325,11 @@ ${JSON.stringify(excelData, null, 2)}
           phoneNumber: student.phoneNumber?.toString().trim() || '',
           registerNumber: student.registerNumber?.toString().trim() || '',
           rollNumber: student.rollNumber?.toString().trim() || '',
-          department: student.department || '',
+          // Tolerant on purpose. A spreadsheet's department name is
+          // canonicalised when it matches the list and passed through verbatim
+          // when it does not — an import of 200 students must not fail because
+          // one row says "Comp Sci". Forms are strict; imports are not.
+          department: canonicalDepartment(student.department) || student.department || '',
           year: student.year?.toString() || '',
           // No `college`: the server names it from the institution this import
           // is scoped to, so a spreadsheet's spelling of the college can't
@@ -910,29 +916,22 @@ ${JSON.stringify(excelData, null, 2)}
                     <label htmlFor="department" className="block text-sm font-medium text-fg-muted mb-2">
                       Department
                     </label>
+                    {/* The same picker and the same 380-entry list the student
+                        registration form uses. This select used to offer eight
+                        SHORT CODES ("CSE", "ADS"), which is half of why the
+                        column ended up holding nineteen spellings: the codes and
+                        the free text bulk imports wrote never matched. */}
                     <div className="relative">
-                      <select
+                      <SearchableSelect
                         id="department"
-                        name="department"
                         value={studentData.department}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-edge-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 appearance-none pr-10"
-                      >
-                        <option value="">Select Department</option>
-                        <option value="CSE">Computer Science & Engineering</option>
-                        <option value="IT">Information Technology</option>
-                        <option value="ECE">Electronics & Communication</option>
-                        <option value="EEE">Electrical & Electronics</option>
-                        <option value="MECH">Mechanical Engineering</option>
-                        <option value="CIVIL">Civil Engineering</option>
-                        <option value="AI">AI & ML</option>
-                        <option value="ADS">ADS</option>
-                      </select>
-                      <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                        <svg className="w-5 h-5 text-fg-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </div>
+                        onChange={(d) =>
+                          handleInputChange({ target: { name: 'department', value: d } })
+                        }
+                        groups={DEPARTMENT_GROUPS}
+                        placeholder="Search department"
+                        emptyMessage="No department matches that search."
+                      />
                     </div>
                   </div>
                   
