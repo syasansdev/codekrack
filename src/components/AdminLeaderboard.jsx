@@ -8,13 +8,17 @@ import { useInstitutions } from '../hooks/queries/useInstitutions';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-toastify';
 import StudentViewDetails from './StudentViewDetails';
-import { motion, AnimatePresence } from 'framer-motion';
+import { YEAR_OPTIONS, matchesYear } from '../lib/studentYear';
+import { exportToExcel, buildLeaderboardRows } from '../utils/excelExport';
+import { motion, AnimatePresence } from 'framer-motion';
+
 const AdminLeaderboard = () => {
   // students / loading / lastScraped are derived from the query below — server
   // state has one home, and it isn't useState.
   const [activeBoard, setActiveBoard] = useState('leetcode');
   const [departmentFilter, setDepartmentFilter] = useState('all');
   const [collegeFilter, setCollegeFilter] = useState('all');
+  const [yearFilter, setYearFilter] = useState('all');
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [hoveredStudent, setHoveredStudent] = useState(null);
   const [autoScraping, setAutoScraping] = useState(false);
@@ -142,7 +146,7 @@ const AdminLeaderboard = () => {
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [departmentFilter, collegeFilter, activeBoard]);
+  }, [departmentFilter, collegeFilter, yearFilter, activeBoard]);
 
   // Queues every student in view for the next scraper run, instead of scraping
   // them here. Results arrive over SSE when the Action finishes.
@@ -168,6 +172,31 @@ const AdminLeaderboard = () => {
     toast.success(`Queued ${queued} student(s) for the next scraper run`);
   };
 
+
+  // Download exactly what the board is showing — same rows, same order, same
+  // filters. Built from `activeStudents` rather than the raw list so the sheet
+  // and the screen cannot disagree.
+  const handleExport = () => {
+    const board = boards.find((b) => b.id === activeBoard);
+    const rows = buildLeaderboardRows(activeStudents, board);
+    if (!rows.length) {
+      toast.info('Nothing to export for the current filters');
+      return;
+    }
+    // The filename records the filters, so two exports taken minutes apart with
+    // different filters do not land in Downloads as indistinguishable files.
+    const part = (v) => String(v).replace(/[^a-z0-9]+/gi, '-').toLowerCase();
+    const name = [
+      'leaderboard',
+      activeBoard,
+      collegeFilter !== 'all' ? part(collegeFilter) : null,
+      departmentFilter !== 'all' ? part(departmentFilter) : null,
+      yearFilter !== 'all' ? `year-${yearFilter}` : null,
+    ].filter(Boolean).join('-');
+
+    exportToExcel(rows, name);
+    toast.success(`Exported ${rows.length} student(s)`);
+  };
 
   // Extract metric value based on platform
   const getMetricValue = (student, boardId) => {
@@ -199,7 +228,10 @@ const AdminLeaderboard = () => {
     .filter(s => {
       const departmentMatch = departmentFilter === 'all' || s.department === departmentFilter;
       const collegeMatch = collegeFilter === 'all' || s.college === collegeFilter || s.institutionName === collegeFilter;
-      return departmentMatch && collegeMatch;
+      // Tolerant: the column holds "3rd Year" for most students and "3" for the
+      // rest, so a strict === would show an almost-empty board. See lib/studentYear.
+      const yearMatch = matchesYear(s.year, yearFilter);
+      return departmentMatch && collegeMatch && yearMatch;
     })
     .map(s => ({
       ...s,
@@ -328,7 +360,8 @@ const AdminLeaderboard = () => {
   };
 
   return (
-    <>      <div>
+    <>
+      <div>
       <div className="max-w-7xl mx-auto" ref={containerRef}>
         {/* Header Section */}
         <motion.div
@@ -440,6 +473,42 @@ const AdminLeaderboard = () => {
                   ))}
                 </select>
               </div>
+              <div className="flex items-center gap-4">
+                <label className="text-sm font-semibold text-fg-muted whitespace-nowrap">
+                  Year:
+                </label>
+                <select
+                  value={yearFilter}
+                  onChange={(e) => setYearFilter(e.target.value)}
+                  className="px-4 py-3 border border-edge-strong rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-surface shadow-sm"
+                >
+                  <option value="all">All Years</option>
+                  {YEAR_OPTIONS.map((y) => (
+                    <option key={y.value} value={y.value}>
+                      {y.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <button
+                type="button"
+                onClick={handleExport}
+                disabled={activeStudents.length === 0}
+                title="Download the board exactly as filtered, as an Excel file"
+                className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold
+                           text-emerald-700 bg-emerald-50 border border-emerald-200 shadow-sm
+                           hover:bg-emerald-100 transition-colors
+                           disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-emerald-50"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Export Excel
+                {activeStudents.length > 0 && (
+                  <span className="text-xs font-normal opacity-80">({activeStudents.length})</span>
+                )}
+              </button>
             </div>
           </div>
           

@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useStudentLeaderboard } from '../hooks/queries/useDashboard';
 import { useInstitutions } from '../hooks/queries/useInstitutions';
 import { Link } from 'react-router-dom';
+import { YEAR_OPTIONS, matchesYear } from '../lib/studentYear';
 
 // Student-facing leaderboard.
 //
@@ -29,6 +30,7 @@ const Leaderboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState('all');
   const [collegeFilter, setCollegeFilter] = useState('all');
+  const [yearFilter, setYearFilter] = useState('all');
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -195,6 +197,10 @@ const Leaderboard = () => {
       
       // College filter
       const matchesCollege = collegeFilter === 'all' || user.college === collegeFilter || user.institutionName === collegeFilter;
+
+      // Year filter. Tolerant, because the column holds "3rd Year" for most
+      // students and "3" for the rest — see lib/studentYear.
+      const matchesYearFilter = matchesYear(user.year, yearFilter);
       
       // Platform filter - only show users who have valid data for the selected platform
       const platformMetric = getPlatformMetric(user, selectedPlatform);
@@ -218,7 +224,7 @@ const Leaderboard = () => {
       // rows whose scrape status is 'completed', which is strictly stronger than
       // "a URL was configured". AdminLeaderboard never had this condition, which
       // is why the admin board kept working and only the student one broke.
-      return matchesSearch && matchesDepartment && matchesCollege && hasPlatformData;
+      return matchesSearch && matchesDepartment && matchesCollege && matchesYearFilter && hasPlatformData;
     });
 
     // Sorting - Primary: by metric (descending), Secondary: by name (alphabetical)
@@ -242,7 +248,7 @@ const Leaderboard = () => {
       isCurrentUser: user.id === currentUser?.uid,
       displayMetric: getPlatformMetric(user, selectedPlatform)
     }));
-  }, [data, searchTerm, departmentFilter, collegeFilter, selectedPlatform, currentUser]);
+  }, [data, searchTerm, departmentFilter, collegeFilter, yearFilter, selectedPlatform, currentUser]);
 
   // Pagination
   const totalPages = Math.ceil(filteredAndSortedData.length / itemsPerPage);
@@ -270,7 +276,7 @@ const Leaderboard = () => {
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, departmentFilter, collegeFilter, selectedPlatform]);
+  }, [searchTerm, departmentFilter, collegeFilter, yearFilter, selectedPlatform]);
 
   // Get platform label
   const getPlatformLabel = (platformId) => {
@@ -471,7 +477,7 @@ const Leaderboard = () => {
               </div>
 
               {/* Filters Row */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
                 {/* Platform Filters */}
                 <div>
                   <label className="block text-sm font-semibold text-fg-muted mb-2">
@@ -527,6 +533,25 @@ const Leaderboard = () => {
                     {collegeOptions.map(college => (
                       <option key={college.id} value={college.id}>
                         {college.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Year Filter */}
+                <div>
+                  <label className="block text-sm font-semibold text-fg-muted mb-2">
+                    Year:
+                  </label>
+                  <select
+                    value={yearFilter}
+                    onChange={(e) => setYearFilter(e.target.value)}
+                    className="w-full px-4 py-2 border border-edge-strong rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-surface"
+                  >
+                    <option value="all">All Years</option>
+                    {YEAR_OPTIONS.map((y) => (
+                      <option key={y.value} value={y.value}>
+                        {y.label}
                       </option>
                     ))}
                   </select>

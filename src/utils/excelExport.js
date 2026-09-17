@@ -88,6 +88,37 @@ export const buildInstitutionStudentRows = (students) => {
   });
 };
 
+// One spreadsheet row per student ON THE BOARD BEING VIEWED.
+//
+// Deliberately different from buildInstitutionStudentRows: that one is a full
+// dump of a college's roster, this one is the leaderboard as it currently
+// stands. So it leads with Rank and the metric the board is ranked by — an
+// export taken from a screen should be the thing that was on the screen, in the
+// same order, or the two disagree and the file is useless as evidence.
+//
+// The caller passes the ALREADY FILTERED and sorted rows, so whatever the
+// department / year / college filters are showing is exactly what lands in the
+// sheet.
+export const buildLeaderboardRows = (students, board) => {
+  const n = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
+  return (students || []).map((s, i) => ({
+    Rank: i + 1,
+    Name: s.name || '',
+    Email: s.email || '',
+    'Roll Number': s.rollNumber || '',
+    Department: s.department || '',
+    Year: s.year || '',
+    College: s.institutionName || s.college || '',
+    // Named after the board so the column says what it counts — "LeetCode
+    // (Problems Solved)" rather than a bare "Score" nobody can interpret a
+    // month later.
+    [`${board?.name || 'Platform'} (${board?.metricLabel || 'Metric'})`]: n(s.metricValue),
+    'Total Solved': n(s.totalSolved),
+    'Scrape Status': s.scrapingStatus?.[board?.dataField] || s.scrapingStatus || '',
+    'Profile URL': s.platformUrls?.[board?.dataField] || '',
+  }));
+};
+
 // Helper function to format data for better Excel export
 export const formatDataForExcel = (data) => {
   if (!data || data.length === 0) return []
