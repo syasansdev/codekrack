@@ -363,6 +363,15 @@ export const DEPARTMENT_GROUPS = [
     ],
   },
   {
+    label: "Postgraduate & Advanced Degrees",
+    items: [
+      "MCA",
+      "M.Tech",
+      "M.E",
+      "M.Sc",
+    ],
+  },
+  {
     label: "Computing & IT degrees",
     items: [
       "Bachelor of Computer Applications (BCA)",

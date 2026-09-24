@@ -176,6 +176,7 @@ export const serializeInstitution = (row) => {
     adminEmail: row.admin_email || null,
     adminUid: row.admin_id || null,
     adminName: row.admin_name || null,
+    adminPassword: row.admin_password || null,
     studentCount: row.student_count ?? 0,
     createdAt: iso(row.created_at),
     updatedAt: iso(row.updated_at),

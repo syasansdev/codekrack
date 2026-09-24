@@ -409,6 +409,7 @@ const InstitutionManagement = () => {
                   <th className="text-left px-6 py-3 font-medium">Name</th>
                   <th className="text-left px-6 py-3 font-medium">Code</th>
                   <th className="text-left px-6 py-3 font-medium">Admin login ID</th>
+                  <th className="text-left px-6 py-3 font-medium">Password</th>
                   <th className="text-left px-6 py-3 font-medium">Students</th>
                   <th className="text-right px-6 py-3 font-medium">Actions</th>
                 </tr>
@@ -441,6 +442,9 @@ const InstitutionManagement = () => {
                     <td className="px-6 py-4 text-fg-muted">{inst.code || '—'}</td>
                     <td className="px-6 py-4 text-fg-muted font-mono text-xs">
                       {inst.adminEmail || '—'}
+                    </td>
+                    <td className="px-6 py-4 text-fg font-mono text-xs break-all">
+                      {inst.adminPassword || '—'}
                     </td>
                     <td className="px-6 py-4">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
@@ -486,9 +490,8 @@ const InstitutionManagement = () => {
 
                   {expanded && (
                     <tr className="bg-surface-2/40">
-                      {/* colSpan covers every column: the toggle, the four data
-                          columns and the actions column. */}
-                      <td colSpan={6} className="p-0 border-t border-edge">
+                      {/* colSpan covers every column: the toggle, the data columns and the actions column. */}
+                      <td colSpan={7} className="p-0 border-t border-edge">
                         <InstitutionStudents
                           institution={inst}
                           onViewStudent={setViewingStudent}

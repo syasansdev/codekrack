@@ -29,7 +29,7 @@ const isUuid = (v) =>
 // opt-out rather than opt-in is how one gets forgotten. Callers append `and ...`.
 const INSTITUTION_SELECT = `
   select
-    i.id, i.name, i.code, i.address, i.contact_email,
+    i.id, i.name, i.code, i.address, i.contact_email, i.admin_password,
     i.created_at, i.updated_at, i.created_by,
     a.id    as admin_id,
     a.email as admin_email,
@@ -224,26 +224,29 @@ router.post('/', verifySuperAdmin, async (req, res) => {
                   name = $1,
                   address = $2,
                   contact_email = $3,
+                  admin_password = $4,
                   updated_at = now()
-            where id = $4
+            where id = $5
         returning id`,
           [
             String(name).trim(),
             String(address || '').trim(),
             String(contactEmail || '').trim(),
+            adminPassword,
             archived.id,
           ]
         );
         id = restored.rows[0].id;
       } else {
         const inst = await c.query(
-          `insert into public.institutions (name, code, address, contact_email, created_by)
-           values ($1, $2, $3, $4, $5) returning id`,
+        `insert into public.institutions (name, code, address, contact_email, admin_password, created_by)
+         values ($1, $2, $3, $4, $5, $6) returning id`,
           [
             String(name).trim(),
             trimmedCode,
             String(address || '').trim(),
             String(contactEmail || '').trim(),
+            adminPassword,
             req.user.uid,
           ]
         );
@@ -364,6 +367,11 @@ router.patch('/:id', verifySuperAdmin, async (req, res) => {
         password: adminPassword,
       });
       if (error) throw error;
+
+      await query(
+        `update public.institutions set admin_password = $1, updated_at = now() where id = $2`,
+        [adminPassword, id]
+      );
 
       // Kill every existing session so the old password stops working right
       // away, rather than lingering until its token expires.
