@@ -22,28 +22,44 @@ const router = express.Router();
 const isUuid = (v) =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(v || ''));
 
-// The admin + student count come from joins, so they can never drift from the
-// profiles table the way a denormalised copy would.
-// The `where i.deleted_at is null` is part of the SELECT, not bolted on by each
-// caller — an archived institution must never appear in a list, and making that
-// opt-out rather than opt-in is how one gets forgotten. Callers append `and ...`.
-const INSTITUTION_SELECT = `
-  select
-    i.id, i.name, i.code, i.address, i.contact_email, i.admin_password,
-    i.created_at, i.updated_at, i.created_by,
-    a.id    as admin_id,
-    a.email as admin_email,
-    a.name  as admin_name,
-    (select count(*) from public.profiles s
-      where s.institution_id = i.id and s.role = 'student') as student_count
-  from public.institutions i
-  left join lateral (
-    select p.id, p.email, p.name from public.profiles p
-     where p.institution_id = i.id and p.role = 'admin'
-     order by p.created_at asc limit 1
-  ) a on true
-  where i.deleted_at is null
-`;
+const institutionHasAdminPasswordColumn = async () => {
+  try {
+    const row = await one(`
+      select exists (
+        select 1
+        from information_schema.columns
+        where table_schema = 'public'
+          and table_name = 'institutions'
+          and column_name = 'admin_password'
+      ) as has_admin_password
+    `);
+    return !!row?.has_admin_password;
+  } catch (e) {
+    logger.warn('Could not detect institution admin_password column:', e.message);
+    return false;
+  }
+};
+
+const buildInstitutionSelect = (includeAdminPassword = false) => {
+  const adminPasswordColumn = includeAdminPassword ? 'i.admin_password,' : '';
+  return `
+    select
+      i.id, i.name, i.code, i.address, i.contact_email, ${adminPasswordColumn}
+      i.created_at, i.updated_at, i.created_by,
+      a.id    as admin_id,
+      a.email as admin_email,
+      a.name  as admin_name,
+      (select count(*) from public.profiles s
+        where s.institution_id = i.id and s.role = 'student') as student_count
+    from public.institutions i
+    left join lateral (
+      select p.id, p.email, p.name from public.profiles p
+       where p.institution_id = i.id and p.role = 'admin'
+       order by p.created_at asc limit 1
+    ) a on true
+    where i.deleted_at is null
+  `;
+};
 
 // =============================================================================
 // GET /api/institutions/public   (PUBLIC — no token)
@@ -83,9 +99,11 @@ router.get('/public', async (_req, res) => {
 // =============================================================================
 router.get('/', verifyAdmin, async (req, res) => {
   try {
+    const includeAdminPassword = await institutionHasAdminPasswordColumn();
+    const selectSql = buildInstitutionSelect(includeAdminPassword);
     const rows = req.user.isSuperAdmin
-      ? await many(`${INSTITUTION_SELECT} order by i.name asc`)
-      : await many(`${INSTITUTION_SELECT} and i.id = $1 order by i.name asc`, [
+      ? await many(`${selectSql} order by i.name asc`)
+      : await many(`${selectSql} and i.id = $1 order by i.name asc`, [
           req.user.institutionId || NO_INSTITUTION,
         ]);
     res.json({ success: true, institutions: rows.map(serializeInstitution) });
@@ -207,6 +225,8 @@ router.post('/', verifySuperAdmin, async (req, res) => {
     return res.status(500).json({ success: false, error: e.message });
   }
 
+  const includeAdminPassword = await institutionHasAdminPasswordColumn();
+
   try {
     // Institution + its admin's profile commit together. If the profile insert
     // fails, the institution is not left behind with no way to administer it.
@@ -218,37 +238,47 @@ router.post('/', verifySuperAdmin, async (req, res) => {
         // student still pointing at it comes back with it — no re-mapping, no
         // guessing. The other fields are refreshed from what was just typed, so
         // a rename during re-add is honoured.
+        const restoreFields = [
+          'deleted_at = null',
+          'name = $1',
+          'address = $2',
+          'contact_email = $3',
+          'updated_at = now()',
+        ];
+        const restoreValues = [
+          String(name).trim(),
+          String(address || '').trim(),
+          String(contactEmail || '').trim(),
+        ];
+        if (includeAdminPassword) {
+          restoreFields.splice(4, 0, 'admin_password = $4');
+          restoreValues.push(adminPassword);
+        }
         const restored = await c.query(
           `update public.institutions
-              set deleted_at = null,
-                  name = $1,
-                  address = $2,
-                  contact_email = $3,
-                  admin_password = $4,
-                  updated_at = now()
-            where id = $5
-        returning id`,
-          [
-            String(name).trim(),
-            String(address || '').trim(),
-            String(contactEmail || '').trim(),
-            adminPassword,
-            archived.id,
-          ]
+              set ${restoreFields.join(', ')}
+            where id = $${restoreValues.length + 1}
+          returning id`,
+          [...restoreValues, archived.id]
         );
         id = restored.rows[0].id;
       } else {
+        const insertFields = ['name', 'code', 'address', 'contact_email', 'created_by'];
+        const insertValues = [
+          String(name).trim(),
+          trimmedCode,
+          String(address || '').trim(),
+          String(contactEmail || '').trim(),
+          req.user.uid,
+        ];
+        if (includeAdminPassword) {
+          insertFields.splice(4, 0, 'admin_password');
+          insertValues.splice(4, 0, adminPassword);
+        }
         const inst = await c.query(
-        `insert into public.institutions (name, code, address, contact_email, admin_password, created_by)
-         values ($1, $2, $3, $4, $5, $6) returning id`,
-          [
-            String(name).trim(),
-            trimmedCode,
-            String(address || '').trim(),
-            String(contactEmail || '').trim(),
-            adminPassword,
-            req.user.uid,
-          ]
+          `insert into public.institutions (${insertFields.join(', ')})
+           values (${insertValues.map((_, idx) => `$${idx + 1}`).join(', ')}) returning id`,
+          insertValues
         );
         id = inst.rows[0].id;
       }
@@ -317,6 +347,7 @@ router.patch('/:id', verifySuperAdmin, async (req, res) => {
     );
     if (!inst) return res.status(404).json({ success: false, error: 'Institution not found' });
 
+    const includeAdminPassword = await institutionHasAdminPasswordColumn();
     const { adminPassword } = req.body || {};
 
     // Allow-list: created_by / created_at / id are unreachable from the body.
@@ -368,10 +399,16 @@ router.patch('/:id', verifySuperAdmin, async (req, res) => {
       });
       if (error) throw error;
 
-      await query(
-        `update public.institutions set admin_password = $1, updated_at = now() where id = $2`,
-        [adminPassword, id]
-      );
+      if (includeAdminPassword) {
+        await query(
+          `update public.institutions set admin_password = $1, updated_at = now() where id = $2`,
+          [adminPassword, id]
+        );
+      } else {
+        logger.warn(
+          `Admin auth password was updated for ${admin.email}, but the institutions.admin_password column is not present in this database.`
+        );
+      }
 
       // Kill every existing session so the old password stops working right
       // away, rather than lingering until its token expires.
@@ -381,9 +418,9 @@ router.patch('/:id', verifySuperAdmin, async (req, res) => {
       logger.info(`Institution admin password reset: ${admin.email}`);
     }
 
-    // `and`, not `where` — INSTITUTION_SELECT already carries its own
+    // `and`, not `where` — buildInstitutionSelect() already carries its own
     // `where i.deleted_at is null`.
-    const row = await one(`${INSTITUTION_SELECT} and i.id = $1`, [id]);
+    const row = await one(`${buildInstitutionSelect(includeAdminPassword)} and i.id = $1`, [id]);
     res.json({ success: true, institution: serializeInstitution(row) });
   } catch (e) {
     logger.error('Update institution failed:', e);
