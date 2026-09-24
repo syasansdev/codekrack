@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useStudentLeaderboard } from '../hooks/queries/useDashboard';
-import { useInstitutions } from '../hooks/queries/useInstitutions';
+import { usePublicInstitutions } from '../hooks/queries/useInstitutions';
 import { Link } from 'react-router-dom';
 import { YEAR_OPTIONS, matchesYear } from '../lib/studentYear';
 
@@ -78,8 +78,10 @@ const Leaderboard = () => {
     }
   ];
 
-  // Load onboarded institutions
-  const { data: institutions = [] } = useInstitutions();
+  // Load the public, onboarded institution list. This is the student-facing
+  // college filter, so it must use the public endpoint rather than the
+  // admin-only list that requires super-admin/admin access.
+  const { data: institutions = [] } = usePublicInstitutions();
 
   // College options dynamically based on onboarded institutions
   const collegeOptions = useMemo(() => {

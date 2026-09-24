@@ -51,6 +51,7 @@ const InstitutionManagement = () => {
   // browser — purely to tally them per institution in a forEach.
   const { data: institutions = [], isLoading: loading, error: listError } = useInstitutions();
   const createInstitution = useCreateInstitution();
+  const hasInstitutionError = Boolean(listError);
   const updateInstitution = useUpdateInstitution();
   const deleteInstitution = useDeleteInstitution();
 
@@ -393,6 +394,13 @@ const InstitutionManagement = () => {
         {loading ? (
           <div className="flex justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+          </div>
+        ) : hasInstitutionError ? (
+          <div className="p-6 text-sm text-red-700">
+            <p className="font-semibold">Could not load institutions.</p>
+            <p className="mt-1">
+              {listError?.message || 'Check that you are signed in as a super-admin and try again.'}
+            </p>
           </div>
         ) : institutions.length === 0 ? (
           <div className="text-center py-12 text-fg-subtle">

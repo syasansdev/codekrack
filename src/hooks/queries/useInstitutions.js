@@ -14,6 +14,7 @@ export const useInstitutions = ({ enabled = true } = {}) =>
     queryKey: queryKeys.institutions.list(),
     queryFn: ({ signal }) => institutionsApi.list({ signal }),
     staleTime: STALE.static, // institutions change rarely
+    retry: 1,
     enabled,
   });
 
