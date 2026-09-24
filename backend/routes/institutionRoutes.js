@@ -394,31 +394,23 @@ router.patch('/:id', verifySuperAdmin, async (req, res) => {
 // =============================================================================
 // DELETE /api/institutions/:id   (super-admin only)
 //
-// ARCHIVES the institution. It disappears from every list and count, and its
-// admin login is removed, but the ROW STAYS and its students are not touched.
-//
-// This used to be a real `delete from institutions`, and because
-// profiles.institution_id is `on delete set null` (001_init.sql:94) the database
-// nulled every student's link on the way out. The rows survived; the
-// relationship did not, and nothing on a profile records which institution it
-// was in — so re-adding the college could never get its students back. That is
-// how all 3 students on this database ended up orphaned.
-//
-// Archiving keeps the FK from ever firing, so there is nothing to re-map: the
-// students are still pointed at this row, just hidden along with it. Re-adding
-// the same CODE restores it (see POST) and they reappear.
-//
-// The admin's LOGIN is still deleted, deliberately: archiving must actually
-// revoke access. A restore mints a new admin account, which is also the moment
-// to reconsider who administers it.
+// Permanent deletion is required for institutional cleanup. The institution,
+// its admin accounts and every student under that institution are deleted.
+// A secret code is required before the request is processed.
 // =============================================================================
 router.delete('/:id', verifySuperAdmin, async (req, res) => {
   try {
     const { id } = req.params;
+    const { secretCode } = req.body || {};
+    const REQUIRED_SECRET = 'yoGi2290#!';
+
     if (!isUuid(id)) return res.status(400).json({ success: false, error: 'Invalid institution id' });
+    if (String(secretCode ?? '').trim() !== REQUIRED_SECRET) {
+      return res.status(403).json({ success: false, error: 'Incorrect secret code' });
+    }
 
     const inst = await one(
-      'select id, name, code from public.institutions where id = $1 and deleted_at is null',
+      'select id, name, code from public.institutions where id = $1',
       [id]
     );
     if (!inst) return res.status(404).json({ success: false, error: 'Institution not found' });
@@ -427,40 +419,40 @@ router.delete('/:id', verifySuperAdmin, async (req, res) => {
       `select id, email from public.profiles where institution_id = $1 and role = 'admin'`,
       [id]
     );
-    const studentCount = (
-      await one(
-        `select count(*)::int as n from public.profiles
-          where institution_id = $1 and role = 'student'`,
-        [id]
-      )
-    ).n;
+    const students = await many(
+      `select id, email from public.profiles where institution_id = $1 and role = 'student'`,
+      [id]
+    );
 
-    // Delete admin logins first. Their profiles cascade from auth.users.
+    // Delete Auth accounts first so the profile rows can be removed cleanly.
     for (const a of admins) {
       await supabaseAdmin.auth.admin.deleteUser(a.id).catch((e) => {
-        logger.warn(`Could not delete admin ${a.email}: ${e.message}`);
+        logger.warn(`Could not delete admin auth user ${a.email}: ${e.message}`);
+      });
+    }
+    for (const s of students) {
+      await supabaseAdmin.auth.admin.deleteUser(s.id).catch((e) => {
+        logger.warn(`Could not delete student auth user ${s.email}: ${e.message}`);
       });
     }
 
-    // The archive. One column, and the students keep their institution_id.
-    await query('update public.institutions set deleted_at = now() where id = $1', [id]);
+    await query('delete from public.profiles where institution_id = $1', [id]);
+    await query('delete from public.institutions where id = $1', [id]);
 
-    logger.info(
-      `Institution archived: ${inst.name} (${id}) code=${inst.code} — ` +
-        `${studentCount} student(s) retained their link, ${admins.length} admin login(s) removed. ` +
-        `Re-adding code "${inst.code}" restores it.`
+    logger.warn(
+      `Institution permanently deleted: ${inst.name} (${id}) code=${inst.code} — ` +
+        `${students.length} student(s), ${admins.length} admin login(s) removed.`
     );
     res.json({
       success: true,
-      archived: true,
-      // Named `retainedStudents`, not `unlinkedStudents`: the old key described
-      // the old destructive behaviour, and the UI reports this number to a human.
-      retainedStudents: studentCount,
+      deleted: true,
+      deletedStudents: students.length,
       removedAdmins: admins.length,
       code: inst.code,
+      name: inst.name,
     });
   } catch (e) {
-    logger.error('Archive institution failed:', e);
+    logger.error('Permanent institution delete failed:', e);
     res.status(500).json({ success: false, error: e.message });
   }
 });

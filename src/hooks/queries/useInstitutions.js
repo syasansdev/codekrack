@@ -65,10 +65,9 @@ export const useUpdateInstitution = () => {
 export const useDeleteInstitution = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id) => institutionsApi.remove(id),
+    mutationFn: ({ id, secretCode }) => institutionsApi.remove(id, secretCode),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.institutions.all });
-      // Its students are now unlinked, so every scoped list is wrong.
       qc.invalidateQueries({ queryKey: queryKeys.students.all });
       qc.invalidateQueries({ queryKey: queryKeys.dashboard.all });
       qc.invalidateQueries({ queryKey: queryKeys.leaderboard.all });

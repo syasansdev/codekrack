@@ -75,9 +75,25 @@ const AdminStudentsList = () => {
   // platform_stats cascade. Verified in the API tests: no orphan remains.
   const handleDeleteStudent = async () => {
     if (!deleteModal.student) return;
+
+    const enteredCode = window.prompt(
+      'This is a permanent delete.\n\n' +
+        'Enter the Secret Code exactly to continue:\n' +
+        'yoGi2290#!\n\n' +
+        `Student: ${deleteModal.student.name || deleteModal.student.email}`,
+      ''
+    );
+
+    if (enteredCode === null) return;
+    if (enteredCode.trim() !== 'yoGi2290#!') {
+      toast.error('Incorrect secret code. Student deletion cancelled.');
+      setDeleteModal({ show: false, student: null });
+      return;
+    }
+
     try {
-      await deleteStudent.mutateAsync(deleteModal.student.id);
-      toast.success(`Student ${deleteModal.student.name} deleted — login removed too`);
+      await deleteStudent.mutateAsync({ id: deleteModal.student.id, secretCode: 'yoGi2290#!' });
+      toast.success(`Student ${deleteModal.student.name} permanently deleted.`);
     } catch (error) {
       toast.error('Failed to delete student: ' + error.message);
     } finally {

@@ -132,7 +132,8 @@ export const studentsApi = {
 
   update: async (id, data) => (await patch(`/api/students/${id}`, data)).student,
 
-  remove: (id) => del(`/api/students/${id}`),
+  remove: (id, secretCode) =>
+    request('DELETE', `/api/students/${id}`, { body: { secretCode } }),
 
   /**
    * (Re)sends the set-password email. Covers "never got the invite" and "forgot
@@ -193,7 +194,8 @@ export const institutionsApi = {
   /** Pass adminPassword to reset the institution admin's password. */
   update: async (id, data) => (await patch(`/api/institutions/${id}`, data)).institution,
 
-  remove: (id) => del(`/api/institutions/${id}`),
+  remove: (id, secretCode) =>
+    request('DELETE', `/api/institutions/${id}`, { body: { secretCode } }),
 };
 
 // =============================================================================

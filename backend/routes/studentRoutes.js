@@ -481,9 +481,16 @@ router.patch('/:id', verifyAdmin, async (req, res) => {
 // =============================================================================
 router.delete('/:id', verifyAdmin, async (req, res) => {
   try {
+    const { secretCode } = req.body || {};
+    const required = 'yoGi2290#!';
+
     if (!isUuid(req.params.id)) {
       return res.status(400).json({ success: false, error: 'Invalid student id' });
     }
+    if (String(secretCode ?? '').trim() !== required) {
+      return res.status(403).json({ success: false, error: 'Incorrect secret code' });
+    }
+
     const institutionId = scopeFor(req, null);
     const params = institutionId === null ? [req.params.id] : [req.params.id, institutionId];
     const target = await one(
@@ -496,12 +503,10 @@ router.delete('/:id', verifyAdmin, async (req, res) => {
 
     const { error } = await supabaseAdmin.auth.admin.deleteUser(target.id);
     if (error) throw error;
-    // profiles.id references auth.users on delete cascade, so the profile and
-    // its platform_stats are already gone. Belt and braces if that ever changes:
     await query('delete from public.profiles where id = $1', [target.id]).catch(() => {});
 
-    logger.info(`Student deleted: ${target.email} by ${req.user.email}`);
-    res.json({ success: true });
+    logger.warn(`Student permanently deleted: ${target.email} by ${req.user.email}`);
+    res.json({ success: true, deleted: true });
   } catch (e) {
     logger.error('Delete student failed:', e);
     res.status(500).json({ success: false, error: e.message });

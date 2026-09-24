@@ -435,61 +435,67 @@ const AdminLeaderboard = () => {
           transition={{ delay: 0.2 }}
           className="bg-surface rounded-2xl shadow-lg p-8 mb-8 border border-edge"
         >
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-8">
+          <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between mb-8">
             <div>
               <h2 className="text-2xl font-bold text-fg mb-2">Platform Selection</h2>
               <p className="text-fg-muted">Choose a platform to view rankings</p>
             </div>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex items-center gap-4">
-                <label className="text-sm font-semibold text-fg-muted whitespace-nowrap">
-                  Department:
-                </label>
-                <select
-                  value={departmentFilter}
-                  onChange={(e) => setDepartmentFilter(e.target.value)}
-                  className="px-4 py-3 border border-edge-strong rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-surface shadow-sm"
-                >
-                  {departments.map(dept => (
-                    <option key={dept} value={dept}>
-                      {dept === 'all' ? 'All Departments' : dept}
-                    </option>
-                  ))}
-                </select>
+
+            <div className="flex flex-col gap-4 w-full xl:w-auto">
+              <div className="flex flex-col gap-4 md:flex-row md:flex-wrap md:items-center">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0 md:min-w-[220px]">
+                  <label className="text-sm font-semibold text-fg-muted whitespace-nowrap">
+                    Department:
+                  </label>
+                  <select
+                    value={departmentFilter}
+                    onChange={(e) => setDepartmentFilter(e.target.value)}
+                    className="w-full sm:w-52 px-4 py-3 border border-edge-strong rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-surface shadow-sm min-w-0"
+                  >
+                    {departments.map(dept => (
+                      <option key={dept} value={dept}>
+                        {dept === 'all' ? 'All Departments' : dept}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0 md:min-w-[220px]">
+                  <label className="text-sm font-semibold text-fg-muted whitespace-nowrap">
+                    College:
+                  </label>
+                  <select
+                    value={collegeFilter}
+                    onChange={(e) => setCollegeFilter(e.target.value)}
+                    className="w-full sm:w-52 px-4 py-3 border border-edge-strong rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-surface shadow-sm min-w-0"
+                  >
+                    {collegeOptions.map(college => (
+                      <option key={college.id} value={college.id}>
+                        {college.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0 md:min-w-[180px]">
+                  <label className="text-sm font-semibold text-fg-muted whitespace-nowrap">
+                    Year:
+                  </label>
+                  <select
+                    value={yearFilter}
+                    onChange={(e) => setYearFilter(e.target.value)}
+                    className="w-full sm:w-40 px-4 py-3 border border-edge-strong rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-surface shadow-sm min-w-0"
+                  >
+                    <option value="all">All Years</option>
+                    {YEAR_OPTIONS.map((y) => (
+                      <option key={y.value} value={y.value}>
+                        {y.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
-              <div className="flex items-center gap-4">
-                <label className="text-sm font-semibold text-fg-muted whitespace-nowrap">
-                  College:
-                </label>
-                <select
-                  value={collegeFilter}
-                  onChange={(e) => setCollegeFilter(e.target.value)}
-                  className="px-4 py-3 border border-edge-strong rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-surface shadow-sm"
-                >
-                  {collegeOptions.map(college => (
-                    <option key={college.id} value={college.id}>
-                      {college.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex items-center gap-4">
-                <label className="text-sm font-semibold text-fg-muted whitespace-nowrap">
-                  Year:
-                </label>
-                <select
-                  value={yearFilter}
-                  onChange={(e) => setYearFilter(e.target.value)}
-                  className="px-4 py-3 border border-edge-strong rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-surface shadow-sm"
-                >
-                  <option value="all">All Years</option>
-                  {YEAR_OPTIONS.map((y) => (
-                    <option key={y.value} value={y.value}>
-                      {y.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+
               <button
                 type="button"
                 onClick={handleExport}
@@ -498,7 +504,8 @@ const AdminLeaderboard = () => {
                 className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold
                            text-emerald-700 bg-emerald-50 border border-emerald-200 shadow-sm
                            hover:bg-emerald-100 transition-colors
-                           disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-emerald-50"
+                           disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-emerald-50
+                           w-full md:w-auto"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -511,8 +518,8 @@ const AdminLeaderboard = () => {
               </button>
             </div>
           </div>
-          
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
             {boards.map((board, index) => (
               <motion.button
                 key={board.id}

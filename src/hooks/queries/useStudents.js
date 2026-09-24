@@ -99,8 +99,8 @@ export const useUpdateStudent = () => {
 export const useDeleteStudent = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id) => studentsApi.remove(id),
-    onSuccess: (_r, id) => {
+    mutationFn: ({ id, secretCode }) => studentsApi.remove(id, secretCode),
+    onSuccess: (_r, { id }) => {
       qc.removeQueries({ queryKey: queryKeys.students.detail(id) });
       qc.invalidateQueries({ queryKey: queryKeys.students.all });
       qc.invalidateQueries({ queryKey: queryKeys.dashboard.all });

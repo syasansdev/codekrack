@@ -18,6 +18,8 @@ import { exportToExcel, buildInstitutionStudentRows } from '../utils/excelExport
 import InstitutionStudents from './InstitutionStudents';
 import StudentViewDetails from './StudentViewDetails';
 
+const DELETE_SECRET_CODE = 'yoGi2290#!';
+
 const emptyForm = {
   name: '',
   code: '',
@@ -176,34 +178,30 @@ const InstitutionManagement = () => {
   };
 
   const handleDelete = async (inst) => {
-    // This dialog used to promise "Student records are KEPT but unlinked from
-    // this institution" — accurate at the time, and the reason 3 students on
-    // this database ended up stranded: unlinking is unrecoverable, because
-    // nothing records where they were. Removing now ARCHIVES, so the wording
-    // has to describe what actually happens, including how to undo it.
     const count = inst.studentCount || 0;
-    if (
-      !window.confirm(
-        `Remove "${inst.name}"?\n\n` +
-          `• It disappears from every list and count.\n` +
-          `• Its admin login (${inst.adminEmail || 'none'}) is deleted.\n` +
-          `• Its ${count} student(s) KEEP their link to it — nothing is unlinked.\n\n` +
-          `To bring it back, add an institution with the code "${inst.code}" again ` +
-          `and its students return automatically.`
-      )
-    )
+    const enteredCode = window.prompt(
+      `This is a permanent delete.\n\n` +
+        `Type the Secret Code exactly to continue:\n${DELETE_SECRET_CODE}\n\n` +
+        `Institution: ${inst.name}\n` +
+        `Students that will be deleted: ${count}\n\n` +
+        `WARNING: this deletes the institution and all students belonging to it permanently.`,
+      ''
+    );
+
+    if (enteredCode === null) return;
+    if (enteredCode.trim() !== DELETE_SECRET_CODE) {
+      toast.error('Incorrect secret code. Deletion cancelled.');
       return;
+    }
+
     try {
-      const res = await deleteInstitution.mutateAsync(inst.id);
+      const res = await deleteInstitution.mutateAsync({ id: inst.id, secretCode: DELETE_SECRET_CODE });
       toast.success(
-        `"${inst.name}" archived` +
-          (res.retainedStudents
-            ? ` — ${res.retainedStudents} student(s) kept. Re-add code "${res.code}" to restore.`
-            : ''),
+        `Permanently deleted "${inst.name}" and ${res.deletedStudents || count} student(s).`,
         { autoClose: 8000 }
       );
     } catch (err) {
-      toast.error(err.message || 'Remove failed');
+      toast.error(err.message || 'Delete failed');
     }
   };
 
