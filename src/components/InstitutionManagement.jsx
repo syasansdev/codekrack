@@ -15,6 +15,7 @@ import {
 } from '../hooks/queries/useInstitutions';
 import { studentsApi } from '../services/api';
 import { exportToExcel, buildInstitutionStudentRows } from '../utils/excelExport';
+import { supabase } from '../lib/supabase';
 import InstitutionStudents from './InstitutionStudents';
 import StudentViewDetails from './StudentViewDetails';
 
@@ -25,6 +26,7 @@ const emptyForm = {
   code: '',
   address: '',
   contactEmail: '',
+  logoUrl: '',
   adminName: '',
   adminEmail: '',
   adminPassword: '',
@@ -35,6 +37,9 @@ const InstitutionManagement = () => {
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState(null);
   const [createdCreds, setCreatedCreds] = useState(null);
+  const [selectedLogoFile, setSelectedLogoFile] = useState(null);
+  const [logoPreview, setLogoPreview] = useState('');
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   // Which institution's export is in flight — the students are fetched on demand
   // (the list here only carries a COUNT, not the roster), so the button shows a
   // spinner while that request runs.
@@ -60,6 +65,25 @@ const InstitutionManagement = () => {
   const resetForm = () => {
     setForm(emptyForm);
     setEditingId(null);
+    setSelectedLogoFile(null);
+    setLogoPreview('');
+  };
+
+  const uploadInstitutionLogo = async (file) => {
+    if (!file) return '';
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '-');
+    const path = `institution-logos/${Date.now()}-${Math.random().toString(36).slice(2)}-${safeName}`;
+    const { data, error } = await supabase.storage.from('institution-logos').upload(path, file, {
+      cacheControl: '3600',
+      upsert: true,
+    });
+    if (error) {
+      throw new Error(
+        error.message || 'The institution logo could not be uploaded. Check the storage bucket configuration.'
+      );
+    }
+    const publicUrl = supabase.storage.from('institution-logos').getPublicUrl(data.path).data.publicUrl;
+    return publicUrl;
   };
 
   const handleSubmit = async (e) => {
@@ -99,6 +123,12 @@ const InstitutionManagement = () => {
     }
 
     try {
+      let finalLogoUrl = (form.logoUrl || '').trim();
+      if (selectedLogoFile) {
+        setUploadingLogo(true);
+        finalLogoUrl = await uploadInstitutionLogo(selectedLogoFile);
+      }
+
       if (editingId) {
         await updateInstitution.mutateAsync({
           id: editingId,
@@ -106,13 +136,17 @@ const InstitutionManagement = () => {
           code: form.code,
           address: form.address,
           contactEmail: form.contactEmail,
+          ...(finalLogoUrl ? { logoUrl: finalLogoUrl } : {}),
           ...(form.adminPassword ? { adminPassword: form.adminPassword } : {}),
         });
         toast.success(
           form.adminPassword ? 'Institution updated + admin password reset' : 'Institution updated'
         );
       } else {
-        const res = await createInstitution.mutateAsync(form);
+        const res = await createInstitution.mutateAsync({
+          ...form,
+          ...(finalLogoUrl ? { logoUrl: finalLogoUrl } : {}),
+        });
         // A matching code restores an archived institution rather than creating
         // a new one, and its students come back with it. Say so plainly and
         // hold the toast longer — quietly re-adopting several hundred students
@@ -134,7 +168,27 @@ const InstitutionManagement = () => {
       // list refetches itself.
     } catch (err) {
       toast.error(err.message || 'Something went wrong');
+    } finally {
+      setUploadingLogo(false);
     }
+  };
+
+  const handleLogoSelection = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please choose an image file for the institution logo.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Logo must be smaller than 5MB.');
+      return;
+    }
+    setSelectedLogoFile(file);
+    setForm((prev) => ({ ...prev, logoUrl: '' }));
+    const reader = new FileReader();
+    reader.onload = () => setLogoPreview(String(reader.result || ''));
+    reader.readAsDataURL(file);
   };
 
   const handleEdit = (inst) => {
@@ -145,10 +199,13 @@ const InstitutionManagement = () => {
       code: inst.code || '',
       address: inst.address || '',
       contactEmail: inst.contactEmail || '',
+      logoUrl: inst.logoUrl || '',
       adminName: '',
       adminEmail: inst.adminEmail || '',
       adminPassword: '',
     });
+    setSelectedLogoFile(null);
+    setLogoPreview(inst.logoUrl || '');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -315,6 +372,47 @@ const InstitutionManagement = () => {
             />
           </div>
 
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-fg-muted mb-1">College logo</label>
+            <div className="flex flex-col gap-3 rounded-xl border border-dashed border-edge bg-surface-2 p-3 md:flex-row md:items-center">
+              <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-lg border border-edge bg-surface">
+                {(logoPreview || form.logoUrl) ? (
+                  <img
+                    src={logoPreview || form.logoUrl}
+                    alt="Institution preview"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <span className="text-xs text-fg-subtle">No logo</span>
+                )}
+              </div>
+              <div className="flex-1">
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/jpg"
+                  onChange={handleLogoSelection}
+                  className="block w-full text-sm text-fg-muted file:mr-3 file:rounded-md file:border-0 file:bg-brand-50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-brand-600"
+                />
+                <div className="mt-2 flex items-center gap-2">
+                  <input
+                    type="url"
+                    value={form.logoUrl}
+                    onChange={(e) => {
+                      setSelectedLogoFile(null);
+                      setLogoPreview('');
+                      setForm({ ...form, logoUrl: e.target.value });
+                    }}
+                    placeholder="Or paste a public image URL"
+                    className={`${inputCls} flex-1`}
+                  />
+                  {(uploadingLogo || selectedLogoFile) && (
+                    <span className="text-xs text-fg-subtle">{uploadingLogo ? 'Uploading…' : 'Ready to save'}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Admin login block */}
           <div className="md:col-span-2 border-t border-edge pt-4 mt-1">
             <h3 className="text-sm font-semibold text-fg mb-1">Institution admin login</h3>
@@ -442,8 +540,19 @@ const InstitutionManagement = () => {
                       </button>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="font-medium text-fg">{inst.name}</div>
-                      {inst.address && <div className="text-xs text-fg-subtle">{inst.address}</div>}
+                      <div className="flex items-center gap-3">
+                        {inst.logoUrl ? (
+                          <img src={inst.logoUrl} alt={inst.name} className="h-10 w-10 rounded-lg object-cover border border-edge bg-surface" />
+                        ) : (
+                          <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-edge bg-surface text-[10px] font-bold uppercase text-fg-subtle">
+                            {inst.name?.slice(0, 2) || 'IN'}
+                          </div>
+                        )}
+                        <div>
+                          <div className="font-medium text-fg">{inst.name}</div>
+                          {inst.address && <div className="text-xs text-fg-subtle">{inst.address}</div>}
+                        </div>
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-fg-muted">{inst.code || '—'}</td>
                     <td className="px-6 py-4 text-fg-muted font-mono text-xs">

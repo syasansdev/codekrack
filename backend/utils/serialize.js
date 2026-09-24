@@ -172,6 +172,7 @@ export const serializeInstitution = (row) => {
     code: row.code,
     address: row.address,
     contactEmail: row.contact_email,
+    logoUrl: row.logo_url || null,
     // Derived by join, not stored on the institution — see 001_init.sql note 2.
     adminEmail: row.admin_email || null,
     adminUid: row.admin_id || null,

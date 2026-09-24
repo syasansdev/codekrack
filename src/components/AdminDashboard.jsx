@@ -253,16 +253,17 @@ const QuickActions = ({ isSuperAdmin }) => (
 /* ── Page ─────────────────────────────────────────────────────────────────── */
 const AdminDashboard = () => {
   const { isSuperAdmin, institutionId, institutionName } = useAdminScope();
+  const { data: institutions, isLoading: instLoading } = useInstitutions({
+    enabled: isSuperAdmin,
+  });
   const { data, isLoading, isError, error, refetch, isFetching } = useDashboardStats({
     institutionId,
   });
 
-  // Only a super-admin can see more than one institution, so only they need the
-  // breakdown. `enabled` keeps an institution admin from firing a request whose
-  // answer is always their own single row.
-  const { data: institutions, isLoading: instLoading } = useInstitutions({
-    enabled: isSuperAdmin,
-  });
+  const currentInstitution =
+    !isSuperAdmin && institutions?.find((inst) => inst.id === institutionId)
+      ? institutions.find((inst) => inst.id === institutionId)
+      : null;
 
   const stats = data?.stats;
 
@@ -294,7 +295,22 @@ const AdminDashboard = () => {
       {/* Page intro. The title itself is in the shell's top bar; this says what
           the numbers below are counting, which changes with role. */}
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
+        <div className="flex items-center gap-3">
+          {(currentInstitution?.logoUrl || (!isSuperAdmin && institutionName)) && (
+            <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-xl border border-edge bg-surface shadow-elite">
+              {currentInstitution?.logoUrl ? (
+                <img
+                  src={currentInstitution.logoUrl}
+                  alt={institutionName || 'Institution logo'}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span className="text-sm font-bold text-fg-subtle">
+                  {(institutionName || 'IN').slice(0, 2).toUpperCase()}
+                </span>
+              )}
+            </div>
+          )}
           <p className="text-sm text-fg-muted">
             {isSuperAdmin ? (
               <>Everything across <span className="font-semibold text-fg">all institutions</span>.</>

@@ -44,7 +44,7 @@ const buildInstitutionSelect = (includeAdminPassword = false) => {
   const adminPasswordColumn = includeAdminPassword ? 'i.admin_password,' : '';
   return `
     select
-      i.id, i.name, i.code, i.address, i.contact_email, ${adminPasswordColumn}
+      i.id, i.name, i.code, i.address, i.contact_email, i.logo_url, ${adminPasswordColumn}
       i.created_at, i.updated_at, i.created_by,
       a.id    as admin_id,
       a.email as admin_email,
@@ -136,6 +136,7 @@ router.post('/', verifySuperAdmin, async (req, res) => {
     adminEmail,
     adminPassword,
     adminName,
+    logoUrl,
   } = req.body || {};
 
   if (!name || !String(name).trim()) {
@@ -250,6 +251,10 @@ router.post('/', verifySuperAdmin, async (req, res) => {
           String(address || '').trim(),
           String(contactEmail || '').trim(),
         ];
+        if (logoUrl) {
+          restoreFields.splice(4, 0, 'logo_url = $4');
+          restoreValues.push(String(logoUrl).trim());
+        }
         if (includeAdminPassword) {
           restoreFields.splice(4, 0, 'admin_password = $4');
           restoreValues.push(adminPassword);
@@ -271,6 +276,10 @@ router.post('/', verifySuperAdmin, async (req, res) => {
           String(contactEmail || '').trim(),
           req.user.uid,
         ];
+        if (logoUrl) {
+          insertFields.splice(4, 0, 'logo_url');
+          insertValues.splice(4, 0, String(logoUrl).trim());
+        }
         if (includeAdminPassword) {
           insertFields.splice(4, 0, 'admin_password');
           insertValues.splice(4, 0, adminPassword);
@@ -334,6 +343,7 @@ const EDITABLE = {
   code: 'code',
   address: 'address',
   contactEmail: 'contact_email',
+  logoUrl: 'logo_url',
 };
 
 router.patch('/:id', verifySuperAdmin, async (req, res) => {
