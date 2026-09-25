@@ -46,9 +46,10 @@ const buildUrl = (path, params) => {
   return url.toString();
 };
 
-const request = async (method, path, { params, body, signal, auth = true } = {}) => {
+const request = async (method, path, { params, body, signal, auth = true, formData = false } = {}) => {
   const headers = { Accept: 'application/json' };
-  if (body !== undefined) headers['Content-Type'] = 'application/json';
+  const hasBody = body !== undefined;
+  if (hasBody && !formData) headers['Content-Type'] = 'application/json';
 
   if (auth) {
     const token = await getAccessToken();
@@ -66,7 +67,7 @@ const request = async (method, path, { params, body, signal, auth = true } = {})
       method,
       headers,
       signal,
-      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+      ...(hasBody ? { body: formData ? body : JSON.stringify(body) } : {}),
     });
   } catch (e) {
     if (e.name === 'AbortError') throw e; // React Query cancellation — not an error
@@ -187,6 +188,19 @@ export const institutionsApi = {
    */
   publicList: async ({ signal } = {}) =>
     (await request('GET', '/api/institutions/public', { signal, auth: false })).institutions,
+
+  uploadLogo: async (file, previousPublicId) => {
+    const formData = new FormData();
+    formData.append('logo', file);
+    if (previousPublicId) formData.append('previousPublicId', previousPublicId);
+    return request('POST', '/api/institutions/logo', {
+      body: formData,
+      formData: true,
+    });
+  },
+
+  deleteLogo: async (publicId) =>
+    request('DELETE', `/api/institutions/logo/${encodeURIComponent(publicId)}`),
 
   /** Creates the institution AND its admin login. Super-admin only. */
   create: (data) => post('/api/institutions', data),

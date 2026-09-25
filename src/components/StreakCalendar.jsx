@@ -9,7 +9,6 @@ const StreakCalendar = () => {
   const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
 
   const daysOfWeek = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-
   const getDayClass = (day) => {
     const today = new Date();
     const isToday = day === today.getDate() &&

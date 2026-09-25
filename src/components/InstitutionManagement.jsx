@@ -13,14 +13,12 @@ import {
   useUpdateInstitution,
   useDeleteInstitution,
 } from '../hooks/queries/useInstitutions';
-import { studentsApi } from '../services/api';
+import { institutionsApi, studentsApi } from '../services/api';
 import { exportToExcel, buildInstitutionStudentRows } from '../utils/excelExport';
-import { supabase } from '../lib/supabase';
 import InstitutionStudents from './InstitutionStudents';
 import StudentViewDetails from './StudentViewDetails';
 
 const DELETE_SECRET_CODE = 'yoGi2290#!';
-const INSTITUTION_LOGO_BUCKET = 'institution-logos';
 
 const emptyForm = {
   name: '',
@@ -28,6 +26,7 @@ const emptyForm = {
   address: '',
   contactEmail: '',
   logoUrl: '',
+  logoPublicId: '',
   adminName: '',
   adminEmail: '',
   adminPassword: '',
@@ -70,26 +69,13 @@ const InstitutionManagement = () => {
     setLogoPreview('');
   };
 
-  const uploadInstitutionLogo = async (file) => {
-    if (!file) return '';
-    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '-');
-    const path = `${INSTITUTION_LOGO_BUCKET}/${Date.now()}-${Math.random().toString(36).slice(2)}-${safeName}`;
-    const { data, error } = await supabase.storage.from(INSTITUTION_LOGO_BUCKET).upload(path, file, {
-      cacheControl: '3600',
-      upsert: true,
-    });
-    if (error) {
-      if (/(bucket.*not found|not found)/i.test(error.message)) {
-        throw new Error(
-          `Image upload is not configured yet. Create the public Supabase Storage bucket "${INSTITUTION_LOGO_BUCKET}" and retry.`
-        );
-      }
-      throw new Error(
-        error.message || 'The institution logo could not be uploaded. Check the storage bucket configuration.'
-      );
+  const uploadInstitutionLogo = async (file, previousPublicId = '') => {
+    if (!file) return { logoUrl: '', logoPublicId: '' };
+    const result = await institutionsApi.uploadLogo(file, previousPublicId);
+    if (!result?.logoUrl || !result?.logoPublicId) {
+      throw new Error('The institution logo upload did not return a valid Cloudinary URL.');
     }
-    const publicUrl = supabase.storage.from(INSTITUTION_LOGO_BUCKET).getPublicUrl(data.path).data.publicUrl;
-    return publicUrl;
+    return result;
   };
 
   const handleSubmit = async (e) => {
@@ -129,10 +115,16 @@ const InstitutionManagement = () => {
     }
 
     try {
+      const previousLogoPublicId = editingId ? (form.logoPublicId || '').trim() : '';
       let finalLogoUrl = (form.logoUrl || '').trim();
+      let finalLogoPublicId = (form.logoPublicId || '').trim();
+      let uploadedNewLogo = null;
+
       if (selectedLogoFile) {
         setUploadingLogo(true);
-        finalLogoUrl = await uploadInstitutionLogo(selectedLogoFile);
+        uploadedNewLogo = await uploadInstitutionLogo(selectedLogoFile, previousLogoPublicId);
+        finalLogoUrl = uploadedNewLogo.logoUrl || finalLogoUrl;
+        finalLogoPublicId = uploadedNewLogo.logoPublicId || finalLogoPublicId;
       }
 
       if (editingId) {
@@ -143,8 +135,14 @@ const InstitutionManagement = () => {
           address: form.address,
           contactEmail: form.contactEmail,
           ...(finalLogoUrl ? { logoUrl: finalLogoUrl } : {}),
+          ...(finalLogoPublicId ? { logoPublicId: finalLogoPublicId } : {}),
           ...(form.adminPassword ? { adminPassword: form.adminPassword } : {}),
         });
+
+        if (previousLogoPublicId && uploadedNewLogo?.logoPublicId && previousLogoPublicId !== uploadedNewLogo.logoPublicId) {
+          await institutionsApi.deleteLogo(previousLogoPublicId).catch(() => undefined);
+        }
+
         toast.success(
           form.adminPassword ? 'Institution updated + admin password reset' : 'Institution updated'
         );
@@ -152,6 +150,7 @@ const InstitutionManagement = () => {
         const res = await createInstitution.mutateAsync({
           ...form,
           ...(finalLogoUrl ? { logoUrl: finalLogoUrl } : {}),
+          ...(finalLogoPublicId ? { logoPublicId: finalLogoPublicId } : {}),
         });
         // A matching code restores an archived institution rather than creating
         // a new one, and its students come back with it. Say so plainly and
@@ -206,6 +205,7 @@ const InstitutionManagement = () => {
       address: inst.address || '',
       contactEmail: inst.contactEmail || '',
       logoUrl: inst.logoUrl || '',
+      logoPublicId: inst.logoPublicId || '',
       adminName: '',
       adminEmail: inst.adminEmail || '',
       adminPassword: '',

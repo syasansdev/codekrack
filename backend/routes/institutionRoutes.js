@@ -10,14 +10,86 @@
 // silently disagree if either write failed. Here the admin is derived by join:
 //   profiles where institution_id = $1 and role = 'admin'
 import express from 'express';
+import multer from 'multer';
 import { supabaseAdmin } from '../config/supabase.js';
+import cloudinary from '../config/cloudinary.js';
 import { query, one, many, tx } from '../config/db.js';
 import { verifyAdmin, verifySuperAdmin, NO_INSTITUTION } from '../middleware/supabaseAuth.js';
 import { serializeInstitution } from '../utils/serialize.js';
 import { isValidEmail, normalizeEmail, undeliverableDomainReason } from '../utils/email.js';
 import logger from '../utils/logger.js';
 
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+});
+
 const router = express.Router();
+
+router.post('/logo', verifySuperAdmin, upload.single('logo'), async (req, res) => {
+  try {
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({ success: false, error: 'No image file provided.' });
+    }
+    if (!file.mimetype.startsWith('image/')) {
+      return res.status(400).json({ success: false, error: 'Only image files are allowed.' });
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      return res.status(400).json({ success: false, error: 'Logo must be smaller than 5MB.' });
+    }
+
+    const result = await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        {
+          folder: 'institution-logos',
+          resource_type: 'image',
+          overwrite: true,
+          transformation: [{ quality: 'auto', fetch_format: 'auto' }],
+        },
+        (error, uploadResult) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+          resolve(uploadResult);
+        }
+      );
+      stream.end(file.buffer);
+    });
+
+    return res.json({
+      success: true,
+      logoUrl: result.secure_url,
+      logoPublicId: result.public_id,
+    });
+  } catch (error) {
+    logger.error('Institution logo upload failed:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'The institution logo could not be uploaded.',
+    });
+  }
+});
+
+router.delete('/logo/:publicId', verifySuperAdmin, async (req, res) => {
+  try {
+    const publicId = decodeURIComponent(req.params.publicId || '');
+    if (!publicId || publicId === 'null' || publicId === 'undefined') {
+      return res.json({ success: true, deleted: false, message: 'No public ID to delete.' });
+    }
+
+    const result = await cloudinary.uploader.destroy(publicId, { resource_type: 'image' });
+    return res.json({ success: true, deleted: result?.result === 'ok' || result?.result === 'not found' });
+  } catch (error) {
+    logger.error('Institution logo delete failed:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'The institution logo could not be deleted.',
+    });
+  }
+});
 
 const isUuid = (v) =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(v || ''));
@@ -58,12 +130,31 @@ const institutionHasLogoColumn = async () => {
   }
 };
 
-const buildInstitutionSelect = (includeAdminPassword = false, includeLogoUrl = true) => {
+const institutionHasLogoPublicIdColumn = async () => {
+  try {
+    const row = await one(`
+      select exists (
+        select 1
+        from information_schema.columns
+        where table_schema = 'public'
+          and table_name = 'institutions'
+          and column_name = 'logo_public_id'
+      ) as has_logo_public_id
+    `);
+    return !!row?.has_logo_public_id;
+  } catch (e) {
+    logger.warn('Could not detect institution logo_public_id column:', e.message);
+    return false;
+  }
+};
+
+const buildInstitutionSelect = (includeAdminPassword = false, includeLogoUrl = true, includeLogoPublicId = true) => {
   const adminPasswordColumn = includeAdminPassword ? 'i.admin_password,' : '';
   const logoUrlColumn = includeLogoUrl ? 'i.logo_url,' : '';
+  const logoPublicIdColumn = includeLogoPublicId ? 'i.logo_public_id,' : '';
   return `
     select
-      i.id, i.name, i.code, i.address, i.contact_email, ${logoUrlColumn} ${adminPasswordColumn}
+      i.id, i.name, i.code, i.address, i.contact_email, ${logoUrlColumn} ${logoPublicIdColumn} ${adminPasswordColumn}
       i.created_at, i.updated_at, i.created_by,
       a.id    as admin_id,
       a.email as admin_email,
@@ -120,7 +211,8 @@ router.get('/', verifyAdmin, async (req, res) => {
   try {
     const includeAdminPassword = await institutionHasAdminPasswordColumn();
     const includeLogoUrl = await institutionHasLogoColumn();
-    const selectSql = buildInstitutionSelect(includeAdminPassword, includeLogoUrl);
+    const includeLogoPublicId = await institutionHasLogoPublicIdColumn();
+    const selectSql = buildInstitutionSelect(includeAdminPassword, includeLogoUrl, includeLogoPublicId);
     const rows = req.user.isSuperAdmin
       ? await many(`${selectSql} order by i.name asc`)
       : await many(`${selectSql} and i.id = $1 order by i.name asc`, [
@@ -157,6 +249,7 @@ router.post('/', verifySuperAdmin, async (req, res) => {
     adminPassword,
     adminName,
     logoUrl,
+    logoPublicId,
   } = req.body || {};
 
   if (!name || !String(name).trim()) {
@@ -248,6 +341,7 @@ router.post('/', verifySuperAdmin, async (req, res) => {
 
   const includeAdminPassword = await institutionHasAdminPasswordColumn();
   const includeLogoUrl = await institutionHasLogoColumn();
+  const includeLogoPublicId = await institutionHasLogoPublicIdColumn();
 
   try {
     // Institution + its admin's profile commit together. If the profile insert
@@ -273,11 +367,15 @@ router.post('/', verifySuperAdmin, async (req, res) => {
           String(contactEmail || '').trim(),
         ];
         if (includeLogoUrl && logoUrl) {
-          restoreFields.splice(4, 0, 'logo_url = $4');
+          restoreFields.push(`logo_url = $${restoreValues.length + 1}`);
           restoreValues.push(String(logoUrl).trim());
         }
+        if (includeLogoPublicId && logoPublicId) {
+          restoreFields.push(`logo_public_id = $${restoreValues.length + 1}`);
+          restoreValues.push(String(logoPublicId).trim());
+        }
         if (includeAdminPassword) {
-          restoreFields.splice(4, 0, 'admin_password = $4');
+          restoreFields.push(`admin_password = $${restoreValues.length + 1}`);
           restoreValues.push(adminPassword);
         }
         const restored = await c.query(
@@ -298,12 +396,16 @@ router.post('/', verifySuperAdmin, async (req, res) => {
           req.user.uid,
         ];
         if (includeLogoUrl && logoUrl) {
-          insertFields.splice(4, 0, 'logo_url');
-          insertValues.splice(4, 0, String(logoUrl).trim());
+          insertFields.push('logo_url');
+          insertValues.push(String(logoUrl).trim());
+        }
+        if (includeLogoPublicId && logoPublicId) {
+          insertFields.push('logo_public_id');
+          insertValues.push(String(logoPublicId).trim());
         }
         if (includeAdminPassword) {
-          insertFields.splice(4, 0, 'admin_password');
-          insertValues.splice(4, 0, adminPassword);
+          insertFields.push('admin_password');
+          insertValues.push(adminPassword);
         }
         const inst = await c.query(
           `insert into public.institutions (${insertFields.join(', ')})
@@ -365,6 +467,7 @@ const EDITABLE = {
   address: 'address',
   contactEmail: 'contact_email',
   logoUrl: 'logo_url',
+  logoPublicId: 'logo_public_id',
 };
 
 router.patch('/:id', verifySuperAdmin, async (req, res) => {
@@ -380,6 +483,7 @@ router.patch('/:id', verifySuperAdmin, async (req, res) => {
 
     const includeAdminPassword = await institutionHasAdminPasswordColumn();
     const includeLogoUrl = await institutionHasLogoColumn();
+    const includeLogoPublicId = await institutionHasLogoPublicIdColumn();
     const { adminPassword } = req.body || {};
 
     // Allow-list: created_by / created_at / id are unreachable from the body.
@@ -388,6 +492,7 @@ router.patch('/:id', verifySuperAdmin, async (req, res) => {
     for (const [apiKey, column] of Object.entries(EDITABLE)) {
       if (!(apiKey in (req.body || {}))) continue;
       if (column === 'logo_url' && !includeLogoUrl) continue;
+      if (column === 'logo_public_id' && !includeLogoPublicId) continue;
       params.push(String(req.body[apiKey] ?? '').trim());
       sets.push(`${column} = $${params.length}`);
     }
@@ -453,7 +558,10 @@ router.patch('/:id', verifySuperAdmin, async (req, res) => {
 
     // `and`, not `where` — buildInstitutionSelect() already carries its own
     // `where i.deleted_at is null`.
-    const row = await one(`${buildInstitutionSelect(includeAdminPassword, includeLogoUrl)} and i.id = $1`, [id]);
+    const row = await one(
+      `${buildInstitutionSelect(includeAdminPassword, includeLogoUrl, includeLogoPublicId)} and i.id = $1`,
+      [id]
+    );
     res.json({ success: true, institution: serializeInstitution(row) });
   } catch (e) {
     logger.error('Update institution failed:', e);
