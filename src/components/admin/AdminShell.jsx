@@ -166,18 +166,9 @@ const SidebarContent = ({ isSuperAdmin, scopeLabel, institutionName, institution
       <p className="text-[10px] font-semibold uppercase tracking-wider text-fg-subtle">
         {isSuperAdmin ? 'Viewing' : 'Institution'}
       </p>
-      <div className="mt-2 flex items-center gap-2">
-        {!isSuperAdmin && institutionLogoUrl ? (
-          <img
-            src={institutionLogoUrl}
-            alt={institutionName || 'Institution logo'}
-            className="h-8 w-8 rounded-lg border border-edge bg-white object-cover shadow-sm"
-          />
-        ) : null}
-        <p className="truncate text-[13px] font-semibold text-fg" title={scopeLabel}>
-          {scopeLabel}
-        </p>
-      </div>
+      <p className="mt-2 truncate text-[13px] font-semibold text-fg" title={scopeLabel}>
+        {scopeLabel}
+      </p>
     </div>
 
     <nav className="flex-1 space-y-6 overflow-y-auto px-3 pb-4">
