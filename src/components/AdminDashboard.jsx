@@ -311,21 +311,29 @@ const AdminDashboard = () => {
           the numbers below are counting, which changes with role. */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="flex items-center gap-4">
-          {(currentInstitution?.logoUrl || (!isSuperAdmin && institutionName)) && (
-            <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border border-edge bg-surface p-2 shadow-elite ring-1 ring-blue-100">
-              {currentInstitution?.logoUrl ? (
-                <img
-                  src={currentInstitution.logoUrl}
-                  alt={institutionName || 'Institution logo'}
-                  className="h-full w-full object-contain"
-                />
-              ) : (
-                <span className="text-base font-black tracking-tight text-fg-subtle">
-                  {(institutionName || 'IN').slice(0, 2).toUpperCase()}
-                </span>
-              )}
-            </div>
-          )}
+          <div className="flex items-center gap-3">
+            <img
+              src="/Codekrack - Big.jpg"
+              alt="CodeKrack brand"
+              className="h-12 w-12 rounded-xl border border-edge bg-white object-contain p-1 shadow-sm"
+            />
+
+            {(currentInstitution?.logoUrl || (!isSuperAdmin && institutionName)) && (
+              <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl border border-edge bg-white p-2 shadow-elite ring-2 ring-brand-200/80 transition-transform duration-200 hover:scale-[1.02]">
+                {currentInstitution?.logoUrl ? (
+                  <img
+                    src={currentInstitution.logoUrl}
+                    alt={institutionName || 'Institution logo'}
+                    className="h-full w-full object-contain"
+                  />
+                ) : (
+                  <span className="text-base font-black tracking-tight text-fg-subtle">
+                    {(institutionName || 'IN').slice(0, 2).toUpperCase()}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
           <p className="text-sm text-fg-muted">
             {isSuperAdmin ? (
               <>Everything across <span className="font-black text-fg">all institutions</span>.</>

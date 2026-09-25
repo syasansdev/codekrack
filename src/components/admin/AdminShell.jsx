@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import useAdminScope from '../../hooks/useAdminScope';
+import { useInstitutions } from '../../hooks/queries/useInstitutions';
 import ThemeToggle from '../ui/ThemeToggle';
 
 // One source of truth for the admin nav. The old sidebar hand-wrote each item
@@ -125,27 +126,37 @@ const NavItem = ({ item, onNavigate }) => {
 };
 
 /* ── Sidebar ──────────────────────────────────────────────────────────────── */
-const SidebarContent = ({ isSuperAdmin, scopeLabel, onNavigate }) => (
+const SidebarContent = ({ isSuperAdmin, scopeLabel, institutionName, institutionLogoUrl, onNavigate }) => (
   <div className="flex h-full flex-col">
     {/* Brand */}
-    <Link
-      to="/admin/dashboard"
-      onClick={onNavigate}
-      className="flex items-center gap-3 px-5 py-5"
-    >
-      {/* The real brand lockup, not a "CK" monogram placeholder. The artwork
-          already contains "SYASAN'S code KRACK", so there is no text beside it —
-          repeating the name next to a wordmark reads as a mistake.
+    <Link to="/admin/dashboard" onClick={onNavigate} className="block px-5 py-5">
+      <div className="space-y-3">
+        <img
+          src="/Codekrack - Big.jpg"
+          alt="CodeKrack, by Syasans"
+          className="w-full rounded-lg bg-white object-contain"
+        />
 
-          It is drawn on white, so it keeps an explicit white plate rather than
-          inheriting the surface: on the dark theme a transparent-looking logo
-          would sit on a dark panel with its own white background showing
-          through as a ragged rectangle. */}
-      <img
-        src="/Codekrack - Big.jpg"
-        alt="CodeKrack, by Syasans"
-        className="w-full rounded-lg bg-white object-contain"
-      />
+        {!isSuperAdmin && institutionLogoUrl && (
+          <div className="rounded-2xl border border-edge bg-white p-2 shadow-sm ring-1 ring-brand-200/60">
+            <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-2 py-2">
+              <img
+                src={institutionLogoUrl}
+                alt={institutionName || 'Institution logo'}
+                className="h-10 w-10 rounded-lg border border-edge bg-white object-cover p-1 shadow-sm"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-fg-subtle">
+                  Institution
+                </p>
+                <p className="truncate text-xs font-semibold text-fg" title={institutionName || scopeLabel}>
+                  {institutionName || scopeLabel}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </Link>
 
     {/* Scope. A super-admin's numbers span every institution and an institution
@@ -155,9 +166,18 @@ const SidebarContent = ({ isSuperAdmin, scopeLabel, onNavigate }) => (
       <p className="text-[10px] font-semibold uppercase tracking-wider text-fg-subtle">
         {isSuperAdmin ? 'Viewing' : 'Institution'}
       </p>
-      <p className="truncate text-[13px] font-semibold text-fg" title={scopeLabel}>
-        {scopeLabel}
-      </p>
+      <div className="mt-2 flex items-center gap-2">
+        {!isSuperAdmin && institutionLogoUrl ? (
+          <img
+            src={institutionLogoUrl}
+            alt={institutionName || 'Institution logo'}
+            className="h-8 w-8 rounded-lg border border-edge bg-white object-cover shadow-sm"
+          />
+        ) : null}
+        <p className="truncate text-[13px] font-semibold text-fg" title={scopeLabel}>
+          {scopeLabel}
+        </p>
+      </div>
     </div>
 
     <nav className="flex-1 space-y-6 overflow-y-auto px-3 pb-4">
@@ -185,8 +205,9 @@ const SidebarContent = ({ isSuperAdmin, scopeLabel, onNavigate }) => (
 
 /* ── Shell ────────────────────────────────────────────────────────────────── */
 const AdminShell = ({ children }) => {
-  const { userData, currentUser, logout, isSuperAdmin } = useAuth();
+  const { userData, currentUser, logout, isSuperAdmin, institutionId } = useAuth();
   const { institutionName } = useAdminScope();
+  const { data: institutions = [] } = useInstitutions({ enabled: Boolean(institutionId) || isSuperAdmin });
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -212,6 +233,11 @@ const AdminShell = ({ children }) => {
 
   const name = userData?.name || userData?.displayName || currentUser?.email || 'Admin';
   const email = userData?.email || currentUser?.email || '';
+  const currentInstitution =
+    !isSuperAdmin && institutionId
+      ? institutions.find((inst) => inst.id === institutionId) || null
+      : null;
+  const institutionLogoUrl = currentInstitution?.logoUrl || null;
   const scopeLabel = isSuperAdmin ? 'All institutions' : institutionName || 'Your institution';
 
   const handleLogout = async () => {
@@ -229,7 +255,12 @@ const AdminShell = ({ children }) => {
     <div className="min-h-screen bg-canvas">
       {/* Desktop sidebar */}
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-edge bg-surface lg:block">
-        <SidebarContent isSuperAdmin={isSuperAdmin} scopeLabel={scopeLabel} />
+        <SidebarContent
+          isSuperAdmin={isSuperAdmin}
+          scopeLabel={scopeLabel}
+          institutionName={institutionName || scopeLabel}
+          institutionLogoUrl={institutionLogoUrl}
+        />
       </aside>
 
       {/* Mobile drawer */}
@@ -261,6 +292,8 @@ const AdminShell = ({ children }) => {
               <SidebarContent
                 isSuperAdmin={isSuperAdmin}
                 scopeLabel={scopeLabel}
+                institutionName={institutionName || scopeLabel}
+                institutionLogoUrl={institutionLogoUrl}
                 onNavigate={() => setMobileOpen(false)}
               />
             </motion.aside>
