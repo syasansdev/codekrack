@@ -20,6 +20,7 @@ import InstitutionStudents from './InstitutionStudents';
 import StudentViewDetails from './StudentViewDetails';
 
 const DELETE_SECRET_CODE = 'yoGi2290#!';
+const INSTITUTION_LOGO_BUCKET = 'institution-logos';
 
 const emptyForm = {
   name: '',
@@ -72,17 +73,22 @@ const InstitutionManagement = () => {
   const uploadInstitutionLogo = async (file) => {
     if (!file) return '';
     const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '-');
-    const path = `institution-logos/${Date.now()}-${Math.random().toString(36).slice(2)}-${safeName}`;
-    const { data, error } = await supabase.storage.from('institution-logos').upload(path, file, {
+    const path = `${INSTITUTION_LOGO_BUCKET}/${Date.now()}-${Math.random().toString(36).slice(2)}-${safeName}`;
+    const { data, error } = await supabase.storage.from(INSTITUTION_LOGO_BUCKET).upload(path, file, {
       cacheControl: '3600',
       upsert: true,
     });
     if (error) {
+      if (/(bucket.*not found|not found)/i.test(error.message)) {
+        throw new Error(
+          `Image upload is not configured yet. Create the public Supabase Storage bucket "${INSTITUTION_LOGO_BUCKET}" and retry.`
+        );
+      }
       throw new Error(
         error.message || 'The institution logo could not be uploaded. Check the storage bucket configuration.'
       );
     }
-    const publicUrl = supabase.storage.from('institution-logos').getPublicUrl(data.path).data.publicUrl;
+    const publicUrl = supabase.storage.from(INSTITUTION_LOGO_BUCKET).getPublicUrl(data.path).data.publicUrl;
     return publicUrl;
   };
 

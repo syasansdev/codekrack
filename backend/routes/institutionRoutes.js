@@ -40,11 +40,30 @@ const institutionHasAdminPasswordColumn = async () => {
   }
 };
 
-const buildInstitutionSelect = (includeAdminPassword = false) => {
+const institutionHasLogoColumn = async () => {
+  try {
+    const row = await one(`
+      select exists (
+        select 1
+        from information_schema.columns
+        where table_schema = 'public'
+          and table_name = 'institutions'
+          and column_name = 'logo_url'
+      ) as has_logo_url
+    `);
+    return !!row?.has_logo_url;
+  } catch (e) {
+    logger.warn('Could not detect institution logo_url column:', e.message);
+    return false;
+  }
+};
+
+const buildInstitutionSelect = (includeAdminPassword = false, includeLogoUrl = true) => {
   const adminPasswordColumn = includeAdminPassword ? 'i.admin_password,' : '';
+  const logoUrlColumn = includeLogoUrl ? 'i.logo_url,' : '';
   return `
     select
-      i.id, i.name, i.code, i.address, i.contact_email, i.logo_url, ${adminPasswordColumn}
+      i.id, i.name, i.code, i.address, i.contact_email, ${logoUrlColumn} ${adminPasswordColumn}
       i.created_at, i.updated_at, i.created_by,
       a.id    as admin_id,
       a.email as admin_email,
@@ -100,7 +119,8 @@ router.get('/public', async (_req, res) => {
 router.get('/', verifyAdmin, async (req, res) => {
   try {
     const includeAdminPassword = await institutionHasAdminPasswordColumn();
-    const selectSql = buildInstitutionSelect(includeAdminPassword);
+    const includeLogoUrl = await institutionHasLogoColumn();
+    const selectSql = buildInstitutionSelect(includeAdminPassword, includeLogoUrl);
     const rows = req.user.isSuperAdmin
       ? await many(`${selectSql} order by i.name asc`)
       : await many(`${selectSql} and i.id = $1 order by i.name asc`, [
@@ -227,6 +247,7 @@ router.post('/', verifySuperAdmin, async (req, res) => {
   }
 
   const includeAdminPassword = await institutionHasAdminPasswordColumn();
+  const includeLogoUrl = await institutionHasLogoColumn();
 
   try {
     // Institution + its admin's profile commit together. If the profile insert
@@ -251,7 +272,7 @@ router.post('/', verifySuperAdmin, async (req, res) => {
           String(address || '').trim(),
           String(contactEmail || '').trim(),
         ];
-        if (logoUrl) {
+        if (includeLogoUrl && logoUrl) {
           restoreFields.splice(4, 0, 'logo_url = $4');
           restoreValues.push(String(logoUrl).trim());
         }
@@ -276,7 +297,7 @@ router.post('/', verifySuperAdmin, async (req, res) => {
           String(contactEmail || '').trim(),
           req.user.uid,
         ];
-        if (logoUrl) {
+        if (includeLogoUrl && logoUrl) {
           insertFields.splice(4, 0, 'logo_url');
           insertValues.splice(4, 0, String(logoUrl).trim());
         }
@@ -358,6 +379,7 @@ router.patch('/:id', verifySuperAdmin, async (req, res) => {
     if (!inst) return res.status(404).json({ success: false, error: 'Institution not found' });
 
     const includeAdminPassword = await institutionHasAdminPasswordColumn();
+    const includeLogoUrl = await institutionHasLogoColumn();
     const { adminPassword } = req.body || {};
 
     // Allow-list: created_by / created_at / id are unreachable from the body.
@@ -365,6 +387,7 @@ router.patch('/:id', verifySuperAdmin, async (req, res) => {
     const params = [];
     for (const [apiKey, column] of Object.entries(EDITABLE)) {
       if (!(apiKey in (req.body || {}))) continue;
+      if (column === 'logo_url' && !includeLogoUrl) continue;
       params.push(String(req.body[apiKey] ?? '').trim());
       sets.push(`${column} = $${params.length}`);
     }
@@ -430,7 +453,7 @@ router.patch('/:id', verifySuperAdmin, async (req, res) => {
 
     // `and`, not `where` — buildInstitutionSelect() already carries its own
     // `where i.deleted_at is null`.
-    const row = await one(`${buildInstitutionSelect(includeAdminPassword)} and i.id = $1`, [id]);
+    const row = await one(`${buildInstitutionSelect(includeAdminPassword, includeLogoUrl)} and i.id = $1`, [id]);
     res.json({ success: true, institution: serializeInstitution(row) });
   } catch (e) {
     logger.error('Update institution failed:', e);

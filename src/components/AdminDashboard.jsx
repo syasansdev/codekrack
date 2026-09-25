@@ -177,8 +177,23 @@ const InstitutionBreakdown = ({ institutions, loading }) => {
                   className="border-b border-edge last:border-0 transition-colors hover:bg-surface-2"
                 >
                   <td className="px-5 py-3">
-                    <p className="text-sm font-semibold text-fg">{inst.name}</p>
-                    {inst.code && <p className="text-xs text-fg-subtle">{inst.code}</p>}
+                    <div className="flex items-center gap-3">
+                      {inst.logoUrl ? (
+                        <img
+                          src={inst.logoUrl}
+                          alt={inst.name}
+                          className="h-9 w-9 rounded-lg border border-edge bg-surface object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-edge bg-surface text-[10px] font-bold uppercase text-fg-subtle">
+                          {(inst.name || 'IN').slice(0, 2)}
+                        </div>
+                      )}
+                      <div>
+                        <p className="text-sm font-semibold text-fg">{inst.name}</p>
+                        {inst.code && <p className="text-xs text-fg-subtle">{inst.code}</p>}
+                      </div>
+                    </div>
                   </td>
                   <td className="px-5 py-3">
                     {/* adminEmail is derived by join. A null means the institution
