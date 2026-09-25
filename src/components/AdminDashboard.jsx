@@ -310,17 +310,17 @@ const AdminDashboard = () => {
       {/* Page intro. The title itself is in the shell's top bar; this says what
           the numbers below are counting, which changes with role. */}
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           {(currentInstitution?.logoUrl || (!isSuperAdmin && institutionName)) && (
-            <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-xl border border-edge bg-surface shadow-elite">
+            <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border border-edge bg-surface p-2 shadow-elite ring-1 ring-blue-100">
               {currentInstitution?.logoUrl ? (
                 <img
                   src={currentInstitution.logoUrl}
                   alt={institutionName || 'Institution logo'}
-                  className="h-full w-full object-cover"
+                  className="h-full w-full object-contain"
                 />
               ) : (
-                <span className="text-sm font-bold text-fg-subtle">
+                <span className="text-base font-black tracking-tight text-fg-subtle">
                   {(institutionName || 'IN').slice(0, 2).toUpperCase()}
                 </span>
               )}
@@ -328,11 +328,11 @@ const AdminDashboard = () => {
           )}
           <p className="text-sm text-fg-muted">
             {isSuperAdmin ? (
-              <>Everything across <span className="font-semibold text-fg">all institutions</span>.</>
+              <>Everything across <span className="font-black text-fg">all institutions</span>.</>
             ) : (
               <>
                 Your students at{' '}
-                <span className="font-semibold text-fg">{institutionName || 'your institution'}</span>.
+                <span className="font-black text-fg">{institutionName || 'your institution'}</span>.
               </>
             )}
           </p>

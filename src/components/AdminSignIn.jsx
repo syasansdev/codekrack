@@ -279,16 +279,17 @@ const AdminSignIn = ({ isOpen = true, onClose = () => {} }) => {
                 animate={{ width: 64 }}
                 transition={{ delay: 0.5, duration: 0.8 }}
               />
-              <div className="flex justify-center mt-4 mb-3">
-                <img
-                  src="/Codekrack - Big.jpg"
-                  alt="CodeKrack"
-                  className="h-14 w-auto object-contain"
-                  style={{ maxWidth: '200px' }}
-                />
+              <div className="mt-5 mb-4 flex justify-center">
+                <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-2xl border border-edge bg-white/80 p-2 shadow-xl shadow-blue-500/10 ring-1 ring-blue-100">
+                  <img
+                    src="/Codekrack - Big.jpg"
+                    alt="CodeKrack"
+                    className="h-full w-full object-contain"
+                  />
+                </div>
               </div>
               <motion.h2 
-                className="text-3xl font-bold   mt-2 mb-2"
+                className="mt-2 mb-2 text-3xl font-black tracking-tight text-fg"
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
@@ -296,7 +297,7 @@ const AdminSignIn = ({ isOpen = true, onClose = () => {} }) => {
                 Admin Sign In
               </motion.h2>
               <motion.p 
-                className="text-fg-subtle text-sm"
+                className="text-sm font-medium text-fg-subtle"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.4 }}
