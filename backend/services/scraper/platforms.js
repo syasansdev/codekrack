@@ -318,21 +318,40 @@ const scrapeAtCoder = async (url) => {
   }
 };
 
+// HackerRank / HackerEarth username parsers, exported so the URL shapes are
+// unit-testable without a network. Each returns '' when the URL is not one of
+// that platform's profile shapes — deliberately NOT extractUsername()'s
+// "last path segment" fallback, which would turn a wrong-platform URL into a
+// lookup of some stranger's account.
+const parseHackerRankUsername = (url) => {
+  const m = String(url || '').match(/hackerrank\.com\/(?:profile\/)?@?([A-Za-z0-9_-]+)\/?(?:[?#]|$)/i);
+  return m ? m[1] : '';
+};
+
+const parseHackerEarthUsername = (url) => {
+  const m = String(url || '').match(/hackerearth\.com\/(?:@|users\/)([A-Za-z0-9_.-]+)\/?(?:[?#]|$)/i);
+  return m ? m[1] : '';
+};
+
 /**
- * HackerRank — official public profile REST API. No API key required.
- * Reads the list of badges and sums the solved challenges count.
+ * HackerRank — public REST API, no key. `/badges` has one entry per badge
+ * (Problem Solving, each language/domain, each chapter) carrying the number of
+ * challenges the user solved in it; the total is the sum. Only earned badges are
+ * listed, so a domain with no badge yet is not counted.
+ *
+ * A brand-new account with no badges returns 200 and an empty list, which looks
+ * the same as a made-up username — so in that case existence is confirmed
+ * against the profile endpoint before a 0 is reported.
  */
 const scrapeHackerRank = async (url) => {
   try {
-    const username = extractUsername(url, /hackerrank\.com\/(?:profile\/)?([^/?]+)/);
+    const username = parseHackerRankUsername(url);
     if (!username) return null;
 
-    const response = await fetch(`https://www.hackerrank.com/rest/hackers/${encodeURIComponent(username)}/badges`, {
-      headers: {
-        'User-Agent': USER_AGENT,
-        'Accept': 'application/json',
-      },
-    });
+    const headers = { 'User-Agent': USER_AGENT, Accept: 'application/json' };
+    const base = 'https://www.hackerrank.com/rest';
+
+    const response = await fetch(`${base}/hackers/${encodeURIComponent(username)}/badges`, { headers });
 
     if (response.status === 404) {
       console.log(`HackerRank: user not found: ${username}`);
@@ -345,9 +364,19 @@ const scrapeHackerRank = async (url) => {
     }
 
     const json = await response.json();
-    if (!json || !Array.isArray(json.models)) {
+    if (!json || json.status === false || !Array.isArray(json.models)) {
       console.log(`HackerRank: unexpected response payload format for ${username}`);
       return null;
+    }
+
+    if (json.models.length === 0) {
+      const profileRes = await fetch(
+        `${base}/contests/master/hackers/${encodeURIComponent(username)}/profile`,
+        { headers }
+      );
+      if (!profileRes.ok) return null;
+      const profile = await profileRes.json();
+      if (!profile || !profile.model || !profile.model.username) return null;
     }
 
     // Sum solved challenge counts across all badges
@@ -380,12 +409,61 @@ const scrapeHackerRank = async (url) => {
 };
 
 /**
+ * HackerEarth — the profile page is a client-rendered app with no stats in its
+ * HTML, so this calls the public JSON endpoint the page itself uses:
+ *   GET /api/community/user/profile/{username}/metrics/
+ *   -> {"solutions_submitted":637,"problem_solved":71,"points":14080,"contest_rating":0}
+ * No auth needed; an unknown username is a 404. `problem_solved` must be present
+ * and numeric — a missing or garbled field is a failure, never a 0.
+ * (The similarly named /practice/api/problems/solved-count/ answers for the
+ * LOGGED-IN user and ignores the username, so it is not used.)
+ */
+const scrapeHackerEarth = async (url) => {
+  try {
+    const username = parseHackerEarthUsername(url);
+    if (!username) return null;
+
+    const response = await fetch(
+      `https://www.hackerearth.com/api/community/user/profile/${encodeURIComponent(username)}/metrics/`,
+      { headers: { 'User-Agent': USER_AGENT, Accept: 'application/json' } }
+    );
+
+    if (response.status === 404) {
+      console.log(`HackerEarth: user not found: ${username}`);
+      return null;
+    }
+
+    if (!response.ok) {
+      console.log(`HackerEarth API HTTP ${response.status} for ${username}`);
+      return null;
+    }
+
+    const json = await response.json();
+    const raw = json && json.problem_solved;
+    const solved = typeof raw === 'string' && raw.trim() !== '' ? Number(raw) : raw;
+    if (typeof solved !== 'number' || !Number.isFinite(solved) || solved < 0) {
+      console.log(`HackerEarth: no problem_solved in response for ${username}`);
+      return null;
+    }
+
+    return {
+      username,
+      problemsSolved: solved,
+      lastUpdated: new Date().toISOString(),
+    };
+  } catch (error) {
+    console.error('HackerEarth scraping error:', error.message);
+    return null;
+  }
+};
+
+/**
  * Scrape every platform for one student. Platforms run in parallel; a slow or
  * failing platform can't block the others (Promise.allSettled + per-platform
  * 25s timeout).
  */
 const scrapeAllPlatforms = async (platformUrls) => {
-  const results = { leetcode: null, github: null, codeforces: null, atcoder: null, hackerrank: null };
+  const results = { leetcode: null, github: null, codeforces: null, atcoder: null, hackerrank: null, hackerearth: null };
 
   const scrapers = {
     leetcode: scrapeLeetCode,
@@ -393,6 +471,7 @@ const scrapeAllPlatforms = async (platformUrls) => {
     codeforces: scrapeCodeforces,
     atcoder: scrapeAtCoder,
     hackerrank: scrapeHackerRank,
+    hackerearth: scrapeHackerEarth,
   };
 
   const tasks = Object.entries(platformUrls).map(async ([platform, url]) => {
@@ -418,6 +497,9 @@ export {
   scrapeCodeforces,
   scrapeAtCoder,
   scrapeHackerRank,
+  scrapeHackerEarth,
+  parseHackerRankUsername,
+  parseHackerEarthUsername,
   scrapeAllPlatforms,
   getCodeforcesRank,
   getAtCoderRank,

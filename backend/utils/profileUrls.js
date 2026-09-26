@@ -45,6 +45,11 @@ const RULES = {
     pattern: /^(https?:\/\/)?(www\.)?hackerrank\.com\/(profile\/)?[A-Za-z0-9_@-]+\/?$/i,
     example: 'hackerrank.com/profile/username',
   },
+  hackerearth: {
+    label: 'HackerEarth',
+    pattern: /^(https?:\/\/)?(www\.)?hackerearth\.com\/(@|users\/)[A-Za-z0-9_.-]+\/?$/i,
+    example: 'hackerearth.com/@username',
+  },
   linkedin: {
     label: 'LinkedIn',
     pattern: /^(https?:\/\/)?([a-z]{2,3}\.)?linkedin\.com\/in\/[A-Za-z0-9_%-]+\/?$/i,

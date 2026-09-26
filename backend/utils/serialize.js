@@ -10,7 +10,7 @@
 // When the frontend is settled, this is the one file to change.
 
 /** The scraped platforms — these get a platform_stats row each. */
-export const PLATFORMS = ['leetcode', 'github', 'codeforces', 'atcoder', 'hackerrank'];
+export const PLATFORMS = ['leetcode', 'github', 'codeforces', 'atcoder', 'hackerrank', 'hackerearth'];
 
 /**
  * Profile URLs that are NOT scraped. They live in profiles.links, because a CV
@@ -199,6 +199,8 @@ export const metricFor = (platform, data) => {
     case 'github':     return Number(data.repositories) || 0;   // repos, not problems
     case 'codeforces': return Number(data.problemsSolved) || 0;
     case 'atcoder':    return Number(data.problemsSolved) || 0;
+    case 'hackerrank': return Number(data.problemsSolved) || 0;
+    case 'hackerearth': return Number(data.problemsSolved) || 0;
     default:           return 0;
   }
 };

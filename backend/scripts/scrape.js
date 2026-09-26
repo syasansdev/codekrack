@@ -30,7 +30,13 @@ import {
   scrapeCodeforces,
   scrapeAtCoder,
   scrapeHackerRank,
+  scrapeHackerEarth,
 } from '../services/scraper/platforms.js';
+// The platform's headline number — the one both leaderboards sort by. Imported
+// rather than redefined here: this file used to carry its own copy, and the two
+// drifted (serialize.js had no hackerrank case). GitHub's metric is repositories,
+// which is why the column is called `metric` and not `problems_solved`.
+import { metricFor } from '../utils/serialize.js';
 
 const SCRAPERS = {
   leetcode: scrapeLeetCode,
@@ -38,21 +44,7 @@ const SCRAPERS = {
   codeforces: scrapeCodeforces,
   atcoder: scrapeAtCoder,
   hackerrank: scrapeHackerRank,
-};
-
-// The platform's headline number — the one both leaderboards sort by. Same
-// mapping as utils/serialize.js metricFor(); note GitHub's is repositories,
-// which is why the column is called `metric` and not `problems_solved`.
-const metricFor = (platform, data) => {
-  if (!data) return 0;
-  switch (platform) {
-    case 'leetcode':   return Number(data.totalSolved) || 0;
-    case 'github':     return Number(data.repositories) || 0;
-    case 'codeforces': return Number(data.problemsSolved) || 0;
-    case 'atcoder':    return Number(data.problemsSolved) || 0;
-    case 'hackerrank': return Number(data.problemsSolved) || 0;
-    default:           return 0;
-  }
+  hackerearth: scrapeHackerEarth,
 };
 
 const args = process.argv.slice(2);

@@ -21,6 +21,7 @@ const METRIC_LABEL = {
   codeforces: 'Problems Solved',
   atcoder: 'Problems Solved',
   hackerrank: 'Problems Solved',
+  hackerearth: 'Problems Solved',
 };
 
 // =============================================================================
