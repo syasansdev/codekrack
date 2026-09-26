@@ -111,6 +111,7 @@ export const validateUrl = (url, platform) => {
     atcoder: /^https?:\/\/(www\.)?atcoder\.jp\/users\/[a-zA-Z0-9_-]+\/?$/,
     github: /^https?:\/\/(www\.)?github\.com\/[a-zA-Z0-9_-]+\/?$/,
     hackerrank: /^https?:\/\/(www\.)?hackerrank\.com\/[a-zA-Z0-9_-]+\/?$/,
+    hackerearth: /^https?:\/\/(www\.)?hackerearth\.com\/(@|users\/)[a-zA-Z0-9_.-]+\/?$/,
     linkedin: /^https?:\/\/(www\.)?linkedin\.com\/in\/[a-zA-Z0-9_-]+\/?$/
   };
 
@@ -138,6 +139,7 @@ export const sanitizeStudentData = (studentData) => {
       codeforces: studentData.platformUrls?.codeforces || '',
       atcoder: studentData.platformUrls?.atcoder || '',
       hackerrank: studentData.platformUrls?.hackerrank || '',
+      hackerearth: studentData.platformUrls?.hackerearth || '',
       linkedin: studentData.platformUrls?.linkedin || ''
     },
     platformData: {
@@ -176,6 +178,11 @@ export const calculateTotalProblems = (platformData) => {
   // HackerRank problems
   if (platformData.hackerrank?.problemsSolved) {
     total += parseInt(platformData.hackerrank.problemsSolved) || 0;
+  }
+
+  // HackerEarth problems
+  if (platformData.hackerearth?.problemsSolved) {
+    total += parseInt(platformData.hackerearth.problemsSolved) || 0;
   }
 
   return total;

@@ -141,6 +141,12 @@ const handleViewDetails = async (student) => {
           <path d="M12 0c1.285 0 9.75 4.886 10.392 6 .645 1.115.645 10.885 0 12S13.287 24 12 24s-9.75-4.885-10.395-6c-.641-1.115-.641-10.885 0-12C2.25 4.886 10.715 0 12 0zm2.295 6.799c-.141 0-.258.115-.258.258v3.875H9.963V6.908c0-.141-.116-.258-.258-.258H8.279c-.141 0-.258.115-.258.258v10.018c0 .143.117.258.258.258h1.426c.142 0 .258-.115.258-.258v-4.09h4.074v4.09c0 .143.116.258.258.258h1.426c.141 0 .258-.115.258-.258V6.908c0-.141-.117-.258-.258-.258h-1.426z"/>
         </svg>
       ),
+      hackerearth: (
+        <svg className="w-5 h-5" viewBox="0 0 24 24">
+          <rect width="24" height="24" rx="5" fill="#323754" />
+          <text x="12" y="16.5" textAnchor="middle" fontSize="11" fontWeight="700" fill="#FFFFFF" fontFamily="Arial, sans-serif">HE</text>
+        </svg>
+      ),
       atcoder: (
         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
           <path d="M12 0l-8 4v8l8 4 8-4V4l-8-4zm0 2.208L17.385 5 12 7.792 6.615 5 12 2.208zM5 6.5l6 3v7l-6-3v-7zm8 10v-7l6-3v7l-6 3z"/>

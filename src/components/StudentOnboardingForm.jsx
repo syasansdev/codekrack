@@ -38,6 +38,7 @@ const PLATFORM_FIELDS = [
   { key: 'codeforces', label: 'Codeforces', placeholder: 'codeforces.com/profile/username' },
   { key: 'atcoder', label: 'AtCoder', placeholder: 'atcoder.jp/users/username' },
   { key: 'hackerrank', label: 'HackerRank', placeholder: 'hackerrank.com/profile/username' },
+  { key: 'hackerearth', label: 'HackerEarth', placeholder: 'hackerearth.com/@username' },
   { key: 'linkedin', label: 'LinkedIn', placeholder: 'linkedin.com/in/username' },
   { key: 'resume', label: 'Resume link', placeholder: 'drive.google.com/file/d/...' },
 ];

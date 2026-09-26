@@ -15,6 +15,17 @@ const PlatformIcon = ({ platform }) => {
         <path fill="currentColor" d="M4.5 7.5A1.5 1.5 0 0 1 6 9v10.5A1.5 1.5 0 0 1 4.5 21h-3A1.5 1.5 0 0 1 0 19.5V9a1.5 1.5 0 0 1 1.5-1.5h3zm9-4.5A1.5 1.5 0 0 1 15 4.5v15a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 19.5v-15A1.5 1.5 0 0 1 10.5 3h3zm9 7.5A1.5 1.5 0 0 1 24 12v7.5a1.5 1.5 0 0 1-1.5 1.5h-3a1.5 1.5 0 0 1-1.5-1.5V12a1.5 1.5 0 0 1 1.5-1.5h3z"/>
       </svg>
     ),
+    hackerrank: (
+      <svg viewBox="0 0 24 24" fill="#00EA64" className="w-5 h-5">
+        <path d="M12 0c1.285 0 9.75 4.886 10.392 6 .645 1.115.645 10.885 0 12S13.287 24 12 24s-9.75-4.885-10.395-6c-.641-1.115-.641-10.885 0-12C2.25 4.886 10.715 0 12 0zm2.295 6.799c-.141 0-.258.115-.258.258v3.875H9.963V6.908c0-.141-.116-.258-.258-.258H8.279c-.141 0-.258.115-.258.258v10.018c0 .143.117.258.258.258h1.426c.142 0 .258-.115.258-.258v-4.09h4.074v4.09c0 .143.116.258.258.258h1.426c.141 0 .258-.115.258-.258V6.908c0-.141-.117-.258-.258-.258h-1.426z"/>
+      </svg>
+    ),
+    hackerearth: (
+      <svg viewBox="0 0 24 24" className="w-5 h-5">
+        <rect width="24" height="24" rx="5" fill="#323754" />
+        <text x="12" y="16.5" textAnchor="middle" fontSize="11" fontWeight="700" fill="#FFFFFF" fontFamily="Arial, sans-serif">HE</text>
+      </svg>
+    ),
     atcoder: (
       <svg viewBox="0 0 24 24" className="w-5 h-5 text-orange-600">
         <path fill="currentColor" d="M7.2 3.6c-.4 0-.8.2-1 .6L.4 16.8c-.4.6-.1 1.4.5 1.8.2.1.4.2.6.2h11.8c.7 0 1.2-.6 1.2-1.2 0-.2-.1-.4-.2-.6L8.5 4.4c-.3-.5-.8-.8-1.3-.8zm8.6 6c-.4 0-.8.2-1 .6l-3.6 6.6c-.4.6-.1 1.4.5 1.8.2.1.4.2.6.2h7.4c.7 0 1.2-.6 1.2-1.2 0-.2-.1-.4-.2-.6l-3.6-6.6c-.3-.5-.8-.8-1.3-.8z"/>
@@ -42,7 +53,9 @@ const EditStudentModal = ({ student, onClose, onUpdate }) => {
       leetcode: '',
       codeforces: '',
       atcoder: '',
-      github: ''
+      github: '',
+      hackerrank: '',
+      hackerearth: ''
     }
   });
   const updateStudent = useUpdateStudent();
@@ -63,7 +76,9 @@ const EditStudentModal = ({ student, onClose, onUpdate }) => {
           leetcode: student.platformUrls?.leetcode || '',
           codeforces: student.platformUrls?.codeforces || '',
           atcoder: student.platformUrls?.atcoder || '',
-          github: student.platformUrls?.github || ''
+          github: student.platformUrls?.github || '',
+          hackerrank: student.platformUrls?.hackerrank || '',
+          hackerearth: student.platformUrls?.hackerearth || ''
         }
       });
     }
@@ -86,7 +101,9 @@ const EditStudentModal = ({ student, onClose, onUpdate }) => {
       leetcode: /^https?:\/\/(www\.)?leetcode\.com\/(u\/)?[a-zA-Z0-9_-]+\/?$/,
       codeforces: /^https?:\/\/(www\.)?codeforces\.com\/profile\/[a-zA-Z0-9_-]+\/?$/,
       atcoder: /^https?:\/\/(www\.)?atcoder\.jp\/users\/[a-zA-Z0-9_-]+\/?$/,
-      github: /^https?:\/\/(www\.)?github\.com\/[a-zA-Z0-9_-]+\/?$/
+      github: /^https?:\/\/(www\.)?github\.com\/[a-zA-Z0-9_-]+\/?$/,
+      hackerrank: /^https?:\/\/(www\.)?hackerrank\.com\/(profile\/)?@?[a-zA-Z0-9_-]+\/?$/,
+      hackerearth: /^https?:\/\/(www\.)?hackerearth\.com\/(@|users\/)[a-zA-Z0-9_.-]+\/?$/
     };
 
     Object.entries(formData.platformUrls).forEach(([platform, url]) => {
@@ -163,14 +180,18 @@ const EditStudentModal = ({ student, onClose, onUpdate }) => {
     leetcode: 'LeetCode',
     codeforces: 'Codeforces',
     atcoder: 'AtCoder',
-    github: 'GitHub'
+    github: 'GitHub',
+    hackerrank: 'HackerRank',
+    hackerearth: 'HackerEarth'
   };
 
   const platformPlaceholders = {
     leetcode: 'https://leetcode.com/username',
     codeforces: 'https://codeforces.com/profile/username',
     atcoder: 'https://atcoder.jp/users/username',
-    github: 'https://github.com/username'
+    github: 'https://github.com/username',
+    hackerrank: 'https://www.hackerrank.com/profile/username',
+    hackerearth: 'https://www.hackerearth.com/@username'
   };
 
   const getInitials = (name = '') => {

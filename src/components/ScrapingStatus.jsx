@@ -149,6 +149,9 @@ const ScrapingStatus = () => {
         return `${data.problemsSolved || 0} problems`;
       case 'github':
         return `${data.repositories || 0} repos`;
+      case 'hackerrank':
+      case 'hackerearth':
+        return `${data.problemsSolved || 0} problems`;
       default:
         return null;
     }

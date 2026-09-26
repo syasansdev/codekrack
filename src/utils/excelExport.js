@@ -78,8 +78,11 @@ export const buildInstitutionStudentRows = (students) => {
       'AtCoder URL': pu.atcoder || '',
       'GitHub Repos': n(pd.github?.repositories),
       'GitHub URL': pu.github || '',
+      'HackerRank Solved': n(pd.hackerrank?.problemsSolved),
+      'HackerRank URL': pu.hackerrank || '',
+      'HackerEarth Solved': n(pd.hackerearth?.problemsSolved),
+      'HackerEarth URL': pu.hackerearth || '',
       LinkedIn: pu.linkedin || '',
-      HackerRank: pu.hackerrank || '',
       Resume: pu.resume || '',
       'Last Scraped': s.scrapingStatus?.lastUpdated
         ? new Date(s.scrapingStatus.lastUpdated).toLocaleString()

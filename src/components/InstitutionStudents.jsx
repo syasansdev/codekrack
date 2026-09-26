@@ -33,6 +33,7 @@ const BOARDS = [
   { id: 'codeforces', label: 'Codeforces', unit: 'solved' },
   { id: 'atcoder', label: 'AtCoder', unit: 'solved' },
   { id: 'hackerrank', label: 'HackerRank', unit: 'solved' },
+  { id: 'hackerearth', label: 'HackerEarth', unit: 'solved' },
 ];
 
 /**

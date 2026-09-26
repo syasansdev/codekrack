@@ -11,7 +11,7 @@ import { dashboardApi } from '../../services/api';
 import { queryKeys } from '../../lib/queryKeys';
 import { STALE } from '../../lib/queryClient';
 
-export const PLATFORMS = ['leetcode', 'github', 'codeforces', 'atcoder'];
+export const PLATFORMS = ['leetcode', 'github', 'codeforces', 'atcoder', 'hackerrank', 'hackerearth'];
 
 /** Labels match each platform's real headline metric — GitHub counts repos, not problems. */
 export const METRIC_LABEL = {
@@ -19,6 +19,8 @@ export const METRIC_LABEL = {
   github: 'Repositories',
   codeforces: 'Problems Solved',
   atcoder: 'Problems Solved',
+  hackerrank: 'Problems Solved',
+  hackerearth: 'Problems Solved',
 };
 
 export const useDashboardStats = ({ institutionId = null, enabled = true } = {}) =>

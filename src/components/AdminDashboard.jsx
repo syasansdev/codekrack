@@ -41,6 +41,8 @@ const PLATFORM_META = {
   github: { label: 'GitHub', bar: 'bg-fg-muted' },
   codeforces: { label: 'Codeforces', bar: 'bg-brand-500' },
   atcoder: { label: 'AtCoder', bar: 'bg-emerald-500' },
+  hackerrank: { label: 'HackerRank', bar: 'bg-green-500' },
+  hackerearth: { label: 'HackerEarth', bar: 'bg-indigo-500' },
 };
 
 /**

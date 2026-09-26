@@ -52,6 +52,7 @@ const AdminUserCreation = () => {
       codeforces: '',
       atcoder: '',
       hackerrank: '',
+      hackerearth: '',
       linkedin: '',
       resume: ''
     }
@@ -86,6 +87,7 @@ Analyze this Excel data and extract student information. Map the data to these e
 - codeforces (Codeforces URL, extract from any text)
 - atcoder (AtCoder URL, extract from any text)
 - hackerrank (HackerRank URL, extract from any text)
+- hackerearth (HackerEarth URL, extract from any text)
 - linkedin (LinkedIn URL, extract from any text)
 - resume (Resume/Drive URL, extract from any text)
 
@@ -133,6 +135,9 @@ ${JSON.stringify(excelData, null, 2)}
       codeforces: ['codeforces', 'cf', 'codeforces profile', 'codeforces url'],
       atcoder: ['atcoder', 'at', 'atcoder profile', 'atcoder url'],
       hackerrank: ['hackerrank', 'hr', 'hackerrank profile', 'hackerrank url'],
+      // No short alias ('he'): mappings match by substring, so it would claim
+      // any column containing "he" ("the", "header", "school"...).
+      hackerearth: ['hackerearth', 'hackerearth profile', 'hackerearth url', 'hackerearth link'],
       linkedin: ['linkedin', 'li', 'linkedin profile', 'linkedin url'],
       resume: ['resume', 'cv', 'drive', 'resume url', 'drive url', 'portfolio']
     };
@@ -152,6 +157,7 @@ ${JSON.stringify(excelData, null, 2)}
       if (str.includes('codeforces.com')) return 'codeforces';
       if (str.includes('atcoder.jp')) return 'atcoder';
       if (str.includes('hackerrank.com')) return 'hackerrank';
+      if (str.includes('hackerearth.com')) return 'hackerearth';
       if (str.includes('linkedin.com')) return 'linkedin';
       if (str.includes('drive.google.com') || str.includes('docs.google.com')) return 'resume';
       return null;
@@ -182,7 +188,7 @@ ${JSON.stringify(excelData, null, 2)}
           }
         }
         
-        if (['github', 'leetcode', 'codeforces', 'atcoder', 'hackerrank', 'linkedin', 'resume'].includes(field)) {
+        if (['github', 'leetcode', 'codeforces', 'atcoder', 'hackerrank', 'hackerearth', 'linkedin', 'resume'].includes(field)) {
           student[field] = extractUrl(value);
         } else {
           student[field] = value ? value.toString().trim() : '';
@@ -305,7 +311,7 @@ ${JSON.stringify(excelData, null, 2)}
         
         // Format platform URLs
         const platformUrls = {};
-        ['github', 'leetcode', 'codeforces', 'atcoder', 'hackerrank', 'linkedin', 'resume'].forEach(platform => {
+        ['github', 'leetcode', 'codeforces', 'atcoder', 'hackerrank', 'hackerearth', 'linkedin', 'resume'].forEach(platform => {
           if (student[platform]) {
             let url = student[platform].toString().trim();
             if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
@@ -700,6 +706,7 @@ ${JSON.stringify(excelData, null, 2)}
         codeforces: '',
         atcoder: '',
         hackerrank: '',
+        hackerearth: '',
         linkedin: '',
         resume: ''
       }
@@ -731,6 +738,12 @@ ${JSON.stringify(excelData, null, 2)}
     hackerrank: (
       <svg className="w-5 h-5" fill="#00EA64" viewBox="0 0 24 24">
         <path d="M12 0c1.285 0 9.75 4.886 10.392 6 .645 1.115.645 10.885 0 12S13.287 24 12 24s-9.75-4.885-10.395-6c-.641-1.115-.641-10.885 0-12C2.25 4.886 10.715 0 12 0zm2.295 6.799c-.141 0-.258.115-.258.258v3.875H9.963V6.908c0-.141-.116-.258-.258-.258H8.279c-.141 0-.258.115-.258.258v10.018c0 .143.117.258.258.258h1.426c.142 0 .258-.115.258-.258v-4.09h4.074v4.09c0 .143.116.258.258.258h1.426c.141 0 .258-.115.258-.258V6.908c0-.141-.117-.258-.258-.258h-1.426z"/>
+      </svg>
+    ),
+    hackerearth: (
+      <svg className="w-5 h-5" viewBox="0 0 24 24">
+        <rect width="24" height="24" rx="5" fill="#323754" />
+        <text x="12" y="16.5" textAnchor="middle" fontSize="11" fontWeight="700" fill="#FFFFFF" fontFamily="Arial, sans-serif">HE</text>
       </svg>
     ),
     linkedin: (
@@ -1181,7 +1194,30 @@ ${JSON.stringify(excelData, null, 2)}
                       />
                     </div>
                   </div>
-                  
+
+                  <div>
+                    <label htmlFor="hackerearth" className="flex items-center text-sm font-medium text-fg-muted mb-2">
+                      {platformIcons.hackerearth}
+                      <span className="ml-2">HackerEarth Profile</span>
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        <svg className="w-5 h-5 text-fg-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                        </svg>
+                      </div>
+                      <input
+                        type="text"
+                        id="hackerearth"
+                        name="platformUrls.hackerearth"
+                        value={studentData.platformUrls.hackerearth}
+                        onChange={handleInputChange}
+                        className="w-full pl-10 px-4 py-2 border border-edge-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300"
+                        placeholder="hackerearth.com/@username"
+                      />
+                    </div>
+                  </div>
+
                   <div>
                     <label htmlFor="linkedin" className="flex items-center text-sm font-medium text-fg-muted mb-2">
                       {platformIcons.linkedin}
@@ -1360,6 +1396,7 @@ ${JSON.stringify(excelData, null, 2)}
                                 <div><strong>Codeforces:</strong> {student.codeforces || 'N/A'}</div>
                                 <div><strong>AtCoder:</strong> {student.atcoder || 'N/A'}</div>
                                 <div><strong>HackerRank:</strong> {student.hackerrank || 'N/A'}</div>
+                                <div><strong>HackerEarth:</strong> {student.hackerearth || 'N/A'}</div>
                                 <div><strong>LinkedIn:</strong> {student.linkedin || 'N/A'}</div>
                                 <div><strong>Resume:</strong> {student.resume || 'N/A'}</div>
                               </div>

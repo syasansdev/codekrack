@@ -71,6 +71,14 @@ const AdminLeaderboard = () => {
       statusField: 'hackerrankStatus',
       dataField: 'hackerrank',
       metricField: 'problemsSolved'
+    },
+    {
+      id: 'hackerearth',
+      name: 'HackerEarth',
+      metricLabel: 'Problems Solved',
+      statusField: 'hackerearthStatus',
+      dataField: 'hackerearth',
+      metricField: 'problemsSolved'
     }
   ];
 

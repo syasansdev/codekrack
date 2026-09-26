@@ -75,6 +75,17 @@ const Leaderboard = () => {
       metricLabel: 'Problems Solved',
       dataField: 'hackerrank',
       metricField: 'problemsSolved'
+    },
+    {
+      id: 'hackerearth',
+      name: 'HackerEarth',
+      // amber, not a fresh hue: the button builds `bg-${color}-500` /
+      // `border-${color}-500` dynamically, and Tailwind only emits classes it can
+      // see spelled out in source. Both amber classes already are.
+      color: 'amber',
+      metricLabel: 'Problems Solved',
+      dataField: 'hackerearth',
+      metricField: 'problemsSolved'
     }
   ];
 

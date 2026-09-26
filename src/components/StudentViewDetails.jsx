@@ -66,6 +66,12 @@ const PlatformIcon = ({ platform }) => {
         <path d="M12 0c1.285 0 9.75 4.886 10.392 6 .645 1.115.645 10.885 0 12S13.287 24 12 24s-9.75-4.885-10.395-6c-.641-1.115-.641-10.885 0-12C2.25 4.886 10.715 0 12 0zm2.295 6.799c-.141 0-.258.115-.258.258v3.875H9.963V6.908c0-.141-.116-.258-.258-.258H8.279c-.141 0-.258.115-.258.258v10.018c0 .143.117.258.258.258h1.426c.142 0 .258-.115.258-.258v-4.09h4.074v4.09c0 .143.116.258.258.258h1.426c.141 0 .258-.115.258-.258V6.908c0-.141-.117-.258-.258-.258h-1.426z"/>
       </svg>
     ),
+    hackerearth: (
+      <svg viewBox="0 0 24 24" className="h-8 w-8 transition transform hover:scale-110 duration-300">
+        <rect width="24" height="24" rx="5" fill="#323754" />
+        <text x="12" y="16.5" textAnchor="middle" fontSize="11" fontWeight="700" fill="#FFFFFF" fontFamily="Arial, sans-serif">HE</text>
+      </svg>
+    ),
   };
   return icons[platform] || null;
 };
@@ -237,7 +243,8 @@ const StudentViewDetails = ({ student, onClose, onStudentUpdate, isAdminView = f
     github: { loading: false, data: null, error: null },
     codeforces: { loading: false, data: null, error: null },
     atcoder: { loading: false, data: null, error: null },
-    hackerrank: { loading: false, data: null, error: null }
+    hackerrank: { loading: false, data: null, error: null },
+    hackerearth: { loading: false, data: null, error: null }
   });
 
   useEffect(() => {
@@ -338,7 +345,7 @@ const StudentViewDetails = ({ student, onClose, onStudentUpdate, isAdminView = f
   // Calculate total problems solved using utility function
   const calculateTotalSolved = () => {
     const platformDataObj = {};
-    ['leetcode', 'codeforces', 'atcoder', 'hackerrank'].forEach(platform => {
+    ['leetcode', 'codeforces', 'atcoder', 'hackerrank', 'hackerearth'].forEach(platform => {
       const platformInfo = getPlatformData(platform);
       if (platformInfo.data) {
         platformDataObj[platform] = platformInfo.data;
@@ -403,7 +410,7 @@ const StudentViewDetails = ({ student, onClose, onStudentUpdate, isAdminView = f
     return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
   };
 
-  const platformOrder = ['leetcode', 'codeforces', 'github', 'atcoder', 'hackerrank'];
+  const platformOrder = ['leetcode', 'codeforces', 'github', 'atcoder', 'hackerrank', 'hackerearth'];
   const availablePlatforms = platformOrder.filter(p => currentStudent.platformUrls?.[p]);
 
   const snapshotData = [
@@ -422,8 +429,8 @@ const StudentViewDetails = ({ student, onClose, onStudentUpdate, isAdminView = f
     { 
       label: "Active Platforms", 
       value: availablePlatforms.length, 
-      maxValue: 5, 
-      color: "text-emerald-500" 
+      maxValue: platformOrder.length,
+      color: "text-emerald-500"
     },
   ];
 
@@ -675,6 +682,10 @@ const StudentViewDetails = ({ student, onClose, onStudentUpdate, isAdminView = f
                                 </div>
                               )}
                             </>
+                          )}
+
+                          {platform === 'hackerearth' && stats && (
+                            <StatItem label="Problems Solved" value={stats.problemsSolved} />
                           )}
                         </dl>
                       )}

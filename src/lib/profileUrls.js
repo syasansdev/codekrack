@@ -51,6 +51,11 @@ export const PROFILE_RULES = {
     pattern: /^(https?:\/\/)?(www\.)?hackerrank\.com\/(profile\/)?[A-Za-z0-9_@-]+\/?$/i,
     example: 'hackerrank.com/profile/username',
   },
+  hackerearth: {
+    label: 'HackerEarth',
+    pattern: /^(https?:\/\/)?(www\.)?hackerearth\.com\/(@|users\/)[A-Za-z0-9_.-]+\/?$/i,
+    example: 'hackerearth.com/@username',
+  },
   linkedin: {
     // The country subdomain (in.linkedin.com) is what LinkedIn hands Indian
     // users when they copy their own profile URL, so it has to be accepted.
