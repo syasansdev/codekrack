@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { useRescrapeStudent } from '../hooks/queries/useStudents';
+import { useRescrapeStudent, useStudent } from '../hooks/queries/useStudents';
 import { validatePlatformData, sanitizeStudentData, calculateTotalProblems, formatLastUpdated } from '../utils/dataValidation';
 import EditStudentModal from './EditStudentModal';
 
@@ -226,6 +226,14 @@ const PlatformStatus = ({ status }) => {
 
 const StudentViewDetails = ({ student, onClose, onStudentUpdate, isAdminView = false }) => {
   const [isMounted, setIsMounted] = useState(false);
+  // Some callers pass a partial record — the Admin Leaderboard builds one from a
+  // leaderboard row, with `platformUrls: {}` and data for only the active board,
+  // which rendered "No Platform Profiles Linked" for students who have them.
+  // When the URLs are missing, load the full record and use that instead; a
+  // record that already carries URLs is used as given, with no extra request.
+  const hasUrls = Object.values(student?.platformUrls || {}).some(Boolean);
+  const { data: fullStudent, isLoading: isResolving } = useStudent(student?.id, { enabled: !hasUrls });
+  const source = hasUrls ? student : fullStudent;
   const [currentStudent, setCurrentStudent] = useState(student);
   const [scrapingStatus, setScrapingStatus] = useState({});
   const [isAutoScraping, setIsAutoScraping] = useState(false);
@@ -249,19 +257,21 @@ const StudentViewDetails = ({ student, onClose, onStudentUpdate, isAdminView = f
 
   useEffect(() => {
     const timer = setTimeout(() => setIsMounted(true), 100);
-    
-    // Sanitize student data and auto-fetch if URLs exist
-    const sanitizedStudent = sanitizeStudentData(student);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Sanitize the resolved student and auto-fetch if URLs exist. Keyed on the id
+  // so a background refetch of the same student does not queue another scrape.
+  useEffect(() => {
+    if (!source) return;
+    const sanitizedStudent = sanitizeStudentData(source);
     if (sanitizedStudent) {
       setCurrentStudent(sanitizedStudent);
       if (sanitizedStudent.platformUrls && Object.values(sanitizedStudent.platformUrls).some(url => url)) {
-        handleAutoFetch();
+        handleAutoFetch(sanitizedStudent);
       }
-      
     }
-    
-    return () => clearTimeout(timer);
-  }, []);
+  }, [source?.id]);
 
   // Generate initial activities based on existing platform data
   // ---------------------------------------------------------------------------
@@ -277,16 +287,18 @@ const StudentViewDetails = ({ student, onClose, onStudentUpdate, isAdminView = f
   // Now: mark the platforms pending, and the GitHub Action does the scraping.
   // Results arrive by SSE. The admin's IP and the CORS proxies are out of it.
   // ---------------------------------------------------------------------------
-  const handleAutoFetch = async () => {
-    if (!currentStudent?.platformUrls || Object.values(currentStudent.platformUrls).every((u) => !u)) {
+  // `target` lets the effect above pass the student it just resolved — the
+  // `currentStudent` state has not been updated yet in that same tick.
+  const handleAutoFetch = async (target = currentStudent) => {
+    if (!target?.platformUrls || Object.values(target.platformUrls).every((u) => !u)) {
       return;
     }
     try {
       setIsAutoScraping(true);
-      const res = await rescrape.mutateAsync(currentStudent.id);
+      const res = await rescrape.mutateAsync(target.id);
       const pending = {};
-      Object.keys(currentStudent.platformUrls).forEach((p) => {
-        if (currentStudent.platformUrls[p]) pending[p] = 'pending';
+      Object.keys(target.platformUrls).forEach((p) => {
+        if (target.platformUrls[p]) pending[p] = 'pending';
       });
       setScrapingStatus(pending);
       toast.success(`Queued ${res.queued} platform(s) — results appear here when the scraper runs`);
@@ -695,7 +707,7 @@ const StudentViewDetails = ({ student, onClose, onStudentUpdate, isAdminView = f
               })}
             </div>
             
-            {availablePlatforms.length === 0 && (
+            {availablePlatforms.length === 0 && !isResolving && (
               <div className="bg-surface border border-edge rounded-xl p-8 text-center mt-6 opacity-0 animate-fadeIn" style={{ animationDelay: '0.8s', animationFillMode: 'forwards' }}>
                 <svg className="w-16 h-16 mx-auto text-slate-300 mb-4 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
