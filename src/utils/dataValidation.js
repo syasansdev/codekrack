@@ -146,7 +146,12 @@ export const sanitizeStudentData = (studentData) => {
       leetcode: validatePlatformData('leetcode', studentData.platformData?.leetcode),
       codeforces: validatePlatformData('codeforces', studentData.platformData?.codeforces),
       atcoder: validatePlatformData('atcoder', studentData.platformData?.atcoder),
-      github: validatePlatformData('github', studentData.platformData?.github)
+      github: validatePlatformData('github', studentData.platformData?.github),
+      // Passed through as-is (null when never scraped). Omitting these dropped
+      // the scraped numbers, so the modal read "No data available" and left them
+      // out of the total even though the row was stored and completed.
+      hackerrank: studentData.platformData?.hackerrank || null,
+      hackerearth: studentData.platformData?.hackerearth || null
     },
     scrapingStatus: studentData.scrapingStatus || {},
     lastUpdated: studentData.lastUpdated || null
