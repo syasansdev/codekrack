@@ -1,10 +1,11 @@
 // src/components/TotalStudentsBreakdown.jsx
 //
-// What the "Total students" tile on the admin Overview opens when clicked: a
-// breakdown of that same count by year and department, with an "All" option on
-// each. It reuses useStudents() with the dashboard's own institutionId, so a
-// super-admin sees the same scope the tile counted and an institution admin
-// never sees past their own college.
+// What the "Total students" tile on the admin Overview opens when clicked: the
+// actual students behind that count, filterable by year and department (with an
+// "All" option on each), each with the same "View" action Manage has. It reuses
+// useStudents() with the dashboard's own institutionId, so a super-admin sees
+// the same scope the tile counted and an institution admin never sees past
+// their own college.
 //
 // MOBILE: a bottom sheet, not a centered dialog. A dialog pinned to a fixed
 // height fights the on-screen keyboard and the two filter dropdowns for space
@@ -14,11 +15,15 @@ import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Users } from 'lucide-react';
 import { useStudents } from '../hooks/queries/useStudents';
-import { YEAR_OPTIONS, matchesYear } from '../lib/studentYear';
+import { YEAR_OPTIONS, matchesYear, yearLabel } from '../lib/studentYear';
+import StudentViewDetails from './StudentViewDetails';
 
 const TotalStudentsBreakdown = ({ isOpen, onClose, institutionId }) => {
   const [year, setYear] = useState('all');
   const [department, setDepartment] = useState('all');
+  // Opens the SAME detail modal Manage uses, on top of this sheet — "View" here
+  // is that action, not a smaller copy of it.
+  const [viewingStudent, setViewingStudent] = useState(null);
 
   const { data: students = [], isLoading } = useStudents({
     institutionId,
@@ -44,17 +49,6 @@ const TotalStudentsBreakdown = ({ isOpen, onClose, institutionId }) => {
       ),
     [students, year, department]
   );
-
-  // By year, respecting whichever department is picked — this is what the
-  // breakdown list below renders, so "All years" still shows the split.
-  const byYear = useMemo(() => {
-    const rows = YEAR_OPTIONS.map((y) => ({
-      ...y,
-      count: filtered.filter((s) => matchesYear(s.year, y.value)).length,
-    }));
-    const unclassified = filtered.filter((s) => !matchesYear(s.year, '1') && !matchesYear(s.year, '2') && !matchesYear(s.year, '3') && !matchesYear(s.year, '4')).length;
-    return unclassified > 0 ? [...rows, { value: '', label: 'Unspecified', count: unclassified }] : rows;
-  }, [filtered]);
 
   return (
     <AnimatePresence>
@@ -135,56 +129,73 @@ const TotalStudentsBreakdown = ({ isOpen, onClose, institutionId }) => {
             </div>
 
             {/* Result */}
-            <div className="px-5 py-5 overflow-y-auto grow">
+            <div className="px-5 py-4 overflow-y-auto grow">
               {isLoading ? (
                 <div className="space-y-3">
                   {[0, 1, 2].map((i) => (
-                    <div key={i} className="h-10 animate-pulse rounded-lg bg-surface-3" />
+                    <div key={i} className="h-14 animate-pulse rounded-xl bg-surface-3" />
                   ))}
                 </div>
               ) : (
                 <>
-                  <div className="text-center mb-6">
-                    <p className="font-display text-4xl font-bold text-fg tabular-nums">
-                      {filtered.length.toLocaleString()}
-                    </p>
-                    <p className="text-sm text-fg-subtle mt-1">
-                      {year === 'all' && department === 'all'
-                        ? 'students in total'
-                        : 'students match this filter'}
-                    </p>
-                  </div>
+                  <p className="text-sm text-fg-subtle mb-3">
+                    <span className="font-bold text-fg tabular-nums">{filtered.length.toLocaleString()}</span>{' '}
+                    {year === 'all' && department === 'all' ? 'students in total' : 'students match this filter'}
+                  </p>
 
-                  {/* Only shown while "All years" is picked — once a specific
-                      year is chosen the total above already answers the question,
-                      and repeating one row under it is noise. */}
-                  {year === 'all' && (
+                  {filtered.length === 0 ? (
+                    <p className="text-center text-sm text-fg-subtle py-10">
+                      No students match this filter.
+                    </p>
+                  ) : (
                     <div className="space-y-2">
-                      <p className="text-xs font-semibold uppercase tracking-wider text-fg-subtle mb-2">
-                        By year
-                      </p>
-                      {byYear.map((y) => (
+                      {filtered.map((student) => (
                         <div
-                          key={y.value || 'unspecified'}
-                          className="flex items-center justify-between rounded-xl bg-surface-2 px-4 py-3"
+                          key={student.id}
+                          className="flex items-center gap-3 rounded-xl bg-surface-2 px-3 py-2.5"
                         >
-                          <span className="text-sm font-medium text-fg">{y.label}</span>
-                          <span className="text-sm font-bold text-fg tabular-nums">{y.count}</span>
+                          <div className="w-9 h-9 shrink-0 bg-blue-100 rounded-full flex items-center justify-center">
+                            <span className="text-blue-600 font-bold text-xs">
+                              {student.name?.charAt(0)?.toUpperCase() || 'S'}
+                            </span>
+                          </div>
+                          <div className="min-w-0 grow">
+                            <p className="text-sm font-medium text-fg truncate">
+                              {student.name || student.email}
+                            </p>
+                            <p className="text-xs text-fg-subtle truncate">
+                              {[student.department, yearLabel(student.year)].filter(Boolean).join(' · ') || student.email}
+                            </p>
+                          </div>
+                          {/* Same action, same icon, as Manage's "View Details" —
+                              this opens that identical modal, not a stand-in. */}
+                          <button
+                            onClick={() => setViewingStudent(student)}
+                            className="shrink-0 text-blue-600 hover:text-blue-900 transition-colors p-2 rounded-lg hover:bg-blue-50"
+                            title="View Details"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                          </button>
                         </div>
                       ))}
                     </div>
-                  )}
-
-                  {filtered.length === 0 && (
-                    <p className="text-center text-sm text-fg-subtle py-6">
-                      No students match this filter.
-                    </p>
                   )}
                 </>
               )}
             </div>
           </motion.div>
         </motion.div>
+      )}
+
+      {viewingStudent && (
+        <StudentViewDetails
+          student={viewingStudent}
+          onClose={() => setViewingStudent(null)}
+          isAdminView={true}
+        />
       )}
     </AnimatePresence>
   );
