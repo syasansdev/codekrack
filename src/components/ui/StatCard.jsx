@@ -64,6 +64,9 @@ const useCountUp = (value, duration = 900) => {
  * @param {number}  delta     signed change; renders a +/- pill when present
  * @param {node}    children  optional slot (a <Sparkline/>) under the value
  * @param {boolean} loading   skeleton instead of a misleading 0
+ * @param {func}    onClick   when present, the whole tile becomes a button —
+ *                            a focus ring, hover lift and pointer cursor mark it
+ *                            as interactive instead of leaving that silent
  */
 const StatCard = ({
   label,
@@ -75,8 +78,10 @@ const StatCard = ({
   children,
   loading = false,
   className = '',
+  onClick,
 }) => {
   const shown = useCountUp(loading ? 0 : Number(value) || 0);
+  const clickable = typeof onClick === 'function';
 
   // Static class strings, not `bg-tint-${tone}`. Tailwind scans source as plain
   // text and never sees an interpolated class, so the composed name would be
@@ -95,8 +100,25 @@ const StatCard = ({
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: 'easeOut' }}
+      whileHover={clickable ? { y: -2 } : undefined}
+      whileTap={clickable ? { scale: 0.98 } : undefined}
+      onClick={onClick}
+      role={clickable ? 'button' : undefined}
+      tabIndex={clickable ? 0 : undefined}
+      onKeyDown={
+        clickable
+          ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onClick(e);
+              }
+            }
+          : undefined
+      }
       className={`group relative overflow-hidden rounded-2xl border border-edge bg-surface p-5
-                  shadow-elite transition-shadow duration-300 hover:shadow-elite-lg ${className}`}
+                  shadow-elite transition-shadow duration-300 hover:shadow-elite-lg ${
+                    clickable ? 'cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500' : ''
+                  } ${className}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">

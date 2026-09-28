@@ -11,7 +11,7 @@
 // aggregates in SQL and is already scope-correct: a super-admin's figures span
 // every institution, an institution admin's are pinned to their own by the
 // server regardless of what the client asks for.
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -30,6 +30,7 @@ import useAdminScope from '../hooks/useAdminScope';
 import { useDashboardStats } from '../hooks/queries/useDashboard';
 import { useInstitutions } from '../hooks/queries/useInstitutions';
 import StatCard from './ui/StatCard';
+import TotalStudentsBreakdown from './TotalStudentsBreakdown';
 import Sparkline from './ui/Sparkline';
 
 // Bar colours are each platform's own brand, which is what makes the rows
@@ -270,6 +271,7 @@ const QuickActions = ({ isSuperAdmin }) => (
 /* ── Page ─────────────────────────────────────────────────────────────────── */
 const AdminDashboard = () => {
   const { isSuperAdmin, institutionId, institutionName } = useAdminScope();
+  const [showStudentBreakdown, setShowStudentBreakdown] = useState(false);
   const { data: institutions, isLoading: instLoading } = useInstitutions({
     enabled: isSuperAdmin,
   });
@@ -367,6 +369,7 @@ const AdminDashboard = () => {
           icon={<Users size={18} />}
           tone="brand"
           loading={isLoading}
+          onClick={() => setShowStudentBreakdown(true)}
         />
 
         {/* Super-admins only. The API returns a literal 1 for an institution
@@ -461,6 +464,12 @@ const AdminDashboard = () => {
         <h2 className="mb-3 font-display text-base font-bold text-fg">Quick actions</h2>
         <QuickActions isSuperAdmin={isSuperAdmin} />
       </div>
+
+      <TotalStudentsBreakdown
+        isOpen={showStudentBreakdown}
+        onClose={() => setShowStudentBreakdown(false)}
+        institutionId={institutionId}
+      />
     </div>
   );
 };

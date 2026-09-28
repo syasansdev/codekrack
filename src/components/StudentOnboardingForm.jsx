@@ -33,15 +33,21 @@ const YEARS = [
 ];
 
 const PLATFORM_FIELDS = [
-  { key: 'leetcode', label: 'LeetCode', placeholder: 'leetcode.com/u/username' },
+  { key: 'leetcode', label: 'LeetCode', placeholder: 'leetcode.com/u/username', required: true },
   { key: 'github', label: 'GitHub', placeholder: 'github.com/username' },
   { key: 'codeforces', label: 'Codeforces', placeholder: 'codeforces.com/profile/username' },
   { key: 'atcoder', label: 'AtCoder', placeholder: 'atcoder.jp/users/username' },
-  { key: 'hackerrank', label: 'HackerRank', placeholder: 'hackerrank.com/profile/username' },
+  { key: 'hackerrank', label: 'HackerRank', placeholder: 'hackerrank.com/profile/username', required: true },
   { key: 'hackerearth', label: 'HackerEarth', placeholder: 'hackerearth.com/@username' },
   { key: 'linkedin', label: 'LinkedIn', placeholder: 'linkedin.com/in/username' },
   { key: 'resume', label: 'Resume link', placeholder: 'drive.google.com/file/d/...' },
 ];
+
+// Every account is tracked on these two platforms from day one — everything
+// else is opt-in. Kept as one list so the frontend check, the error message and
+// the backend's own copy (utils/profileUrls.js REQUIRED_PLATFORMS) can't drift
+// on which platforms are mandatory even if the wording around them does.
+const REQUIRED_PLATFORM_KEYS = PLATFORM_FIELDS.filter((f) => f.required).map((f) => f.key);
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -127,7 +133,12 @@ const StudentOnboardingForm = ({ isOpen = true, onClose, onSignIn }) => {
   // field rather than only when they hit Create account at the bottom of a long
   // form and have to scroll back up to find it.
   const checkPlatform = (key) => {
-    const message = validateProfileUrl(key, form.platformUrls[key]);
+    const value = form.platformUrls[key];
+    const message =
+      validateProfileUrl(key, value) ||
+      (REQUIRED_PLATFORM_KEYS.includes(key) && !String(value ?? '').trim()
+        ? `Your ${PLATFORM_FIELDS.find((f) => f.key === key).label} profile is required`
+        : null);
     setErrors((e) => withPlatformError(e, key, message || undefined));
   };
 
@@ -166,6 +177,11 @@ const StudentOnboardingForm = ({ isOpen = true, onClose, onSignIn }) => {
     // that platform. The commonest error this catches is a link pasted into the
     // wrong box, which no generic "is it a URL" check would notice.
     const platformUrls = validateProfileUrls(form.platformUrls);
+    for (const f of PLATFORM_FIELDS) {
+      if (f.required && !String(form.platformUrls[f.key] ?? '').trim()) {
+        platformUrls[f.key] = `Your ${f.label} profile is required`;
+      }
+    }
     if (Object.keys(platformUrls).length) e.platformUrls = platformUrls;
 
     setErrors(e);
@@ -506,14 +522,15 @@ const StudentOnboardingForm = ({ isOpen = true, onClose, onSignIn }) => {
                 Your coding profiles
               </h3>
               <p className="text-sm text-fg-subtle -mt-2">
-                Optional, and you can add them later from your profile. Whatever you add here starts
-                being tracked on the next scraper run.
+                LeetCode and HackerRank are required — every account is tracked on those from day
+                one. The rest are optional and can be added later from your profile. Whatever you
+                add here starts being tracked on the next scraper run.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
                 {PLATFORM_FIELDS.map((f) => {
                   const fieldError = errors.platformUrls?.[f.key];
                   return (
-                    <Field key={f.key} label={f.label} error={fieldError}>
+                    <Field key={f.key} label={f.label} error={fieldError} required={f.required}>
                       <input
                         className={`${inputCls} ${
                           fieldError ? 'border-red-400 focus:ring-red-400 focus:border-red-400' : ''

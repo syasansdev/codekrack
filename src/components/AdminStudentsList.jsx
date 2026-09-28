@@ -3,6 +3,7 @@ import { useAdminScope } from '../hooks/useAdminScope';
 import {
   useStudents,
   useDeleteStudent,
+  useBulkDeleteStudents,
   useSendInvite,
   useSetStudentStatus,
 } from '../hooks/queries/useStudents';
@@ -16,11 +17,17 @@ const AdminStudentsList = () => {
   const [deleteModal, setDeleteModal] = useState({ show: false, student: null });
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [editingStudent, setEditingStudent] = useState(null);
+  // "Select students -> delete" on this screen. A Set of ids rather than an
+  // array of rows: selection survives the list re-sorting/refetching under it,
+  // and toggling one student is O(1) instead of a find + splice.
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
+  const [bulkDeleteModal, setBulkDeleteModal] = useState(false);
 
   const { institutionId } = useAdminScope();
   // Already sorted by name, and scoped by the server.
   const { data: students = [], isLoading: loading } = useStudents({ institutionId });
   const deleteStudent = useDeleteStudent();
+  const bulkDeleteStudents = useBulkDeleteStudents();
   const sendInvite = useSendInvite();
   const setStudentStatus = useSetStudentStatus();
   const [busyId, setBusyId] = useState(null);
@@ -60,6 +67,7 @@ const AdminStudentsList = () => {
     }
   };
   const deleting = deleteStudent.isPending;
+  const bulkDeleting = bulkDeleteStudents.isPending;
 
   // DELETION IS NOW ONE OPERATION, and it actually works.
   //
@@ -73,26 +81,16 @@ const AdminStudentsList = () => {
   //
   // DELETE /api/students/:id removes the auth user; the profile and its
   // platform_stats cascade. Verified in the API tests: no orphan remains.
+  //
+  // No secret code here any more — that is reserved for deleting a whole
+  // INSTITUTION (super-admin only, InstitutionManagement.jsx). Deleting a
+  // student, one at a time or as a batch below, is a normal admin action; the
+  // confirmation modal itself, naming exactly who is about to be deleted, is
+  // the safeguard.
   const handleDeleteStudent = async () => {
     if (!deleteModal.student) return;
-
-    const enteredCode = window.prompt(
-      'This is a permanent delete.\n\n' +
-        'Enter the Secret Code exactly to continue:\n' +
-        'yoGi2290#!\n\n' +
-        `Student: ${deleteModal.student.name || deleteModal.student.email}`,
-      ''
-    );
-
-    if (enteredCode === null) return;
-    if (enteredCode.trim() !== 'yoGi2290#!') {
-      toast.error('Incorrect secret code. Student deletion cancelled.');
-      setDeleteModal({ show: false, student: null });
-      return;
-    }
-
     try {
-      await deleteStudent.mutateAsync({ id: deleteModal.student.id, secretCode: 'yoGi2290#!' });
+      await deleteStudent.mutateAsync({ id: deleteModal.student.id });
       toast.success(`Student ${deleteModal.student.name} permanently deleted.`);
     } catch (error) {
       toast.error('Failed to delete student: ' + error.message);
@@ -101,12 +99,56 @@ const AdminStudentsList = () => {
     }
   };
 
-  const filteredStudents = students.filter(student => 
+  const filteredStudents = students.filter(student =>
     student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     student.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     student.registerNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     student.department?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const visibleSelectedCount = filteredStudents.filter((s) => selectedIds.has(s.id)).length;
+  const allVisibleSelected = filteredStudents.length > 0 && visibleSelectedCount === filteredStudents.length;
+
+  const toggleSelected = (id) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  // Selects/clears only the rows the search has matched, not every student —
+  // "select all" on a filtered list should mean the list on screen.
+  const toggleSelectAllVisible = () => {
+    setSelectedIds((prev) => {
+      if (allVisibleSelected) {
+        const next = new Set(prev);
+        filteredStudents.forEach((s) => next.delete(s.id));
+        return next;
+      }
+      const next = new Set(prev);
+      filteredStudents.forEach((s) => next.add(s.id));
+      return next;
+    });
+  };
+
+  const handleBulkDelete = async () => {
+    const ids = [...selectedIds];
+    if (!ids.length) return;
+    try {
+      const res = await bulkDeleteStudents.mutateAsync(ids);
+      if (res.failed?.length) {
+        toast.warn(`Deleted ${res.deletedCount} of ${ids.length}. ${res.failed.length} could not be deleted.`);
+      } else {
+        toast.success(`${res.deletedCount} student(s) permanently deleted.`);
+      }
+      setSelectedIds(new Set());
+    } catch (error) {
+      toast.error('Bulk delete failed: ' + error.message);
+    } finally {
+      setBulkDeleteModal(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -171,12 +213,45 @@ const AdminStudentsList = () => {
           </div>
         </div>
 
+        {/* Bulk selection toolbar — appears once something is selected, stacks
+            on mobile instead of squeezing the count and button onto one line. */}
+        {selectedIds.size > 0 && (
+          <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3">
+            <span className="text-sm font-medium text-blue-900">
+              {selectedIds.size} student{selectedIds.size === 1 ? '' : 's'} selected
+            </span>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setSelectedIds(new Set())}
+                className="px-3 py-2 text-sm font-medium text-fg-muted hover:text-fg transition-colors"
+              >
+                Clear
+              </button>
+              <button
+                onClick={() => setBulkDeleteModal(true)}
+                className="px-4 py-2 bg-red-600 text-white text-sm font-semibold rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Delete selected
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Students Table */}
         <div className="bg-surface rounded-2xl shadow-lg border border-edge overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-edge">
               <thead className="bg-surface-2">
                 <tr>
+                  <th className="px-4 py-3 text-left">
+                    <input
+                      type="checkbox"
+                      checked={allVisibleSelected}
+                      onChange={toggleSelectAllVisible}
+                      aria-label="Select all students"
+                      className="h-4 w-4 rounded border-edge-strong text-blue-600 focus:ring-blue-500"
+                    />
+                  </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-fg-subtle uppercase tracking-wider">Student</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-fg-subtle uppercase tracking-wider">Department</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-fg-subtle uppercase tracking-wider">Year</th>
@@ -186,7 +261,16 @@ const AdminStudentsList = () => {
               </thead>
               <tbody className="bg-surface divide-y divide-edge">
                 {filteredStudents.map((student) => (
-                  <tr key={student.id} className="hover:bg-surface-2">
+                  <tr key={student.id} className={`hover:bg-surface-2 ${selectedIds.has(student.id) ? 'bg-blue-50/60' : ''}`}>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(student.id)}
+                        onChange={() => toggleSelected(student.id)}
+                        aria-label={`Select ${student.name || student.email}`}
+                        className="h-4 w-4 rounded border-edge-strong text-blue-600 focus:ring-blue-500"
+                      />
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
@@ -387,6 +471,92 @@ const AdminStudentsList = () => {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
                         Delete Student
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Bulk Delete Confirmation Modal — same permanent-delete warning as the
+          single-student one, scaled to a count instead of one name. No secret
+          code here either; see the note above handleDeleteStudent. */}
+      <AnimatePresence>
+        {bulkDeleteModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+            onClick={() => !bulkDeleting && setBulkDeleteModal(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              className="bg-surface rounded-2xl shadow-xl max-w-md w-full mx-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-6">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                    <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-fg">Delete {selectedIds.size} student{selectedIds.size === 1 ? '' : 's'}</h3>
+                    <p className="text-sm text-fg-subtle">This action cannot be undone</p>
+                  </div>
+                </div>
+
+                <div className="bg-surface-2 rounded-xl p-4 mb-4 max-h-40 overflow-y-auto">
+                  <ul className="space-y-1">
+                    {students.filter((s) => selectedIds.has(s.id)).map((s) => (
+                      <li key={s.id} className="text-sm text-fg truncate">
+                        {s.name || s.email} <span className="text-fg-subtle">({s.email})</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-5 h-5 text-red-600 mt-0.5">⚠️</div>
+                    <div className="text-sm text-red-800">
+                      <p className="font-semibold mb-1">Warning</p>
+                      <p>This will permanently delete {selectedIds.size} student account{selectedIds.size === 1 ? '' : 's'} and all associated data. This action cannot be undone.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setBulkDeleteModal(false)}
+                    disabled={bulkDeleting}
+                    className="flex-1 px-4 py-3 bg-surface-2 text-fg-muted rounded-xl hover:bg-surface-3 disabled:opacity-50 transition-colors font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleBulkDelete}
+                    disabled={bulkDeleting}
+                    className="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center gap-2"
+                  >
+                    {bulkDeleting ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Deleting...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        Delete {selectedIds.size} student{selectedIds.size === 1 ? '' : 's'}
                       </>
                     )}
                   </button>

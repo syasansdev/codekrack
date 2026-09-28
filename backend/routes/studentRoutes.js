@@ -37,7 +37,7 @@ import {
   PLATFORMS,
 } from '../utils/serialize.js';
 import { isValidEmail, normalizeEmail, undeliverableDomainReason } from '../utils/email.js';
-import { firstProfileUrlError } from '../utils/profileUrls.js';
+import { firstProfileUrlError, firstMissingRequiredPlatform } from '../utils/profileUrls.js';
 import { canonicalDepartment } from '../utils/departments.js';
 import logger from '../utils/logger.js';
 
@@ -230,6 +230,15 @@ router.post('/register', registerLimiter, async (req, res) => {
     const badUrl = firstProfileUrlError(req.body?.platformUrls);
     if (badUrl) {
       return res.status(400).json({ success: false, error: badUrl });
+    }
+
+    // LeetCode and HackerRank are mandatory on the public form — every account
+    // is tracked on those from day one. Checked after the format check above,
+    // so a malformed required URL gets the more specific "doesn't look like a
+    // link" message rather than "is required".
+    const missingRequired = firstMissingRequiredPlatform(req.body?.platformUrls);
+    if (missingRequired) {
+      return res.status(400).json({ success: false, error: missingRequired });
     }
 
     // Resolve the institution here rather than trusting a name from the body.
@@ -473,42 +482,95 @@ router.patch('/:id', verifyAdmin, async (req, res) => {
   }
 });
 
+// Deletes the Auth user; the profile and platform rows cascade. Firestore's
+// version deleted the profile and LEFT the Auth login alive — an account that
+// could still sign in with no profile behind it. Shared by the single-student
+// and bulk routes below, scoped identically by both.
+const deleteOneStudent = async (req, id) => {
+  if (!isUuid(id)) return { id, ok: false, error: 'Invalid student id' };
+
+  const institutionId = scopeFor(req, null);
+  const params = institutionId === null ? [id] : [id, institutionId];
+  const target = await one(
+    `select id, email from public.profiles
+      where id = $1 and role = 'student'
+      ${institutionId === null ? '' : 'and institution_id = $2'}`,
+    params
+  );
+  if (!target) return { id, ok: false, error: 'Student not found' };
+
+  const { error } = await supabaseAdmin.auth.admin.deleteUser(target.id);
+  if (error) return { id, ok: false, error: error.message };
+  await query('delete from public.profiles where id = $1', [target.id]).catch(() => {});
+
+  logger.warn(`Student permanently deleted: ${target.email} by ${req.user.email}`);
+  return { id, ok: true, email: target.email };
+};
+
 // =============================================================================
 // DELETE /api/students/:id   (any admin)
-// Deletes the Auth user; the profile and platform rows cascade.
-// Firestore's version deleted the profile and LEFT the Auth login alive — an
-// account that could still sign in with no profile behind it.
+//
+// No secret code — deleting a student (or a batch of them, below) is a normal
+// admin action, scoped to the admin's own institution by deleteOneStudent()
+// exactly like every other student route. The secret code is reserved for
+// deleting a whole INSTITUTION (see DELETE /api/institutions/:id,
+// verifySuperAdmin-only), which is the one action here with no scope fence at
+// all and blast radius beyond a single row.
 // =============================================================================
 router.delete('/:id', verifyAdmin, async (req, res) => {
   try {
-    const { secretCode } = req.body || {};
-    const required = 'yoGi2290#!';
-
-    if (!isUuid(req.params.id)) {
-      return res.status(400).json({ success: false, error: 'Invalid student id' });
+    const result = await deleteOneStudent(req, req.params.id);
+    if (!result.ok) {
+      const status = result.error === 'Student not found' ? 404
+        : result.error === 'Invalid student id' ? 400
+        : 500;
+      return res.status(status).json({ success: false, error: result.error });
     }
-    if (String(secretCode ?? '').trim() !== required) {
-      return res.status(403).json({ success: false, error: 'Incorrect secret code' });
-    }
-
-    const institutionId = scopeFor(req, null);
-    const params = institutionId === null ? [req.params.id] : [req.params.id, institutionId];
-    const target = await one(
-      `select id, email from public.profiles
-        where id = $1 and role = 'student'
-        ${institutionId === null ? '' : 'and institution_id = $2'}`,
-      params
-    );
-    if (!target) return res.status(404).json({ success: false, error: 'Student not found' });
-
-    const { error } = await supabaseAdmin.auth.admin.deleteUser(target.id);
-    if (error) throw error;
-    await query('delete from public.profiles where id = $1', [target.id]).catch(() => {});
-
-    logger.warn(`Student permanently deleted: ${target.email} by ${req.user.email}`);
     res.json({ success: true, deleted: true });
   } catch (e) {
     logger.error('Delete student failed:', e);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// =============================================================================
+// POST /api/students/bulk-delete   (any admin)
+// Body: { ids: string[] }
+//
+// The "select a group of students and delete" action on the Manage screen.
+// Same rules as the single delete above (no secret code, same institution
+// scope) — this is that endpoint run over a list, not a separate power. One
+// bad id in the batch does not stop the rest: each id is resolved and deleted
+// independently, and the response reports which succeeded and which didn't
+// (out of scope, already gone, etc.) so the UI can say so per student.
+// =============================================================================
+const MAX_BULK_DELETE = 200;
+router.post('/bulk-delete', verifyAdmin, async (req, res) => {
+  try {
+    const ids = Array.isArray(req.body?.ids) ? [...new Set(req.body.ids)] : [];
+    if (!ids.length) {
+      return res.status(400).json({ success: false, error: 'ids must be a non-empty array' });
+    }
+    if (ids.length > MAX_BULK_DELETE) {
+      return res
+        .status(400)
+        .json({ success: false, error: `Delete at most ${MAX_BULK_DELETE} students at a time` });
+    }
+
+    const results = [];
+    for (const id of ids) {
+      results.push(await deleteOneStudent(req, id));
+    }
+
+    const deleted = results.filter((r) => r.ok).map((r) => r.id);
+    const failed = results.filter((r) => !r.ok).map(({ id, error }) => ({ id, error }));
+
+    logger.warn(
+      `Bulk delete by ${req.user.email}: ${deleted.length} deleted, ${failed.length} failed`
+    );
+    res.json({ success: true, deletedCount: deleted.length, deleted, failed });
+  } catch (e) {
+    logger.error('Bulk delete students failed:', e);
     res.status(500).json({ success: false, error: e.message });
   }
 });

@@ -99,9 +99,24 @@ export const useUpdateStudent = () => {
 export const useDeleteStudent = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, secretCode }) => studentsApi.remove(id, secretCode),
+    mutationFn: ({ id }) => studentsApi.remove(id),
     onSuccess: (_r, { id }) => {
       qc.removeQueries({ queryKey: queryKeys.students.detail(id) });
+      qc.invalidateQueries({ queryKey: queryKeys.students.all });
+      qc.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+      qc.invalidateQueries({ queryKey: queryKeys.leaderboard.all });
+      qc.invalidateQueries({ queryKey: queryKeys.scraping.all });
+    },
+  });
+};
+
+/** The Manage screen's "select students -> delete" action. Invalidates the same
+ * queries as a single delete — a batch is just several of the same write. */
+export const useBulkDeleteStudents = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (ids) => studentsApi.bulkRemove(ids),
+    onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.students.all });
       qc.invalidateQueries({ queryKey: queryKeys.dashboard.all });
       qc.invalidateQueries({ queryKey: queryKeys.leaderboard.all });

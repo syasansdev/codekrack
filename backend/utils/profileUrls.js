@@ -19,6 +19,13 @@
 // a GitHub URL under LeetCode, stores it, and the damage shows up days later as
 // a scrape marked 'failed' that nobody traces back to a registration form.
 
+// Every account is tracked on these two from day one; everything else in RULES
+// stays opt-in. Checked only on the public register route (see
+// firstMissingRequiredPlatform below) — admin edits and bulk import share
+// splitPlatformUrls()/provisionStudent() with rows that predate this rule, and
+// must keep working without a LeetCode or HackerRank link on file.
+export const REQUIRED_PLATFORMS = ['leetcode', 'hackerrank'];
+
 const RULES = {
   leetcode: {
     label: 'LeetCode',
@@ -99,4 +106,18 @@ export const firstProfileUrlError = (platformUrls = {}) => {
   return null;
 };
 
-export default { profileUrlError, firstProfileUrlError };
+/**
+ * @returns {string|null} a message safe to show the student for the first of
+ *   REQUIRED_PLATFORMS with no value, or null when all of them are present.
+ */
+export const firstMissingRequiredPlatform = (platformUrls = {}) => {
+  const urls = platformUrls && typeof platformUrls === 'object' ? platformUrls : {};
+  for (const platform of REQUIRED_PLATFORMS) {
+    if (!String(urls[platform] ?? '').trim()) {
+      return `Your ${RULES[platform].label} profile is required`;
+    }
+  }
+  return null;
+};
+
+export default { profileUrlError, firstProfileUrlError, firstMissingRequiredPlatform, REQUIRED_PLATFORMS };

@@ -133,8 +133,13 @@ export const studentsApi = {
 
   update: async (id, data) => (await patch(`/api/students/${id}`, data)).student,
 
-  remove: (id, secretCode) =>
-    request('DELETE', `/api/students/${id}`, { body: { secretCode } }),
+  // No secret code — see backend/routes/studentRoutes.js DELETE /:id. That is
+  // reserved for deleting a whole institution.
+  remove: (id) => request('DELETE', `/api/students/${id}`),
+
+  /** The Manage screen's "select students -> delete" action. Same rules as
+   * `remove`, run over a list; returns { deletedCount, deleted, failed }. */
+  bulkRemove: (ids) => post('/api/students/bulk-delete', { ids }),
 
   /**
    * (Re)sends the set-password email. Covers "never got the invite" and "forgot
