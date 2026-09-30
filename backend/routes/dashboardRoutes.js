@@ -16,6 +16,7 @@ const router = express.Router();
 // Every platform's headline metric, matching the `boards` config both
 // leaderboards use. Kept here so the API can validate ?platform=.
 const METRIC_LABEL = {
+  all: 'Total Score',
   leetcode: 'Problems Solved',
   github: 'Repositories',
   codeforces: 'Problems Solved',
@@ -111,18 +112,58 @@ router.get('/stats', verifyAdmin, async (req, res) => {
 // GET /api/dashboard/leaderboard?platform=leetcode&limit=50   (any admin)
 // GET /api/dashboard/leaderboard/student  (student-facing, own institution)
 //
-// Sorted in SQL by the platform's own metric. Only 'completed' scrapes score,
-// which is exactly Leaderboard.jsx:136's rule — a pending or failed scrape must
-// not park someone at 0 above someone who simply hasn't been scraped yet.
+// Sorted in SQL by the platform's own metric. Completed scrapes score, and
+// students with existing positive metric stay visible during pending rescrapes.
+// When platform is 'all', metrics are summed across all platforms.
 // =============================================================================
 const leaderboardQuery = async (platform, institutionId, limit) => {
   const scoped = institutionId !== null;
+
+  if (platform === 'all') {
+    const params = [];
+    let where = `where p.role = 'student' and p.deactivated_at is null
+                   and (ps.status = 'completed' or ps.metric > 0)`;
+    if (scoped) {
+      params.push(institutionId);
+      where += ` and p.institution_id = $${params.length}`;
+    }
+    params.push(limit);
+
+    return many(
+      `select p.id, p.name, p.email, p.display_name, p.roll_number, p.department, p.year,
+              p.college, p.institution_id, i.name as institution_name,
+              '' as username,
+              coalesce(sum(ps.metric), 0)::int as metric,
+              0 as rating,
+              0 as max_rating,
+              '' as rank,
+              jsonb_build_object(
+                'totalScore', coalesce(sum(ps.metric), 0)::int,
+                'metric', coalesce(sum(ps.metric), 0)::int,
+                'totalSolved', coalesce(sum(ps.metric), 0)::int,
+                'platforms', coalesce(jsonb_object_agg(ps.platform, ps.metric) filter (where ps.platform is not null), '{}'::jsonb)
+              ) as data,
+              max(ps.last_updated) as last_updated,
+              rank() over (order by coalesce(sum(ps.metric), 0) desc) as position
+         from public.profiles p
+         join public.platform_stats ps on ps.user_id = p.id
+         left join public.institutions i on i.id = p.institution_id
+         ${where}
+         group by p.id, p.name, p.email, p.display_name, p.roll_number, p.department, p.year,
+                  p.college, p.institution_id, i.name
+         having coalesce(sum(ps.metric), 0) > 0
+         order by metric desc, p.name asc
+         limit $${params.length}`,
+      params
+    );
+  }
+
   const params = [platform];
   // deactivated_at is null: a switched-off account keeps its history but stops
   // appearing on the board, which is the visible half of what deactivating one
   // is for. It comes back untouched if the account is reactivated.
   let where = `where p.role = 'student' and p.deactivated_at is null
-                 and ps.platform = $1 and ps.status = 'completed'`;
+                 and ps.platform = $1 and (ps.status = 'completed' or ps.metric > 0)`;
   if (scoped) {
     params.push(institutionId);
     where += ` and p.institution_id = $${params.length}`;
@@ -169,11 +210,11 @@ const serializeBoard = (rows) =>
 
 router.get('/leaderboard', verifyAdmin, async (req, res) => {
   try {
-    const platform = String(req.query.platform || 'leetcode').toLowerCase();
-    if (!PLATFORMS.includes(platform)) {
+    const platform = String(req.query.platform || 'all').toLowerCase();
+    if (platform !== 'all' && !PLATFORMS.includes(platform)) {
       return res
         .status(400)
-        .json({ success: false, error: `platform must be one of: ${PLATFORMS.join(', ')}` });
+        .json({ success: false, error: `platform must be one of: all, ${PLATFORMS.join(', ')}` });
     }
     const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 100, 1), 500);
     const institutionId = scopeFor(req, req.query.institutionId);
@@ -199,11 +240,11 @@ router.get('/leaderboard', verifyAdmin, async (req, res) => {
  */
 router.get('/leaderboard/student', verifyToken, async (req, res) => {
   try {
-    const platform = String(req.query.platform || 'leetcode').toLowerCase();
-    if (!PLATFORMS.includes(platform)) {
+    const platform = String(req.query.platform || 'all').toLowerCase();
+    if (platform !== 'all' && !PLATFORMS.includes(platform)) {
       return res
         .status(400)
-        .json({ success: false, error: `platform must be one of: ${PLATFORMS.join(', ')}` });
+        .json({ success: false, error: `platform must be one of: all, ${PLATFORMS.join(', ')}` });
     }
     const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 100, 1), 500);
 

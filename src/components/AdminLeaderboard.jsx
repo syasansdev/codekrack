@@ -15,7 +15,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 const AdminLeaderboard = () => {
   // students / loading / lastScraped are derived from the query below — server
   // state has one home, and it isn't useState.
-  const [activeBoard, setActiveBoard] = useState('leetcode');
+  const [activeBoard, setActiveBoard] = useState('all');
   const [departmentFilter, setDepartmentFilter] = useState('all');
   const [collegeFilter, setCollegeFilter] = useState('all');
   const [yearFilter, setYearFilter] = useState('all');
@@ -32,6 +32,14 @@ const AdminLeaderboard = () => {
 
   // Platform configurations
   const boards = [
+    { 
+      id: 'all', 
+      name: 'ALL', 
+      metricLabel: 'Total Score',
+      statusField: 'allStatus',
+      dataField: 'all',
+      metricField: 'totalScore'
+    },
     { 
       id: 'leetcode', 
       name: 'LeetCode', 
@@ -218,7 +226,9 @@ const AdminLeaderboard = () => {
       return 0;
     }
 
-    return platformData[board.metricField] || 0;
+    return typeof platformData === 'number'
+      ? platformData
+      : (platformData[board.metricField] ?? platformData.metric ?? platformData.totalScore ?? 0);
   };
 
   // Get scraping status
@@ -416,7 +426,7 @@ const AdminLeaderboard = () => {
         >
           {[
             { label: 'Total Students', value: platformStats.totalStudents, color: 'from-blue-500 to-blue-600' },
-            { label: `Active on ${currentBoard.name}`, value: platformStats.activeStudents, color: 'from-green-500 to-green-600' },
+            { label: activeBoard === 'all' ? 'Active Coders' : `Active on ${currentBoard.name}`, value: platformStats.activeStudents, color: 'from-green-500 to-green-600' },
             { label: 'Departments', value: platformStats.departments, color: 'from-purple-500 to-purple-600' },
             { label: 'Top Score', value: activeStudents[0]?.metricValue || 0, color: 'from-orange-500 to-orange-600' }
           ].map((stat, index) => (
@@ -527,7 +537,7 @@ const AdminLeaderboard = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
             {boards.map((board, index) => (
               <motion.button
                 key={board.id}
@@ -557,9 +567,11 @@ const AdminLeaderboard = () => {
                   {board.metricLabel}
                 </div>
                 <div className="text-xs text-fg-subtle">
-                  {platformStatsData 
-                    ? (platformStatsData[board.id]?.completed || 0) 
-                    : (activeBoard === board.id ? students.length : 0)} students
+                  {board.id === 'all'
+                    ? (activeBoard === 'all' ? activeStudents.length : (students.length || 0))
+                    : platformStatsData 
+                      ? (platformStatsData[board.id]?.completed || 0) 
+                      : (activeBoard === board.id ? students.length : 0)} students
                 </div>
               </motion.button>
             ))}

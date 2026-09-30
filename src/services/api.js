@@ -224,11 +224,11 @@ export const dashboardApi = {
   stats: ({ institutionId, signal } = {}) =>
     get('/api/dashboard/stats', { params: { institutionId }, signal }),
 
-  leaderboard: ({ platform = 'leetcode', institutionId, limit, signal } = {}) =>
+  leaderboard: ({ platform = 'all', institutionId, limit, signal } = {}) =>
     get('/api/dashboard/leaderboard', { params: { platform, institutionId, limit }, signal }),
 
   /** Student-facing board — scoped to the caller's own institution by the server. */
-  studentLeaderboard: ({ platform = 'leetcode', limit, signal } = {}) =>
+  studentLeaderboard: ({ platform = 'all', limit, signal } = {}) =>
     get('/api/dashboard/leaderboard/student', { params: { platform, limit }, signal }),
 
   scrapingStatus: ({ institutionId, signal } = {}) =>

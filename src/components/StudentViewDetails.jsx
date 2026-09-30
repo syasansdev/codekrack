@@ -260,37 +260,24 @@ const StudentViewDetails = ({ student, onClose, onStudentUpdate, isAdminView = f
     return () => clearTimeout(timer);
   }, []);
 
-  // Sanitize the resolved student and auto-fetch if URLs exist. Keyed on the id
-  // so a background refetch of the same student does not queue another scrape.
+  // Sanitize the resolved student. Keyed on the id
+  // so a background refetch of the same student does not reset state.
   useEffect(() => {
     if (!source) return;
     const sanitizedStudent = sanitizeStudentData(source);
     if (sanitizedStudent) {
       setCurrentStudent(sanitizedStudent);
-      if (sanitizedStudent.platformUrls && Object.values(sanitizedStudent.platformUrls).some(url => url)) {
-        handleAutoFetch(sanitizedStudent);
-      }
     }
   }, [source?.id]);
 
   // Generate initial activities based on existing platform data
   // ---------------------------------------------------------------------------
-  // Refreshing a student's numbers is now a server-side request, not a scrape.
-  //
-  // This block used to hold its OWN copies of scrapeLeetCode / scrapeGitHub /
-  // scrapeCodeforces / scrapeAtCoder (a third copy in the codebase), call them
-  // from the browser through CORS proxies, and updateDoc the results straight
-  // into Firestore. It also wrote to activityService — whose logging methods
-  // were all stubbed out ("DISABLED TO SAVE STORAGE"), so every one of those
-  // awaits was a no-op that only added latency.
-  //
-  // Now: mark the platforms pending, and the GitHub Action does the scraping.
-  // Results arrive by SSE. The admin's IP and the CORS proxies are out of it.
+  // Refreshing a student's numbers is a server-side request, triggered manually.
   // ---------------------------------------------------------------------------
-  // `target` lets the effect above pass the student it just resolved — the
-  // `currentStudent` state has not been updated yet in that same tick.
-  const handleAutoFetch = async (target = currentStudent) => {
+  const handleManualRefresh = async () => {
+    const target = currentStudent;
     if (!target?.platformUrls || Object.values(target.platformUrls).every((u) => !u)) {
+      toast.info('No platforms configured for this student');
       return;
     }
     try {
@@ -307,10 +294,6 @@ const StudentViewDetails = ({ student, onClose, onStudentUpdate, isAdminView = f
     } finally {
       setIsAutoScraping(false);
     }
-  };
-
-  const handleManualRefresh = async () => {
-    await handleAutoFetch();
   };
 
   // Per-platform retry: the whole student is re-queued, because the scraper
@@ -732,7 +715,7 @@ const StudentViewDetails = ({ student, onClose, onStudentUpdate, isAdminView = f
                 <span>Fetching real-time data...</span>
               </div>
             ) : (
-              'Data updates automatically when viewing'
+              'Data updates automatically via scheduled scraper'
             )}
           </div>
           <div className="flex items-center gap-3">

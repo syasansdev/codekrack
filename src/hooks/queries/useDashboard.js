@@ -11,10 +11,11 @@ import { dashboardApi } from '../../services/api';
 import { queryKeys } from '../../lib/queryKeys';
 import { STALE } from '../../lib/queryClient';
 
-export const PLATFORMS = ['leetcode', 'github', 'codeforces', 'atcoder', 'hackerrank', 'hackerearth'];
+export const PLATFORMS = ['all', 'leetcode', 'github', 'codeforces', 'atcoder', 'hackerrank', 'hackerearth'];
 
 /** Labels match each platform's real headline metric — GitHub counts repos, not problems. */
 export const METRIC_LABEL = {
+  all: 'Total Score',
   leetcode: 'Problems Solved',
   github: 'Repositories',
   codeforces: 'Problems Solved',
@@ -33,7 +34,7 @@ export const useDashboardStats = ({ institutionId = null, enabled = true } = {})
 
 /** Admin leaderboard. SSE-invalidated. */
 export const useLeaderboard = ({
-  platform = 'leetcode',
+  platform = 'all',
   institutionId = null,
   limit = 100,
   enabled = true,
@@ -49,7 +50,7 @@ export const useLeaderboard = ({
   });
 
 /** Student-facing leaderboard — the server scopes it to the caller's institution. */
-export const useStudentLeaderboard = ({ platform = 'leetcode', limit = 100, enabled = true } = {}) =>
+export const useStudentLeaderboard = ({ platform = 'all', limit = 100, enabled = true } = {}) =>
   useQuery({
     queryKey: queryKeys.leaderboard.student(platform),
     queryFn: ({ signal }) => dashboardApi.studentLeaderboard({ platform, limit, signal }),

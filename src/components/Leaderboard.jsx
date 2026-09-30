@@ -26,7 +26,7 @@ import { YEAR_OPTIONS, matchesYear } from '../lib/studentYear';
 
 const Leaderboard = () => {
   const { currentUser, userData } = useAuth();
-  const [selectedPlatform, setSelectedPlatform] = useState('leetcode');
+  const [selectedPlatform, setSelectedPlatform] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState('all');
   const [collegeFilter, setCollegeFilter] = useState('all');
@@ -34,8 +34,16 @@ const Leaderboard = () => {
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Platform configurations - Only 4 platforms
+  // Platform configurations
   const platforms = [
+    { 
+      id: 'all', 
+      name: 'ALL', 
+      color: 'blue',
+      metricLabel: 'Total Score',
+      dataField: 'all',
+      metricField: 'totalScore'
+    },
     { 
       id: 'leetcode', 
       name: 'LeetCode', 
@@ -149,7 +157,9 @@ const Leaderboard = () => {
       return 0;
     }
 
-    const rawValue = platformData[platform.metricField] || 0;
+    const rawValue = typeof platformData === 'number'
+      ? platformData
+      : (platformData[platform.metricField] ?? platformData.metric ?? platformData.totalScore ?? 0);
     
     // Validate data to prevent showing unrealistic numbers
     if (platformId === 'leetcode' && rawValue > 3000) {
@@ -393,7 +403,7 @@ const Leaderboard = () => {
             Coding Leaderboard
           </h1> */}
           <p className="text-xl text-fg max-w-2xl mx-auto">
-            Track your progress across LeetCode, Codeforces, AtCoder, and GitHub
+            Track your progress across competitive programming platforms
           </p>
         </motion.div>
 
@@ -423,7 +433,7 @@ const Leaderboard = () => {
             >
               {[
                 { label: 'Total Coders', value: platformStats.totalStudents, color: 'blue' },
-                { label: `Active on ${currentPlatform.name}`, value: platformStats.activeStudents, color: 'green' },
+                { label: selectedPlatform === 'all' ? 'Active Coders' : `Active on ${currentPlatform.name}`, value: platformStats.activeStudents, color: 'green' },
                 { label: 'Highest Score', value: platformStats.highestScore, color: 'purple' },
                 { label: 'Average Score', value: platformStats.averageMetric, color: 'orange' }
               ].map((stat, index) => (
