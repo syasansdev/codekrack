@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useUpdateStudent } from '../hooks/queries/useStudents';
+import { YEAR_OPTIONS, SECTION_OPTIONS } from '../lib/studentYear';
 import { toast } from 'react-toastify';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -48,6 +49,7 @@ const EditStudentModal = ({ student, onClose, onUpdate }) => {
     rollNumber: '',
     department: '',
     year: '',
+    section: '',
     phoneNumber: '',
     platformUrls: {
       leetcode: '',
@@ -71,6 +73,7 @@ const EditStudentModal = ({ student, onClose, onUpdate }) => {
         rollNumber: student.rollNumber || '',
         department: student.department || '',
         year: student.year || '',
+        section: student.section || 'N/A',
         phoneNumber: student.phoneNumber || '',
         platformUrls: {
           leetcode: student.platformUrls?.leetcode || '',
@@ -137,6 +140,7 @@ const EditStudentModal = ({ student, onClose, onUpdate }) => {
         rollNumber: formData.rollNumber.trim(),
         department: formData.department.trim(),
         year: formData.year.trim(),
+        section: formData.section.trim(),
         phoneNumber: formData.phoneNumber.trim(),
         platformUrls: formData.platformUrls,
       });
@@ -324,7 +328,7 @@ const EditStudentModal = ({ student, onClose, onUpdate }) => {
 
                   <div>
                     <label className="block text-sm font-semibold text-fg-muted mb-2">
-                      Academic Year
+                      Year of Passing Out
                     </label>
                     <select
                       value={formData.year}
@@ -332,10 +336,24 @@ const EditStudentModal = ({ student, onClose, onUpdate }) => {
                       className="w-full px-4 py-3 border border-edge-strong rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-edge-strong transition-all duration-200 bg-surface"
                     >
                       <option value="">Select Year</option>
-                      <option value="1">1st Year</option>
-                      <option value="2">2nd Year</option>
-                      <option value="3">3rd Year</option>
-                      <option value="4">4th Year</option>
+                      {YEAR_OPTIONS.map((y) => (
+                        <option key={y.value} value={y.value}>{y.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-fg-muted mb-2">
+                      Section
+                    </label>
+                    <select
+                      value={formData.section}
+                      onChange={(e) => handleInputChange('section', e.target.value)}
+                      className="w-full px-4 py-3 border border-edge-strong rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-edge-strong transition-all duration-200 bg-surface"
+                    >
+                      <option value="N/A">N/A</option>
+                      {SECTION_OPTIONS.map((s) => (
+                        <option key={s.value} value={s.value}>{s.label}</option>
+                      ))}
                     </select>
                   </div>
                 </div>

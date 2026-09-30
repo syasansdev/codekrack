@@ -130,7 +130,7 @@ const leaderboardQuery = async (platform, institutionId, limit) => {
     params.push(limit);
 
     return many(
-      `select p.id, p.name, p.email, p.display_name, p.roll_number, p.department, p.year,
+      `select p.id, p.name, p.email, p.display_name, p.roll_number, p.department, p.year, p.section,
               p.college, p.institution_id, i.name as institution_name,
               '' as username,
               coalesce(sum(ps.metric), 0)::int as metric,
@@ -149,7 +149,7 @@ const leaderboardQuery = async (platform, institutionId, limit) => {
          join public.platform_stats ps on ps.user_id = p.id
          left join public.institutions i on i.id = p.institution_id
          ${where}
-         group by p.id, p.name, p.email, p.display_name, p.roll_number, p.department, p.year,
+         group by p.id, p.name, p.email, p.display_name, p.roll_number, p.department, p.year, p.section,
                   p.college, p.institution_id, i.name
          having coalesce(sum(ps.metric), 0) > 0
          order by metric desc, p.name asc
@@ -171,7 +171,7 @@ const leaderboardQuery = async (platform, institutionId, limit) => {
   params.push(limit);
 
   return many(
-    `select p.id, p.name, p.email, p.display_name, p.roll_number, p.department, p.year,
+    `select p.id, p.name, p.email, p.display_name, p.roll_number, p.department, p.year, p.section,
             p.college, p.institution_id, i.name as institution_name,
             ps.username, ps.metric, ps.rating, ps.max_rating, ps.rank,
             ps.data, ps.last_updated,
@@ -195,6 +195,8 @@ const serializeBoard = (rows) =>
     rollNumber: r.roll_number,
     department: r.department,
     year: r.year,
+    yearOfPassingOut: r.year,
+    section: r.section || 'N/A',
     college: r.college,
     institutionId: r.institution_id,
     institutionName: r.institution_name,

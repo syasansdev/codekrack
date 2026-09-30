@@ -18,6 +18,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 import { Loader2 } from 'lucide-react';
 import { useStudents, useSendInvite, useSetStudentPassword, useSetStudentStatus } from '../hooks/queries/useStudents';
+import { yearLabel } from '../lib/studentYear';
 
 // One page of rows. 25 keeps the expanded roster shorter than the institutions
 // table it sits inside, so the page does not visually swallow the row above it.
@@ -249,7 +250,7 @@ const InstitutionStudents = ({ institution, onViewStudent }) => {
             <tr>
               <th className="text-left px-4 py-2.5 font-medium whitespace-nowrap">Name</th>
               <th className="text-left px-4 py-2.5 font-medium whitespace-nowrap">Email</th>
-              <th className="text-left px-4 py-2.5 font-medium whitespace-nowrap">Dept · Year</th>
+              <th className="text-left px-4 py-2.5 font-medium whitespace-nowrap">Dept · Passing Out</th>
               {BOARDS.map((b) => (
                 <th key={b.id} className="text-left px-4 py-2.5 font-medium whitespace-nowrap">
                   {b.label}
@@ -277,7 +278,7 @@ const InstitutionStudents = ({ institution, onViewStudent }) => {
                 </td>
                 <td className="px-4 py-3 text-fg-muted whitespace-nowrap">{s.email}</td>
                 <td className="px-4 py-3 text-fg-muted whitespace-nowrap">
-                  {[s.department, s.year && `Year ${s.year}`].filter(Boolean).join(' · ') || '—'}
+                  {[s.department, s.year && `Passing Out ${yearLabel(s.year)}`].filter(Boolean).join(' · ') || '—'}
                 </td>
 
                 {BOARDS.map((b) => {

@@ -8,7 +8,7 @@ import { useInstitutions } from '../hooks/queries/useInstitutions';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-toastify';
 import StudentViewDetails from './StudentViewDetails';
-import { YEAR_OPTIONS, matchesYear } from '../lib/studentYear';
+import { YEAR_OPTIONS, matchesYear, yearLabel } from '../lib/studentYear';
 import { exportToExcel, buildLeaderboardRows } from '../utils/excelExport';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -497,14 +497,14 @@ const AdminLeaderboard = () => {
 
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0 md:min-w-[180px]">
                   <label className="text-sm font-semibold text-fg-muted whitespace-nowrap">
-                    Year:
+                    Year of Passing Out:
                   </label>
                   <select
                     value={yearFilter}
                     onChange={(e) => setYearFilter(e.target.value)}
                     className="w-full sm:w-40 px-4 py-3 border border-edge-strong rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-surface shadow-sm min-w-0"
                   >
-                    <option value="all">All Years</option>
+                    <option value="all">All Passing Out Years</option>
                     {YEAR_OPTIONS.map((y) => (
                       <option key={y.value} value={y.value}>
                         {y.label}
@@ -850,7 +850,7 @@ const AdminLeaderboard = () => {
                                   {student.department || 'N/A'}
                                 </div>
                                 <div className="text-xs text-fg-subtle">
-                                  Year {student.year || 'N/A'}
+                                  Passing Out {yearLabel(student.year)}
                                 </div>
                               </td>
 
@@ -1047,7 +1047,7 @@ const AdminLeaderboard = () => {
                         {student.department}
                       </p>
                       <p className="text-xs text-fg-subtle mb-4">
-                        {student.college} • Year {student.year}
+                        {student.college} • Passing Out {yearLabel(student.year)}
                       </p>
                       
                       {/* Status */}

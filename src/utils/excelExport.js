@@ -1,4 +1,5 @@
 import * as XLSX from 'xlsx'
+import { yearLabel } from '../lib/studentYear'
 
 export const exportToExcel = (data, filename = 'export') => {
   if (!data || data.length === 0) {
@@ -62,7 +63,10 @@ export const buildInstitutionStudentRows = (students) => {
       'Roll Number': s.rollNumber || '',
       'Register Number': s.registerNumber || '',
       Department: s.department || '',
-      Year: s.year || '',
+      // yearLabel, not the raw column: the sheet should read the way the table
+      // does if a leftover "3rd Year" ever reaches it.
+      'Year of Passing Out': yearLabel(s.year),
+      Section: s.section || 'N/A',
       College: s.college || '',
       Phone: s.phoneNumber || '',
       '10th %': s.tenthPercentage ?? '',
@@ -91,6 +95,17 @@ export const buildInstitutionStudentRows = (students) => {
   });
 };
 
+export const buildStudentManagementRows = (students) =>
+  (students || []).map((s) => ({
+    'Full Name': s.name || '',
+    'Email Address': s.email || '',
+    'College / Institution': s.institutionName || s.college || '',
+    'Year of Passing Out': yearLabel(s.year),
+    Department: s.department || '',
+    Section: s.section || 'N/A',
+    'Register Number': s.registerNumber || '',
+  }));
+
 // One spreadsheet row per student ON THE BOARD BEING VIEWED.
 //
 // Deliberately different from buildInstitutionStudentRows: that one is a full
@@ -110,7 +125,8 @@ export const buildLeaderboardRows = (students, board) => {
     Email: s.email || '',
     'Roll Number': s.rollNumber || '',
     Department: s.department || '',
-    Year: s.year || '',
+    'Year of Passing Out': yearLabel(s.year),
+    Section: s.section || 'N/A',
     College: s.institutionName || s.college || '',
     // Named after the board so the column says what it counts — "LeetCode
     // (Problems Solved)" rather than a bare "Score" nobody can interpret a

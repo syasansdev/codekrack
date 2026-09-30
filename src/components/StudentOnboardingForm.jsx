@@ -24,13 +24,7 @@ import { studentsApi } from '../services/api';
 import { validateProfileUrl, validateProfileUrls } from '../lib/profileUrls';
 import { DEPARTMENT_GROUPS, isKnownDepartment } from '../lib/departments';
 import SearchableSelect from './ui/SearchableSelect';
-
-const YEARS = [
-  { value: '1', label: '1st Year' },
-  { value: '2', label: '2nd Year' },
-  { value: '3', label: '3rd Year' },
-  { value: '4', label: '4th Year' },
-];
+import { YEAR_OPTIONS, SECTION_OPTIONS, isValidPassingYear, isValidSection } from '../lib/studentYear';
 
 const PLATFORM_FIELDS = [
   { key: 'leetcode', label: 'LeetCode', placeholder: 'leetcode.com/u/username', required: true },
@@ -61,6 +55,7 @@ const EMPTY = {
   rollNumber: '',
   department: '',
   year: '',
+  section: '',
   institutionId: '',
   tenthPercentage: '',
   twelfthPercentage: '',
@@ -161,7 +156,8 @@ const StudentOnboardingForm = ({ isOpen = true, onClose, onSignIn }) => {
     // the server checks the same thing, because a form is not a control.
     else if (!isKnownDepartment(form.department))
       e.department = 'Choose a department from the list';
-    if (!form.year) e.year = 'Select your year';
+    if (!form.year || !isValidPassingYear(form.year)) e.year = 'Select your Year of Passing Out';
+    if (!form.section || !isValidSection(form.section, { allowNA: false })) e.section = 'Select your section';
 
     if (form.phoneNumber && !/^[0-9+\-\s()]{6,20}$/.test(form.phoneNumber.trim()))
       e.phoneNumber = 'Enter a valid phone number';
@@ -210,6 +206,7 @@ const StudentOnboardingForm = ({ isOpen = true, onClose, onSignIn }) => {
         rollNumber: form.rollNumber.trim(),
         department: form.department,
         year: form.year,
+        section: form.section,
         // The id, not the name. The server reads the college name off this row.
         institutionId: form.institutionId,
         tenthPercentage: form.tenthPercentage,
@@ -446,16 +443,30 @@ const StudentOnboardingForm = ({ isOpen = true, onClose, onSignIn }) => {
                     emptyMessage="No department matches that search."
                   />
                 </Field>
-                <Field label="Year of study" error={errors.year} required>
+                <Field label="Year of Passing Out" error={errors.year} required>
                   <select
                     className={inputCls}
                     value={form.year}
                     onChange={(e) => set('year', e.target.value)}
                   >
                     <option value="">Select year</option>
-                    {YEARS.map((y) => (
+                    {YEAR_OPTIONS.map((y) => (
                       <option key={y.value} value={y.value}>
                         {y.label}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="Section" error={errors.section} required>
+                  <select
+                    className={inputCls}
+                    value={form.section}
+                    onChange={(e) => set('section', e.target.value)}
+                  >
+                    <option value="">Select section</option>
+                    {SECTION_OPTIONS.map((s) => (
+                      <option key={s.value} value={s.value}>
+                        {s.label}
                       </option>
                     ))}
                   </select>

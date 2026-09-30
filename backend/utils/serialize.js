@@ -25,7 +25,7 @@ export const STUDENT_SELECT = `
   select
     p.id, p.email, p.name, p.display_name, p.role, p.institution_id,
     p.is_admin, p.is_super_admin,
-    p.phone_number, p.register_number, p.roll_number, p.department, p.year,
+    p.phone_number, p.register_number, p.roll_number, p.department, p.year, p.section,
     p.college, p.tenth_percentage, p.twelfth_percentage,
     p.streak, p.last_activity_date, p.links, p.invited_at,
     p.created_at, p.updated_at, p.last_login_at, p.created_by,
@@ -123,7 +123,9 @@ export const serializeStudent = (row) => {
     registerNumber: row.register_number,
     rollNumber: row.roll_number,
     department: row.department,
-    year: row.year,
+    year: row.year, // Year of Passing Out (calendar year)
+    yearOfPassingOut: row.year,
+    section: row.section || 'N/A',
     college: row.college,
     tenthPercentage: num(row.tenth_percentage),
     twelfthPercentage: num(row.twelfth_percentage),

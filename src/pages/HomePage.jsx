@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence, animate } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useMyProfile } from '../hooks/queries/useStudents';
+import { yearLabel } from '../lib/studentYear';
 import { useNavigate } from 'react-router-dom';
 
 // A reusable component for animating numbers from zero to the target value.
@@ -83,6 +84,7 @@ const HomePage = () => {
       department: profile.department || 'Not Specified',
       college: profile.college || 'Engineering',
       year: profile.year || 'N/A',
+      section: profile.section || 'N/A',
       scrapingStatus: profile.scrapingStatus || {},
     };
   }, [profile]);
@@ -286,7 +288,10 @@ const HomePage = () => {
                         Welcome back, {userData?.name}
                       </h1>
                       <p className="text-fg-muted mb-3">
-                        {userData?.department} · Year {userData?.year} · {userData?.college}
+                        {userData?.department}
+                        {userData?.section && userData.section !== 'N/A' ? ` · Sec ${userData.section}` : ''}
+                        {' · Passing out '}{yearLabel(userData?.year)}
+                        {' · '}{userData?.college}
                       </p>
                       <p className="text-sm text-fg-subtle leading-relaxed max-w-2xl">
                         Track your competitive programming progress and coding statistics across multiple platforms.

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useRescrapeStudent, useStudent } from '../hooks/queries/useStudents';
 import { validatePlatformData, sanitizeStudentData, calculateTotalProblems, formatLastUpdated } from '../utils/dataValidation';
+import { yearLabel } from '../lib/studentYear';
 import EditStudentModal from './EditStudentModal';
 
 // --- Animation & Utility Hooks ---
@@ -500,8 +501,12 @@ const StudentViewDetails = ({ student, onClose, onStudentUpdate, isAdminView = f
               <span>{currentStudent.department || 'N/A'}</span>
             </div>
             <div className="flex gap-2 hover:translate-x-1 transition-transform duration-200">
-              <strong className="font-medium text-fg-subtle">Year:</strong>
-              <span>{currentStudent.year || 'N/A'}</span>
+              <strong className="font-medium text-fg-subtle">Passing Out:</strong>
+              <span>{yearLabel(currentStudent.year)}</span>
+            </div>
+            <div className="flex gap-2 hover:translate-x-1 transition-transform duration-200">
+              <strong className="font-medium text-fg-subtle">Section:</strong>
+              <span>{currentStudent.section || 'N/A'}</span>
             </div>
           </div>
           {currentStudent.scrapingStatus?.lastUpdated && (

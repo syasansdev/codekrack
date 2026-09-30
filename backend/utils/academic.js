@@ -1,18 +1,18 @@
-// src/lib/studentYear.js
+// backend/utils/academic.js
 //
-// Year of Passing Out is what we store and filter on. Year of Study only
-// survives as a converter for leftover import values ("2nd Year") so a filter
-// never has to guess which cohort those rows belong to.
+// Year of Passing Out is the stored academic year on a student. Year of Study
+// is only used to CONVERT existing rows (and spreadsheet cells that still say
+// "2nd Year") into a calendar year.
 //
-// KEEP IN SYNC WITH backend/utils/academic.js.
+// Formula (see 015_year_of_passing_out.sql):
+//   Passing Out Year = Academic Year Start Year + (Course Duration - Current Year of Study)
+// Academic year "2026-27" uses start year 2026, matching the worked examples
+// (4-year 1st year -> 2029, 3-year 1st year -> 2028).
 
 export const SECTION_NA = 'N/A';
 export const SECTION_LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-export const SECTION_OPTIONS = SECTION_LETTERS.map((letter) => ({
-  value: letter,
-  label: letter,
-}));
 
+/** Indian academic year typically runs June–May. September 2026 is 2026-27. */
 export const academicYearStart = (date = new Date()) => {
   const y = date.getFullYear();
   return date.getMonth() >= 5 ? y : y - 1;
@@ -20,17 +20,15 @@ export const academicYearStart = (date = new Date()) => {
 
 export const passingYearOptions = (date = new Date()) => {
   const start = academicYearStart(date) - 1;
-  return Array.from({ length: 8 }, (_, i) => {
-    const value = String(start + i);
-    return { value, label: value };
-  });
+  return Array.from({ length: 8 }, (_, i) => String(start + i));
 };
-
-/** Picker + filter options. Same export name the leaderboards already import. */
-export const YEAR_OPTIONS = passingYearOptions();
 
 export const isCalendarYear = (raw) => /^(19|20)\d{2}$/.test(String(raw ?? '').trim());
 
+/**
+ * Reduce a stored year-of-study to 1..4, or null when it is a calendar year
+ * or otherwise unreadable. Mirrors src/lib/studentYear.js.
+ */
 export const studyYearDigit = (raw) => {
   const v = String(raw ?? '').trim().toLowerCase();
   if (!v || isCalendarYear(v)) return null;
@@ -44,6 +42,12 @@ export const studyYearDigit = (raw) => {
   return roman[token] || word[token] || null;
 };
 
+/**
+ * Typical programme length from the department name. Engineering / B.Des are
+ * four years; BCA / BSc / BA / BCom / BBA are three; PG is two. Unknown names
+ * default to four (this portal is engineering-heavy) unless the student is
+ * already in a year that forces a longer course.
+ */
 export const courseDurationForDepartment = (department, studyYear = null) => {
   const d = String(department || '').trim();
   const lower = d.toLowerCase();
@@ -79,6 +83,11 @@ export const passingOutFromStudyYear = (studyYear, department, date = new Date()
   return academicYearStart(date) + (duration - y);
 };
 
+/**
+ * Accept a picker year (2029), or convert a leftover year-of-study (1..4 /
+ * "2nd Year") using the department's course duration. Returns a 4-digit string
+ * or '' when nothing usable is there.
+ */
 export const coercePassingYear = (raw, department = '') => {
   const v = String(raw ?? '').trim();
   if (!v) return '';
@@ -96,19 +105,6 @@ export const isValidPassingYear = (raw) => {
   return n >= start - 2 && n <= start + 10;
 };
 
-export const normalizePassingYear = (raw) => {
-  const v = String(raw ?? '').trim();
-  if (isCalendarYear(v)) return v;
-  return coercePassingYear(v);
-};
-
-export const matchesYear = (studentYear, filter) => {
-  if (!filter || filter === 'all') return true;
-  return normalizePassingYear(studentYear) === String(filter);
-};
-
-export const yearLabel = (raw) => normalizePassingYear(raw) || String(raw ?? '') || 'N/A';
-
 export const normalizeSection = (raw, { allowNA = true } = {}) => {
   const v = String(raw ?? '').trim().toUpperCase();
   if (allowNA && (v === 'N/A' || v === 'NA')) return SECTION_NA;
@@ -116,37 +112,17 @@ export const normalizeSection = (raw, { allowNA = true } = {}) => {
   return '';
 };
 
-export const isValidSection = (raw, { allowNA = false } = {}) => {
-  const v = String(raw ?? '').trim().toUpperCase();
-  if (allowNA && (v === 'N/A' || v === 'NA')) return true;
-  return v.length === 1 && v >= 'A' && v <= 'Z';
-};
-
-export const sectionLabel = (raw) => {
-  const v = String(raw ?? '').trim();
-  return v || SECTION_NA;
-};
-
-export const uniquePassingYears = (students) => {
-  const years = [
-    ...new Set(
-      (students || [])
-        .map((s) => normalizePassingYear(s.year))
-        .filter(Boolean)
-    ),
-  ].sort();
-  if (years.length) return years.map((value) => ({ value, label: value }));
-  return YEAR_OPTIONS;
-};
+export const isValidSection = (raw, { allowNA = false } = {}) =>
+  Boolean(normalizeSection(raw, { allowNA }));
 
 export default {
-  YEAR_OPTIONS,
-  SECTION_OPTIONS,
-  normalizePassingYear,
-  matchesYear,
-  yearLabel,
+  academicYearStart,
+  passingYearOptions,
   coercePassingYear,
   isValidPassingYear,
+  normalizeSection,
   isValidSection,
-  sectionLabel,
+  courseDurationForDepartment,
+  SECTION_LETTERS,
+  SECTION_NA,
 };

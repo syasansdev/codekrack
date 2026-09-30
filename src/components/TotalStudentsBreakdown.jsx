@@ -15,7 +15,7 @@ import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Users } from 'lucide-react';
 import { useStudents } from '../hooks/queries/useStudents';
-import { YEAR_OPTIONS, matchesYear, yearLabel } from '../lib/studentYear';
+import { uniquePassingYears, matchesYear, yearLabel } from '../lib/studentYear';
 import StudentViewDetails from './StudentViewDetails';
 
 const TotalStudentsBreakdown = ({ isOpen, onClose, institutionId }) => {
@@ -33,6 +33,7 @@ const TotalStudentsBreakdown = ({ isOpen, onClose, institutionId }) => {
   // Built from who is actually enrolled, not the full ~380-entry canonical
   // list — a department nobody is in would only ever show a filter that
   // returns nothing.
+  const passingYears = useMemo(() => uniquePassingYears(students), [students]);
   const departments = useMemo(
     () => ['all', ...new Set(students.map((s) => s.department).filter(Boolean))].sort((a, b) =>
       a === 'all' ? -1 : b === 'all' ? 1 : a.localeCompare(b)
@@ -92,7 +93,7 @@ const TotalStudentsBreakdown = ({ isOpen, onClose, institutionId }) => {
             <div className="px-5 py-4 grid grid-cols-1 sm:grid-cols-2 gap-3 shrink-0 border-b border-edge">
               <label className="block">
                 <span className="block text-xs font-semibold uppercase tracking-wider text-fg-subtle mb-1.5">
-                  Year
+                  Year of Passing Out
                 </span>
                 <select
                   value={year}
@@ -100,8 +101,8 @@ const TotalStudentsBreakdown = ({ isOpen, onClose, institutionId }) => {
                   className="w-full px-3 py-2.5 border border-edge-strong rounded-xl bg-surface text-sm
                              focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="all">All Years</option>
-                  {YEAR_OPTIONS.map((y) => (
+                  <option value="all">All Passing Out Years</option>
+                  {passingYears.map((y) => (
                     <option key={y.value} value={y.value}>
                       {y.label}
                     </option>
@@ -164,7 +165,7 @@ const TotalStudentsBreakdown = ({ isOpen, onClose, institutionId }) => {
                               {student.name || student.email}
                             </p>
                             <p className="text-xs text-fg-subtle truncate">
-                              {[student.department, yearLabel(student.year)].filter(Boolean).join(' · ') || student.email}
+                              {[student.department, yearLabel(student.year), student.section && student.section !== 'N/A' ? `Sec ${student.section}` : null].filter(Boolean).join(' · ') || student.email}
                             </p>
                           </div>
                           {/* Same action, same icon, as Manage's "View Details" —

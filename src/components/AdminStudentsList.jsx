@@ -11,9 +11,14 @@ import { toast } from 'react-toastify';
 import { motion, AnimatePresence } from 'framer-motion';
 import StudentViewDetails from './StudentViewDetails';
 import EditStudentModal from './EditStudentModal';
+import { exportToExcel, buildStudentManagementRows } from '../utils/excelExport';
+import { matchesYear, uniquePassingYears, yearLabel, sectionLabel } from '../lib/studentYear';
 
 const AdminStudentsList = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterDepartment, setFilterDepartment] = useState('');
+  const [filterCollege, setFilterCollege] = useState('');
+  const [filterYear, setFilterYear] = useState(''); // Year of Passing Out
   const [deleteModal, setDeleteModal] = useState({ show: false, student: null });
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [editingStudent, setEditingStudent] = useState(null);
@@ -99,12 +104,54 @@ const AdminStudentsList = () => {
     }
   };
 
-  const filteredStudents = students.filter(student =>
-    student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.registerNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.department?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredStudents = students.filter((student) => {
+    const q = searchTerm.toLowerCase();
+    const matchesSearch =
+      searchTerm === '' ||
+      student.name?.toLowerCase().includes(q) ||
+      student.email?.toLowerCase().includes(q) ||
+      student.registerNumber?.toLowerCase().includes(q) ||
+      student.department?.toLowerCase().includes(q);
+
+    const matchesDepartment = filterDepartment === '' || student.department === filterDepartment;
+    // Same expression the option list is built from, so anything selectable
+    // here always matches something.
+    const matchesCollege =
+      filterCollege === '' || (student.institutionName || student.college || '') === filterCollege;
+    // matchesYear normalises both sides: a student still carrying "3rd Year"
+    // from an old import matches the 2027 option once converted.
+    const matchesPassingYear = matchesYear(student.year, filterYear);
+
+    return matchesSearch && matchesDepartment && matchesCollege && matchesPassingYear;
+  });
+
+  // Built from the students actually in view, like StudentList does, so a
+  // filter option can never point at an empty table.
+  const departments = [...new Set(students.map((s) => s.department).filter(Boolean))].sort();
+  const colleges = [
+    ...new Set(students.map((s) => s.institutionName || s.college).filter(Boolean)),
+  ].sort();
+  const passingYears = uniquePassingYears(students);
+
+  const hasActiveFilters = Boolean(searchTerm || filterDepartment || filterCollege || filterYear);
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setFilterDepartment('');
+    setFilterCollege('');
+    setFilterYear('');
+  };
+
+  // Exports exactly what the table is showing, from the live React Query data —
+  // the same rows an admin is looking at, not a second fetch that could differ.
+  const handleExportExcel = () => {
+    if (filteredStudents.length === 0) {
+      toast.info('Nothing to export — no students match the current filters.');
+      return;
+    }
+    exportToExcel(buildStudentManagementRows(filteredStudents), 'students');
+    toast.success(`Exported ${filteredStudents.length} student${filteredStudents.length === 1 ? '' : 's'} to Excel`);
+  };
 
   const visibleSelectedCount = filteredStudents.filter((s) => selectedIds.has(s.id)).length;
   const allVisibleSelected = filteredStudents.length > 0 && visibleSelectedCount === filteredStudents.length;
@@ -195,21 +242,84 @@ const AdminStudentsList = () => {
           </div>
         </div>
 
-        {/* Search */}
-        <div className="mb-8">
-          <div className="relative max-w-md mx-auto">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg className="h-5 w-5 text-fg-subtle" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+        {/* Search & Filters */}
+        <div className="mb-8 bg-surface border border-edge rounded-2xl p-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg className="h-5 w-5 text-fg-subtle" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <input
+                type="text"
+                placeholder="Search students..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="block w-full pl-10 pr-4 py-3 border border-edge-strong rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
             </div>
-            <input
-              type="text"
-              placeholder="Search students..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="block w-full pl-10 pr-4 py-3 border border-edge-strong rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
+
+            <select
+              value={filterDepartment}
+              onChange={(e) => setFilterDepartment(e.target.value)}
+              aria-label="Filter by Department"
+              className="block w-full px-4 py-3 border border-edge-strong rounded-2xl bg-surface text-fg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">All Departments</option>
+              {departments.map((dept) => (
+                <option key={dept} value={dept}>{dept}</option>
+              ))}
+            </select>
+
+            <select
+              value={filterCollege}
+              onChange={(e) => setFilterCollege(e.target.value)}
+              aria-label="Filter by College / Institution"
+              className="block w-full px-4 py-3 border border-edge-strong rounded-2xl bg-surface text-fg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">All Colleges</option>
+              {colleges.map((college) => (
+                <option key={college} value={college}>{college}</option>
+              ))}
+            </select>
+
+            <select
+              value={filterYear}
+              onChange={(e) => setFilterYear(e.target.value)}
+              aria-label="Filter by Year of Passing Out"
+              className="block w-full px-4 py-3 border border-edge-strong rounded-2xl bg-surface text-fg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">All Passing Out Years</option>
+              {passingYears.map((year) => (
+                <option key={year.value} value={year.value}>{year.label}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-fg-muted">
+                Showing {filteredStudents.length} of {students.length} students
+              </span>
+              {hasActiveFilters && (
+                <button
+                  onClick={clearFilters}
+                  className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
+                >
+                  Clear filters
+                </button>
+              )}
+            </div>
+            <button
+              onClick={handleExportExcel}
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-xl hover:bg-emerald-700 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Export Excel
+            </button>
           </div>
         </div>
 
@@ -254,7 +364,7 @@ const AdminStudentsList = () => {
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-fg-subtle uppercase tracking-wider">Student</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-fg-subtle uppercase tracking-wider">Department</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-fg-subtle uppercase tracking-wider">Year</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-fg-subtle uppercase tracking-wider">Year of Passing Out</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-fg-subtle uppercase tracking-wider">Status</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-fg-subtle uppercase tracking-wider">Actions</th>
                 </tr>
@@ -289,12 +399,13 @@ const AdminStudentsList = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-fg">{student.department || 'N/A'}</div>
-                      <div className="text-sm text-fg-subtle">{student.college || ''}</div>
+                      {/* Same expression the college filter options are built
+                          from, so the value on screen is always one of them. */}
+                      <div className="text-sm text-fg-subtle">{student.institutionName || student.college || ''}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-fg">
-                        {student.year ? `Year ${student.year}` : 'N/A'}
-                      </div>
+                      <div className="text-sm text-fg">{yearLabel(student.year)}</div>
+                      <div className="text-sm text-fg-subtle">Section {sectionLabel(student.section)}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {/* Was Active/Pending Setup off requiresPasswordReset — a flag
@@ -387,7 +498,7 @@ const AdminStudentsList = () => {
             <div className="text-6xl mb-4">👥</div>
             <h3 className="text-2xl font-semibold text-fg-muted mb-2">No students found</h3>
             <p className="text-fg-subtle">
-              {searchTerm ? 'Try adjusting your search terms.' : 'Students will appear here once added.'}
+              {hasActiveFilters ? 'Try adjusting your search or filters.' : 'Students will appear here once added.'}
             </p>
           </div>
         )}

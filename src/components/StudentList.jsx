@@ -8,6 +8,7 @@ import { useStudents, useRescrapeStudent } from '../hooks/queries/useStudents';
 import { toast } from 'react-toastify';
 import StudentViewDetails from './StudentViewDetails';
 import { motion, AnimatePresence } from 'framer-motion';
+import { YEAR_OPTIONS, matchesYear, yearLabel, sectionLabel } from '../lib/studentYear';
 
 // Scraping is triggered here, but no longer PERFORMED here. The old version
 // imported browser scrapers from ../utils/scrapers and called each platform's
@@ -90,12 +91,10 @@ const StudentList = () => {
       
     const matchesDepartment = filterDepartment === '' || student.department === filterDepartment;
     
-    const matchesYear = filterYear === '' || 
-      (student.year?.toString() === filterYear) ||
-      (filterYear === '1' && student.year?.toString().toLowerCase().includes('1st')) ||
-      (filterYear === '2' && student.year?.toString().toLowerCase().includes('2nd')) ||
-      (filterYear === '3' && student.year?.toString().toLowerCase().includes('3rd')) ||
-      (filterYear === '4' && student.year?.toString().toLowerCase().includes('4th'));
+    // Tolerant: the column holds "2027" for most students and a leftover
+    // "3rd Year" for the rest — matchesYear normalises both sides. See
+    // lib/studentYear.
+    const matchesPassingYear = matchesYear(student.year, filterYear);
       
     // Match on the INSTITUTION's name, falling back to the free-text college
     // column for students imported before registration bound them to one. The
@@ -104,7 +103,7 @@ const StudentList = () => {
     const matchesCollege =
       filterCollege === '' || (student.institutionName || student.college || '') === filterCollege;
 
-    return matchesSearch && matchesDepartment && matchesYear && matchesCollege;
+    return matchesSearch && matchesDepartment && matchesPassingYear && matchesCollege;
   });
   
   const departments = [...new Set(students.map(s => s.department).filter(Boolean))].sort();
@@ -293,7 +292,7 @@ const StudentList = () => {
 
             <div>
               <label htmlFor="year" className="block text-sm font-semibold text-fg-muted mb-2">
-                Filter by Year
+                Filter by Year of Passing Out
               </label>
               <motion.div whileHover={{ scale: 1.01 }} className="relative">
                 <select
@@ -302,11 +301,10 @@ const StudentList = () => {
                   onChange={(e) => setFilterYear(e.target.value)}
                   className="w-full px-4 py-3 border-2 border-edge-strong rounded-lg focus:outline-none focus:border-blue-500 transition-colors bg-surface appearance-none"
                 >
-                  <option value="">All Years</option>
-                  <option value="1">1st Year</option>
-                  <option value="2">2nd Year</option>
-                  <option value="3">3rd Year</option>
-                  <option value="4">4th Year</option>
+                  <option value="">All Passing Out Years</option>
+                  {YEAR_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
                 </select>
                 <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                   <svg className="w-5 h-5 text-fg-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -411,7 +409,8 @@ const StudentList = () => {
                           </td>
                           <td className="px-6 py-4">
                             <div className="text-sm font-semibold text-fg">{student.department || 'N/A'}</div>
-                            <div className="text-sm text-fg-muted">Year {student.year || 'N/A'}</div>
+                            <div className="text-sm text-fg-muted">Year of Passing Out: {yearLabel(student.year)}</div>
+                            <div className="text-sm text-fg-muted">Section {sectionLabel(student.section)}</div>
                             {student.college && (
                               <div className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mt-1">
                                 {student.college}

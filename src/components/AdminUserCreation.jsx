@@ -7,6 +7,7 @@ import { useAdminScope } from '../hooks/useAdminScope';
 import { useInstitutions } from '../hooks/queries/useInstitutions';
 import { useCreateStudent } from '../hooks/queries/useStudents';
 import { DEPARTMENT_GROUPS, canonicalDepartment } from '../lib/departments';
+import { YEAR_OPTIONS, SECTION_OPTIONS, isValidPassingYear, isValidSection } from '../lib/studentYear';
 import SearchableSelect from './ui/SearchableSelect';
 
 const AdminUserCreation = () => {
@@ -43,7 +44,8 @@ const AdminUserCreation = () => {
     registerNumber: '',
     rollNumber: '',
     department: '',
-    year: '',
+    year: '', // Year of Passing Out — a calendar year, not a study year
+    section: '',
     tenthPercentage: '',
     twelfthPercentage: '',
     platformUrls: {
@@ -61,6 +63,8 @@ const AdminUserCreation = () => {
   const [formErrors, setFormErrors] = useState({
     name: '',
     email: '',
+    year: '',
+    section: '',
   });
 
   // Smart Excel Processing with AI fallback
@@ -79,7 +83,8 @@ Analyze this Excel data and extract student information. Map the data to these e
 - registerNumber (registration/reg number)
 - rollNumber (roll number)
 - department (department/branch)
-- year (year of study, convert to number 1-4)
+- year (Year of Passing Out — copy the sheet's value as-is, e.g. "2028"; the system converts a study year like "2nd Year" itself)
+- section (class section letter, A-Z)
 - tenthPercentage (10th percentage, number only)
 - twelfthPercentage (12th percentage, number only)
 - github (GitHub URL, extract from any text)
@@ -127,7 +132,8 @@ ${JSON.stringify(excelData, null, 2)}
       registerNumber: ['register', 'reg', 'register number', 'registration', 'reg_no', 'regno'],
       rollNumber: ['roll', 'roll number', 'roll_no', 'rollno', 'roll no', 'student roll', 'student_roll', 'admission', 'admission number', 'student id', 'id', 'student number'],
       department: ['department', 'dept', 'branch', 'stream', 'course'],
-      year: ['year', 'academic year', 'study year', 'class', 'yr', 'sem', 'semester', 'batch'],
+      year: ['year', 'passing', 'graduation', 'academic year', 'study year', 'class', 'yr', 'sem', 'semester', 'batch'],
+      section: ['section', 'sec'],
       tenthPercentage: ['10th', 'tenth', '10th percentage', 'sslc', '10th%'],
       twelfthPercentage: ['12th', 'twelfth', '12th percentage', 'hsc', 'puc', '12th%'],
       github: ['github', 'git', 'github profile', 'github url', 'github link'],
@@ -336,7 +342,11 @@ ${JSON.stringify(excelData, null, 2)}
           // when it does not — an import of 200 students must not fail because
           // one row says "Comp Sci". Forms are strict; imports are not.
           department: canonicalDepartment(student.department) || student.department || '',
+          // Whatever lands here — a calendar year or a leftover "2nd Year" from
+          // the spreadsheet — is normalised server-side by academic.js, which
+          // knows the course duration. The client deliberately does not guess.
           year: student.year?.toString() || '',
+          section: student.section?.toString() || '',
           // No `college`: the server names it from the institution this import
           // is scoped to, so a spreadsheet's spelling of the college can't
           // fragment it into several.
@@ -575,6 +585,16 @@ ${JSON.stringify(excelData, null, 2)}
       errors.email = 'Email is invalid';
     }
     
+    // Mandatory for every newly onboarded student. The server checks this too;
+    // failing here just saves a round trip and points at the field.
+    if (!isValidPassingYear(studentData.year)) {
+      errors.year = 'Select the Year of Passing Out';
+    }
+    
+    if (!isValidSection(studentData.section)) {
+      errors.section = 'Select a section (A–Z)';
+    }
+    
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -633,6 +653,7 @@ ${JSON.stringify(excelData, null, 2)}
         rollNumber: studentData.rollNumber.trim() || '',
         department: studentData.department || '',
         year: studentData.year || '',
+        section: studentData.section || '',
         tenthPercentage: studentData.tenthPercentage || '',
         twelfthPercentage: studentData.twelfthPercentage || '',
         platformUrls: formattedUrls,
@@ -698,6 +719,7 @@ ${JSON.stringify(excelData, null, 2)}
       rollNumber: '',
       department: '',
       year: '',
+      section: '',
       tenthPercentage: '',
       twelfthPercentage: '',
       platformUrls: {
@@ -950,7 +972,7 @@ ${JSON.stringify(excelData, null, 2)}
                   
                   <div>
                     <label htmlFor="year" className="block text-sm font-medium text-fg-muted mb-2">
-                      Year of Study
+                      Year of Passing Out <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
                       <select
@@ -958,19 +980,49 @@ ${JSON.stringify(excelData, null, 2)}
                         name="year"
                         value={studentData.year}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-edge-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 appearance-none pr-10"
+                        className={`w-full px-4 py-2 border ${formErrors.year ? 'border-red-500 bg-red-50' : 'border-edge-strong'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 appearance-none pr-10`}
                       >
-                        <option value="">Select Year</option>
-                        <option value="1">1st Year</option>
-                        <option value="2">2nd Year</option>
-                        <option value="3">3rd Year</option>
-                        <option value="4">4th Year</option>
+                        <option value="">Select Year of Passing Out</option>
+                        {YEAR_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
                       </select>
                       <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
                         <svg className="w-5 h-5 text-fg-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                         </svg>
                       </div>
+                      {formErrors.year && (
+                        <p className="mt-1 text-xs text-red-600">{formErrors.year}</p>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="section" className="block text-sm font-medium text-fg-muted mb-2">
+                      Section <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <select
+                        id="section"
+                        name="section"
+                        value={studentData.section}
+                        onChange={handleInputChange}
+                        className={`w-full px-4 py-2 border ${formErrors.section ? 'border-red-500 bg-red-50' : 'border-edge-strong'} rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 appearance-none pr-10`}
+                      >
+                        <option value="">Select Section</option>
+                        {SECTION_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                      <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                        <svg className="w-5 h-5 text-fg-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                      {formErrors.section && (
+                        <p className="mt-1 text-xs text-red-600">{formErrors.section}</p>
+                      )}
                     </div>
                   </div>
                   
@@ -1384,7 +1436,8 @@ ${JSON.stringify(excelData, null, 2)}
                               <div><strong>Register No:</strong> {student.registerNumber || 'N/A'}</div>
                               <div><strong>Roll No:</strong> {student.rollNumber || 'N/A'}</div>
                               <div><strong>Department:</strong> {student.department || 'N/A'}</div>
-                              <div><strong>Year:</strong> {student.year || 'N/A'}</div>
+                              <div><strong>Year of Passing Out:</strong> {student.year || 'N/A'}</div>
+                              <div><strong>Section:</strong> {student.section || 'N/A'}</div>
                               <div><strong>10th %:</strong> {student.tenthPercentage || 'N/A'}</div>
                               <div><strong>12th %:</strong> {student.twelfthPercentage || 'N/A'}</div>
                             </div>

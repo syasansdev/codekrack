@@ -28,8 +28,13 @@ import {
   numOrNull,
   ProvisioningError,
   MIN_PASSWORD_LENGTH,
-  VALID_YEARS,
 } from '../services/studentProvisioning.js';
+import {
+  coercePassingYear,
+  isValidPassingYear,
+  normalizeSection,
+  isValidSection,
+} from '../utils/academic.js';
 import {
   STUDENT_SELECT,
   serializeStudent,
@@ -187,6 +192,7 @@ router.post('/register', registerLimiter, async (req, res) => {
       institutionId,
       password,
       year,
+      section,
       // A field no human sees and no browser fills. Anything in it came from a
       // bot walking the form, so the request is dropped.
       website: honeypot = '',
@@ -208,8 +214,11 @@ router.post('/register', registerLimiter, async (req, res) => {
     if (!institutionId || !isUuid(institutionId)) {
       return res.status(400).json({ success: false, error: 'Please select your college' });
     }
-    if (!year || !VALID_YEARS.includes(String(year))) {
-      return res.status(400).json({ success: false, error: 'Please select your year of study' });
+    if (!year || !isValidPassingYear(year)) {
+      return res.status(400).json({ success: false, error: 'Please select your Year of Passing Out' });
+    }
+    if (!section || !isValidSection(section, { allowNA: false })) {
+      return res.status(400).json({ success: false, error: 'Please select your section (A–Z)' });
     }
 
     // Department must be ON the list. Strict here and NOT inside
@@ -264,6 +273,7 @@ router.post('/register', registerLimiter, async (req, res) => {
       // second variant of a department that is already on the list.
       department,
       year,
+      section,
       // Server-supplied, not client-supplied. See the header note.
       college: inst.name,
       tenthPercentage: req.body?.tenthPercentage,
@@ -299,6 +309,7 @@ const EDITABLE = {
   rollNumber: 'roll_number',
   department: 'department',
   year: 'year',
+  section: 'section',
   // `college` is deliberately NOT editable. It is a copy of the institution's
   // name, maintained below whenever a student is moved, so that one college is
   // one string everywhere. Letting it be typed here would reintroduce exactly
@@ -331,7 +342,17 @@ router.patch('/:id', verifyAdmin, async (req, res) => {
       if (!(apiKey in (req.body || {}))) continue;
       let v = req.body[apiKey];
       if (column.endsWith('percentage')) v = numOrNull(v);
-      else v = String(v ?? '').trim();
+      else if (column === 'year') {
+        v = coercePassingYear(v, req.body?.department);
+        if (req.body[apiKey] && !isValidPassingYear(v)) {
+          return res.status(400).json({ success: false, error: 'Year of Passing Out must be a calendar year' });
+        }
+      } else if (column === 'section') {
+        v = normalizeSection(v, { allowNA: true });
+        if (req.body[apiKey] && !v) {
+          return res.status(400).json({ success: false, error: 'Section must be A–Z or N/A' });
+        }
+      } else v = String(v ?? '').trim();
       params.push(v);
       sets.push(`${column} = $${params.length}`);
     }
@@ -811,6 +832,7 @@ const SELF_EDITABLE = {
   phoneNumber: 'phone_number',
   department: 'department',
   year: 'year',
+  section: 'section',
   // No `college`. It mirrors the institution the student was registered under,
   // and a student typing over it is precisely how one college becomes several
   // spellings on the same leaderboard. Moving a student to a different college
@@ -824,7 +846,19 @@ router.patch('/me/profile', verifyToken, async (req, res) => {
     const params = [];
     for (const [apiKey, column] of Object.entries(SELF_EDITABLE)) {
       if (!(apiKey in (req.body || {}))) continue;
-      params.push(String(req.body[apiKey] ?? '').trim());
+      let v = String(req.body[apiKey] ?? '').trim();
+      if (column === 'year') {
+        v = coercePassingYear(v, req.body?.department);
+        if (req.body[apiKey] && !isValidPassingYear(v)) {
+          return res.status(400).json({ success: false, error: 'Year of Passing Out must be a calendar year' });
+        }
+      } else if (column === 'section') {
+        v = normalizeSection(v, { allowNA: true });
+        if (req.body[apiKey] && !v) {
+          return res.status(400).json({ success: false, error: 'Section must be A–Z or N/A' });
+        }
+      }
+      params.push(v);
       sets.push(`${column} = $${params.length}`);
     }
 

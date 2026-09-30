@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useStudentLeaderboard } from '../hooks/queries/useDashboard';
 import { usePublicInstitutions } from '../hooks/queries/useInstitutions';
 import { Link } from 'react-router-dom';
-import { YEAR_OPTIONS, matchesYear } from '../lib/studentYear';
+import { YEAR_OPTIONS, matchesYear, yearLabel } from '../lib/studentYear';
 
 // Student-facing leaderboard.
 //
@@ -137,6 +137,7 @@ const Leaderboard = () => {
         department: r.department || 'Not Specified',
         college: r.college || 'Engineering',
         year: r.year || 'N/A',
+        section: r.section || 'N/A',
         platformData: { [selectedPlatform]: r.data },
         scrapingStatus: { [selectedPlatform]: 'completed' },
         platformUrls: {},
@@ -564,14 +565,14 @@ const Leaderboard = () => {
                 {/* Year Filter */}
                 <div>
                   <label className="block text-sm font-semibold text-fg-muted mb-2">
-                    Year:
+                    Year of Passing Out:
                   </label>
                   <select
                     value={yearFilter}
                     onChange={(e) => setYearFilter(e.target.value)}
                     className="w-full px-4 py-2 border border-edge-strong rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-surface"
                   >
-                    <option value="all">All Years</option>
+                    <option value="all">All Passing Out Years</option>
                     {YEAR_OPTIONS.map((y) => (
                       <option key={y.value} value={y.value}>
                         {y.label}
@@ -691,7 +692,7 @@ const Leaderboard = () => {
                                     {user.email || 'No email'}
                                   </div>
                                   <div className="text-xs text-fg-subtle lg:hidden">
-                                    {user.department} • Year {user.year}
+                                    {user.department} • Passing Out {yearLabel(user.year)}
                                   </div>
                                 </div>
                               </div>
@@ -703,7 +704,7 @@ const Leaderboard = () => {
                                 {user.department}
                               </div>
                               <div className="text-xs text-fg-subtle">
-                                Year {user.year}
+                                Passing Out {yearLabel(user.year)}
                               </div>
                             </td>
 

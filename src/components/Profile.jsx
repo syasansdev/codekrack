@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUpdateMyProfile } from '../hooks/queries/useStudents';
 import { DEPARTMENT_GROUPS } from '../lib/departments';
+import { YEAR_OPTIONS, SECTION_OPTIONS, sectionLabel } from '../lib/studentYear';
 import SearchableSelect from './ui/SearchableSelect';
 import ChangePassword from '../components/ChangePassword';
 
@@ -43,6 +44,7 @@ const Profile = () => {
     name: '',
     department: '',
     year: '',
+    section: '',
     college: '',
     phoneNumber: '',
     resumeUrl: '',
@@ -54,6 +56,7 @@ const Profile = () => {
         name: userData.name || '',
         department: userData.department || '',
         year: userData.year || '',
+        section: userData.section || '',
         college: userData.college || '',
         // BUG FIX: this read userData.phone and saved to `phone`, while the rest
         // of the app (and the DB column) uses phoneNumber. The field always
@@ -86,6 +89,7 @@ const Profile = () => {
         name: formData.name,
         department: formData.department,
         year: formData.year,
+        section: formData.section,
         phoneNumber: formData.phoneNumber,
         platformUrls: { resume: formData.resumeUrl },
       });
@@ -107,6 +111,7 @@ const Profile = () => {
         name: userData.name || '',
         department: userData.department || '',
         year: userData.year || '',
+        section: userData.section || '',
         college: userData.college || '',
         phoneNumber: userData.phoneNumber || '',
         resumeUrl: userData.platformUrls?.resume || '',
@@ -231,7 +236,7 @@ const Profile = () => {
                         </div>
                       </div>
                       
-                      {/* Department & Year */}
+                      {/* Department, Year of Passing Out, Section */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div>
                           <label className="block text-sm font-medium text-fg-muted mb-2">
@@ -257,7 +262,7 @@ const Profile = () => {
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-fg-muted mb-2">
-                            Academic Year
+                            Year of Passing Out
                           </label>
                           <select 
                             name="year" 
@@ -266,11 +271,29 @@ const Profile = () => {
                             className="w-full px-4 py-3 border border-edge-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                           >
                             <option value="">Select Year</option>
-                            <option value="1">First Year</option>
-                            <option value="2">Second Year</option>
-                            <option value="3">Third Year</option>
-                            <option value="4">Fourth Year</option>
+                            {YEAR_OPTIONS.map((y) => (
+                              <option key={y.value} value={y.value}>{y.label}</option>
+                            ))}
                           </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-fg-muted mb-2">
+                            Section
+                          </label>
+                          <select
+                            name="section"
+                            value={formData.section === 'N/A' ? '' : formData.section}
+                            onChange={handleInputChange}
+                            className="w-full px-4 py-3 border border-edge-strong rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                          >
+                            <option value="">{formData.section === 'N/A' ? 'N/A — select a section' : 'Select Section'}</option>
+                            {SECTION_OPTIONS.map((s) => (
+                              <option key={s.value} value={s.value}>{s.label}</option>
+                            ))}
+                          </select>
+                          {formData.section === 'N/A' && (
+                            <p className="text-xs text-fg-subtle mt-1">Currently {sectionLabel(formData.section)}</p>
+                          )}
                         </div>
                       </div>
                       

@@ -31,6 +31,12 @@ import { PLATFORMS, LINK_KEYS } from '../utils/serialize.js';
 import { isValidEmail, normalizeEmail, undeliverableDomainReason } from '../utils/email.js';
 import { sendSetPasswordEmail } from './inviteService.js';
 import logger from '../utils/logger.js';
+import {
+  coercePassingYear,
+  isValidPassingYear,
+  normalizeSection,
+  SECTION_NA,
+} from '../utils/academic.js';
 
 /**
  * A password that is deliberately impossible to use or to know.
@@ -82,9 +88,9 @@ export const numOrNull = (v) => {
 export const MIN_PASSWORD_LENGTH = 8;
 
 /**
- * The four values `year` may hold. Stored as "1".."4" because that is what the
- * admin form and every spreadsheet import already write — the ordinal labels
- * ("2nd Year") belong to the UI, not the column.
+ * @deprecated Year of Study ordinals are no longer stored. Kept as an alias so
+ * older callers that imported VALID_YEARS keep building; new code uses
+ * coercePassingYear / isValidPassingYear from utils/academic.js.
  */
 export const VALID_YEARS = ['1', '2', '3', '4'];
 
@@ -134,6 +140,7 @@ export const provisionStudent = async ({
   rollNumber = '',
   department = '',
   year = '',
+  section = '',
   tenthPercentage = '',
   twelfthPercentage = '',
   platformUrls = {},
@@ -154,9 +161,14 @@ export const provisionStudent = async ({
   if (password !== null && String(password).length < MIN_PASSWORD_LENGTH) {
     throw new ProvisioningError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters`);
   }
-  if (year && !VALID_YEARS.includes(String(year))) {
-    throw new ProvisioningError('Year must be 1, 2, 3 or 4');
+  const passingYear = coercePassingYear(year, department);
+  if (year && !passingYear) {
+    throw new ProvisioningError('Year of Passing Out must be a calendar year');
   }
+  if (passingYear && !isValidPassingYear(passingYear)) {
+    throw new ProvisioningError('Year of Passing Out is out of range');
+  }
+  const sectionValue = normalizeSection(section, { allowNA: true }) || SECTION_NA;
   if (!institutionId) {
     throw new ProvisioningError('An institution is required');
   }
@@ -220,13 +232,14 @@ export const provisionStudent = async ({
       await c.query(
         `insert into public.profiles
            (id, email, name, display_name, phone_number, register_number, roll_number,
-            department, year, college, tenth_percentage, twelfth_percentage,
+            department, year, section, college, tenth_percentage, twelfth_percentage,
             role, institution_id, links, created_by, expires_at)
-         values ($1,$2,$3,$3,$4,$5,$6,$7,$8,$9,$10,$11,'student',$12,$13,$14,$15)`,
+         values ($1,$2,$3,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'student',$13,$14,$15,$16)`,
         [
           authUser.id, lower, String(name).trim(),
           String(phoneNumber || '').trim(), String(registerNumber || '').trim(),
-          String(rollNumber || '').trim(), department || '', String(year || ''),
+          String(rollNumber || '').trim(), department || '', passingYear,
+          sectionValue,
           // The institution's name, never the caller's. `college` is the column
           // every leaderboard and filter groups on, and letting it be typed is
           // how one college becomes "SJCE", "S.J.C.E" and "sjce " — three

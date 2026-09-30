@@ -133,6 +133,7 @@ export const sanitizeStudentData = (studentData) => {
     rollNumber: studentData.rollNumber || '',
     department: studentData.department || '',
     year: studentData.year || '',
+    section: studentData.section || 'N/A',
     platformUrls: {
       github: studentData.platformUrls?.github || '',
       leetcode: studentData.platformUrls?.leetcode || '',
