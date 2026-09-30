@@ -34,6 +34,30 @@ primary_region = "bom"   # Mumbai — same region as Supabase ap-south-1
 [build]
   dockerfile = "backend/Dockerfile"
 
+# ---------------------------------------------------------------------------
+# MIGRATIONS RUN ON EVERY DEPLOY
+#
+# backend/db/migrate.js is the only thing that ever applies db/migrations/*.sql.
+# Nothing else calls it: the image CMD is `node server.js`, there is no CI
+# deploy workflow, and there is no npm prestart hook. Without the line below, a
+# release that reads a newly added column (e.g. profiles.section from
+# 015_year_of_passing_out.sql) would 500 every request that touches it, until
+# someone remembered to run migrations by hand.
+#
+# Fly runs this in a temporary machine built from the NEW release image, after
+# the deploy is accepted but BEFORE the new version replaces any running
+# machine. A non-zero exit aborts the deploy and the old version keeps serving
+# — a failed deploy is the correct outcome when the schema doesn't match the
+# code being shipped.
+#
+# DATABASE_URL arrives via `fly secrets set` (see the checklist below); no .env
+# ships in the image (.dockerignore excludes it), so dotenv falls through to
+# the real environment. The 5-minute default timeout is ample — migrate.js
+# applies each file in a transaction and skips already-applied ones by checksum.
+# ---------------------------------------------------------------------------
+[deploy]
+  release_command = "npm run migrate"
+
 [env]
   NODE_ENV = "production"
   PORT = "5001"
