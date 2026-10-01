@@ -9,6 +9,7 @@ import compression from "compression";
 import institutionRoutes from "./routes/institutionRoutes.js";
 import studentRoutes from "./routes/studentRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
+import rankRoutes from "./routes/rankRoutes.js";
 import eventsRoutes from "./routes/eventsRoutes.js";
 import { startRealtime, stopRealtime } from "./services/realtime.js";
 import { verifyMailer } from "./services/mailer.js";
@@ -125,6 +126,7 @@ app.use("/api", apiLimiter);
 app.use("/api/institutions", institutionRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/ranks", rankRoutes);
 
 // Health check route
 app.get("/health", (req, res) => {

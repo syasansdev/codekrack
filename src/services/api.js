@@ -235,5 +235,18 @@ export const dashboardApi = {
     get('/api/dashboard/scraping-status', { params: { institutionId }, signal }),
 };
 
-export const api = { studentsApi, institutionsApi, dashboardApi, request, BASE_URL };
+// =============================================================================
+// Rank tiers
+// =============================================================================
+export const ranksApi = {
+  /** Any signed-in user. Scoped to the caller's institution by the server. */
+  thresholds: ({ institutionId, signal } = {}) =>
+    get('/api/ranks/thresholds', { params: { institutionId }, signal }).then((r) => r.thresholds),
+
+  /** Admin only. Replaces the full threshold grid for one institution. */
+  updateThresholds: async ({ institutionId, thresholds }) =>
+    (await request('PUT', '/api/ranks/thresholds', { body: { institutionId, thresholds } })).thresholds,
+};
+
+export const api = { studentsApi, institutionsApi, dashboardApi, ranksApi, request, BASE_URL };
 export default api;

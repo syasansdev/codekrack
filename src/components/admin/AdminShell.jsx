@@ -21,6 +21,7 @@ import {
   LogOut,
   Menu,
   Radar,
+  Sparkles,
   Trophy,
   UserCog,
   UserPlus,
@@ -57,6 +58,7 @@ const NAV = [
     items: [
       { to: '/admin/leaderboard', label: 'Leaderboard', icon: Trophy },
       { to: '/admin/scraping-status', label: 'Scraping', icon: Radar },
+      { to: '/admin/ranks', label: 'Rank Tiers', icon: Sparkles },
     ],
   },
   {

@@ -7,7 +7,6 @@ import 'react-toastify/dist/ReactToastify.css';
 import LandingPage from './pages/LandingPage';
 import HomePage from './pages/HomePage';
 import LeaderboardPage from './pages/LeaderboardPage';
-import AchievementsPage from './pages/AchievementsPage';
 
 // Components
 import Header from './components/Header';
@@ -33,6 +32,7 @@ import ChangePassword from './components/ChangePassword';
 import StudentOnboardingForm from './components/StudentOnboardingForm';
 import SuperAdminRoute from './components/SuperAdminRoute';
 import InstitutionManagement from './components/InstitutionManagement';
+import RankManagement from './components/admin/RankManagement';
 
 
 // Auth Context
@@ -132,13 +132,6 @@ function App() {
             </ProtectedRoute>
           } />
 
-          {/* Achievements Page Route */}
-          <Route path="/achievements" element={
-            <ProtectedRoute>
-              <AchievementsPage />
-            </ProtectedRoute>
-          } />
-          
           {/* /profile and /settings both render the real Profile. /profile used
               to show a "coming soon" placeholder despite being the linked one. */}
           <Route path="/profile" element={
@@ -153,11 +146,6 @@ function App() {
               <Profile />
             </ProtectedRoute>
           } />
-
-          {/* /achievements removed: AchievementSystem ranked students by a
-              profile-level `totalSolved` that nothing ever wrote, so every rank
-              was computed from 0, and it fetched the ENTIRE users collection to
-              do it. Deleted rather than migrated. */}
 
           {/* Individual Component Routes (if needed for testing).
               Now behind ProtectedRoute (SEC-06). It was the one route in the
@@ -197,6 +185,7 @@ function App() {
             <Route path="add-student" element={<AdminUserCreation />} />
             <Route path="scraping-status" element={<ScrapingStatus />} />
             <Route path="leaderboard" element={<AdminLeaderboard />} />
+            <Route path="ranks" element={<RankManagement />} />
           </Route>
           
           {/* Legacy alias for /admin/dashboard.

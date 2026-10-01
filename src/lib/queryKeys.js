@@ -63,6 +63,12 @@ export const queryKeys = {
     all: ['scraping'],
     status: (institutionId = null) => ['scraping', 'status', institutionId ?? 'all'],
   },
+
+  // --- rank tiers -------------------------------------------------------
+  ranks: {
+    all: ['ranks'],
+    thresholds: (institutionId = null) => ['ranks', 'thresholds', institutionId ?? 'all'],
+  },
 };
 
 /**

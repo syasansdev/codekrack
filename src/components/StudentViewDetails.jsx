@@ -2,6 +2,10 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useRescrapeStudent, useStudent } from '../hooks/queries/useStudents';
+import { useRankThresholds } from '../hooks/queries/useRanks';
+import { getPlatformScores, computeRank } from '../utils/rank';
+import { rankByKey } from '../config/ranks';
+import { RankChip, RankBanner } from './RankBadge';
 import { validatePlatformData, sanitizeStudentData, calculateTotalProblems, formatLastUpdated } from '../utils/dataValidation';
 import { yearLabel } from '../lib/studentYear';
 import EditStudentModal from './EditStudentModal';
@@ -409,6 +413,17 @@ const StudentViewDetails = ({ student, onClose, onStudentUpdate, isAdminView = f
   const platformOrder = ['leetcode', 'codeforces', 'github', 'atcoder', 'hackerrank', 'hackerearth'];
   const availablePlatforms = platformOrder.filter(p => currentStudent.platformUrls?.[p]);
 
+  // Rank is computed from this student's own institution's thresholds, not the
+  // admin's — a super-admin viewing students across colleges must see each one
+  // ranked against the ladder their own college configured.
+  const { data: rankThresholds = [] } = useRankThresholds({
+    institutionId: currentStudent?.institutionId,
+    enabled: Boolean(currentStudent?.institutionId),
+  });
+  const rankScores = getPlatformScores(currentStudent?.platformData);
+  const studentRankKey = computeRank(rankScores, rankThresholds);
+  const studentRank = rankByKey(studentRankKey);
+
   const snapshotData = [
     { 
       label: "Total Problems Solved", 
@@ -441,21 +456,28 @@ const StudentViewDetails = ({ student, onClose, onStudentUpdate, isAdminView = f
       className={`fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-opacity duration-300 ease-in-out ${isMounted ? 'opacity-100' : 'opacity-0'}`}
       onClick={onClose}
     >
-      <div 
-        className={`bg-surface-2 rounded-2xl shadow-2xl max-w-6xl w-full max-h-[95vh] flex flex-col overflow-hidden transition-all duration-500 ease-out ${isMounted ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-8'}`}
+      <div
+        className={`bg-surface-2 rounded-2xl shadow-2xl max-w-6xl w-full max-h-[95vh] flex flex-col overflow-hidden ring-1 ${studentRank.ring} transition-all duration-500 ease-out ${isMounted ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-8'}`}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Rank-themed accent bar */}
+        <div className={`h-1.5 w-full bg-gradient-to-r ${studentRank.gradient}`} />
+
         {/* Header */}
         <header className="px-8 py-4 border-b border-edge bg-surface">
           <div className="flex justify-between items-start gap-6">
             <div className="flex items-center gap-5">
-              <div 
-                className="flex-shrink-0 h-16 w-16 bg-blue-600 text-white flex items-center justify-center rounded-full text-2xl font-bold transform transition-transform duration-300 hover:scale-110 hover:shadow-lg"
+              <div
+                className={`flex-shrink-0 h-16 w-16 bg-gradient-to-br ${studentRank.gradient} ${studentRank.text} flex items-center justify-center rounded-full text-2xl font-bold transform transition-transform duration-300 hover:scale-110 hover:shadow-lg`}
+                style={{ boxShadow: `0 6px 20px ${studentRank.glow}` }}
               >
                 {getInitials(currentStudent.name)}
               </div>
               <div>
-                <h2 className="text-3xl font-extrabold text-fg tracking-tight">{currentStudent.name}</h2>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <h2 className="text-3xl font-extrabold text-fg tracking-tight">{currentStudent.name}</h2>
+                  <RankChip rankKey={studentRankKey} />
+                </div>
                 <p className="text-fg-subtle mt-1">{currentStudent.email}</p>
                 {isAutoScraping && (
                   <div className="flex items-center gap-2 mt-1 text-sm text-blue-600">
@@ -518,6 +540,13 @@ const StudentViewDetails = ({ student, onClose, onStudentUpdate, isAdminView = f
 
         {/* Body */}
         <main className="overflow-y-auto flex-1 p-8 bg-surface-2/70">
+          {/* Rank Banner */}
+          {currentStudent?.institutionId && (
+            <section className="mb-8 opacity-0 animate-fadeIn" style={{ animationDelay: '0.05s', animationFillMode: 'forwards' }}>
+              <RankBanner rankKey={studentRankKey} scores={rankScores} thresholds={rankThresholds} />
+            </section>
+          )}
+
           {/* Overall Snapshot Section */}
           <section className="opacity-0 animate-fadeIn" style={{ animationDelay: '0.1s', animationFillMode: 'forwards' }}>
             <div className="flex justify-between items-center mb-4">

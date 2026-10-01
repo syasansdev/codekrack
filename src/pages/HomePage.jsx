@@ -2,6 +2,9 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence, animate } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useMyProfile } from '../hooks/queries/useStudents';
+import { useRankThresholds } from '../hooks/queries/useRanks';
+import { getPlatformScores, computeRank } from '../utils/rank';
+import { RankBanner } from '../components/RankBadge';
 import { yearLabel } from '../lib/studentYear';
 import { useNavigate } from 'react-router-dom';
 
@@ -30,13 +33,20 @@ const AnimatedStat = ({ value }) => {
 
 
 const HomePage = () => {
-  const { currentUser } = useAuth();
+  const { currentUser, institutionId } = useAuth();
   const navigate = useNavigate();
 
   // Was: useState + useEffect + a direct Firestore read of users/{uid}.
   // The API returns platformData in the same shape the scraper produced, so the
   // mapping below is unchanged — only where the data comes from is different.
   const { data: profile, isLoading: loading, error: queryError } = useMyProfile();
+  const { data: rankThresholds = [] } = useRankThresholds({ institutionId, enabled: Boolean(institutionId) });
+
+  const rankScores = useMemo(() => getPlatformScores(profile?.platformData), [profile]);
+  const studentRank = useMemo(
+    () => computeRank(rankScores, rankThresholds),
+    [rankScores, rankThresholds]
+  );
 
   useEffect(() => {
     if (!currentUser) navigate('/signin');
@@ -310,6 +320,16 @@ const HomePage = () => {
                     </motion.div>
                   </div>
                 </div>
+              </motion.div>
+
+              {/* Rank Banner */}
+              <motion.div
+                className="mb-8"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1, duration: 0.4 }}
+              >
+                <RankBanner rankKey={studentRank} scores={rankScores} thresholds={rankThresholds} />
               </motion.div>
 
               {/* Platform Summary Cards */}

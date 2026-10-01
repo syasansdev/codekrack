@@ -200,17 +200,10 @@ const Header = () => {
   );
 
   // Navigation items.
-  //
-  // 'Achievements' -> '/achievements' was still listed here after the route was
-  // deleted in the Firebase purge (App.jsx documents why: it ranked students by
-  // a field nothing ever wrote, so every rank came out 0). Nothing removed the
-  // link, so a quarter of the student nav bar led straight to the 404 page.
-  // Verified: zero routes in App.jsx match '/achievements'.
   const navItems = [
     { name: 'Dashboard', path: '/dashboard' },
     { name: 'Leaderboard', path: '/leaderboard' },
     { name: 'Activity', path: '/activity' },
-    { name: 'Achievements', path: '/achievements' },
   ];
 
   // Check if current path is active
