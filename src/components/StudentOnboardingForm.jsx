@@ -28,17 +28,17 @@ import { YEAR_OPTIONS, SECTION_OPTIONS, isValidPassingYear, isValidSection } fro
 
 const PLATFORM_FIELDS = [
   { key: 'leetcode', label: 'LeetCode', placeholder: 'leetcode.com/u/username', required: true },
-  { key: 'github', label: 'GitHub', placeholder: 'github.com/username' },
-  { key: 'codeforces', label: 'Codeforces', placeholder: 'codeforces.com/profile/username' },
-  { key: 'atcoder', label: 'AtCoder', placeholder: 'atcoder.jp/users/username' },
+  { key: 'github', label: 'GitHub', placeholder: 'github.com/username', required: true },
+  { key: 'codeforces', label: 'Codeforces', placeholder: 'codeforces.com/profile/username', required: true },
+  { key: 'atcoder', label: 'AtCoder', placeholder: 'atcoder.jp/users/username', required: true },
   { key: 'hackerrank', label: 'HackerRank', placeholder: 'hackerrank.com/profile/username', required: true },
   { key: 'hackerearth', label: 'HackerEarth', placeholder: 'hackerearth.com/@username' },
-  { key: 'linkedin', label: 'LinkedIn', placeholder: 'linkedin.com/in/username' },
-  { key: 'resume', label: 'Resume link', placeholder: 'drive.google.com/file/d/...' },
+  { key: 'linkedin', label: 'LinkedIn', placeholder: 'linkedin.com/in/username', required: true },
+  { key: 'resume', label: 'Resume link', placeholder: 'drive.google.com/file/d/...', required: true },
 ];
 
-// Every account is tracked on these two platforms from day one — everything
-// else is opt-in. Kept as one list so the frontend check, the error message and
+// Every account must supply all of these from day one — only HackerEarth is
+// opt-in. Kept as one list so the frontend check, the error message and
 // the backend's own copy (utils/profileUrls.js REQUIRED_PLATFORMS) can't drift
 // on which platforms are mandatory even if the wording around them does.
 const REQUIRED_PLATFORM_KEYS = PLATFORM_FIELDS.filter((f) => f.required).map((f) => f.key);
@@ -533,9 +533,9 @@ const StudentOnboardingForm = ({ isOpen = true, onClose, onSignIn }) => {
                 Your coding profiles
               </h3>
               <p className="text-sm text-fg-subtle -mt-2">
-                LeetCode and HackerRank are required — every account is tracked on those from day
-                one. The rest are optional and can be added later from your profile. Whatever you
-                add here starts being tracked on the next scraper run.
+                LeetCode, GitHub, Codeforces, AtCoder, HackerRank, LinkedIn and your resume link are
+                all required — only HackerEarth is optional and can be added later from your
+                profile. Whatever you add here starts being tracked on the next scraper run.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-4">
                 {PLATFORM_FIELDS.map((f) => {

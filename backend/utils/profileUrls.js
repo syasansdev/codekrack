@@ -19,12 +19,12 @@
 // a GitHub URL under LeetCode, stores it, and the damage shows up days later as
 // a scrape marked 'failed' that nobody traces back to a registration form.
 
-// Every account is tracked on these two from day one; everything else in RULES
-// stays opt-in. Checked only on the public register route (see
+// Every account must supply all of these from day one; only HackerEarth stays
+// opt-in. Checked only on the public register route (see
 // firstMissingRequiredPlatform below) — admin edits and bulk import share
 // splitPlatformUrls()/provisionStudent() with rows that predate this rule, and
-// must keep working without a LeetCode or HackerRank link on file.
-export const REQUIRED_PLATFORMS = ['leetcode', 'hackerrank'];
+// must keep working without them on file.
+export const REQUIRED_PLATFORMS = ['leetcode', 'github', 'codeforces', 'atcoder', 'hackerrank', 'linkedin', 'resume'];
 
 const RULES = {
   leetcode: {

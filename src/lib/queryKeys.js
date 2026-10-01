@@ -68,6 +68,9 @@ export const queryKeys = {
   ranks: {
     all: ['ranks'],
     thresholds: (institutionId = null) => ['ranks', 'thresholds', institutionId ?? 'all'],
+    // Raw (unmerged) scope used by the super-admin editor. 'global' is a
+    // distinct key from any institution id, including 'all' used above.
+    raw: (scope = 'global') => ['ranks', 'raw', scope],
   },
 };
 

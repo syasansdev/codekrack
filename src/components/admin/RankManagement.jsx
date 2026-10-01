@@ -1,18 +1,26 @@
 // src/components/admin/RankManagement.jsx
 //
-// Admin screen for configuring the rank ladder (Contender -> Grandmaster).
-// For each tier, the admin sets a minimum score per platform; a student only
-// earns that tier once every platform the admin gave a non-zero minimum to
-// is met (rank.js computeRank — the exact mirror of this grid). "Starter" is
+// Super-admin-only screen for configuring the rank ladder (Contender ->
+// Grandmaster). Route-guarded by SuperAdminRoute (App.jsx) — an institution
+// admin never reaches this page and the PUT endpoint re-checks independently.
+//
+// Two scopes, picked from the same dropdown:
+//   "All institutions" — the global default (institution_id = NULL in the
+//     table) that applies everywhere an institution hasn't set its own value.
+//   a specific institution — overrides the global default for that college
+//     only, cell by cell (rank x platform).
+// A tier is earned once a student meets ANY ONE platform minimum configured
+// for it (rank.js computeRank — the exact mirror of this grid). "Starter" is
 // the floor everyone has and isn't editable here.
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
-import { Save, RotateCcw, Sparkles } from 'lucide-react';
+import { Save, RotateCcw, Sparkles, Globe2 } from 'lucide-react';
 import { CONFIGURABLE_RANKS, RANK_TIERS, PLATFORMS } from '../../config/ranks';
-import { useAdminScope } from '../../hooks/useAdminScope';
 import { useInstitutions } from '../../hooks/queries/useInstitutions';
-import { useRankThresholds, useUpdateRankThresholds } from '../../hooks/queries/useRanks';
+import { useRawRankThresholds, useUpdateRankThresholds } from '../../hooks/queries/useRanks';
+
+const GLOBAL_SCOPE = '__global__';
 
 const emptyGrid = () => {
   const grid = {};
@@ -44,21 +52,15 @@ const flattenGrid = (grid) => {
 };
 
 const RankManagement = () => {
-  const { isSuperAdmin, institutionId: scopedInstitutionId } = useAdminScope();
-  const { data: institutions = [] } = useInstitutions({ enabled: isSuperAdmin });
-  const [pickedInstitutionId, setPickedInstitutionId] = useState('');
+  const { data: institutions = [] } = useInstitutions();
+  const [scope, setScope] = useState(GLOBAL_SCOPE);
 
-  useEffect(() => {
-    if (isSuperAdmin && !pickedInstitutionId && institutions.length > 0) {
-      setPickedInstitutionId(institutions[0].id);
-    }
-  }, [isSuperAdmin, institutions, pickedInstitutionId]);
+  const isGlobal = scope === GLOBAL_SCOPE;
+  const institutionId = isGlobal ? null : scope;
 
-  const institutionId = isSuperAdmin ? pickedInstitutionId : scopedInstitutionId;
-
-  const { data: thresholds, isLoading } = useRankThresholds({
+  const { data: thresholds, isLoading } = useRawRankThresholds({
     institutionId,
-    enabled: Boolean(institutionId),
+    global: isGlobal,
   });
   const updateMutation = useUpdateRankThresholds();
 
@@ -70,7 +72,7 @@ const RankManagement = () => {
       setGrid(gridFromThresholds(thresholds));
       setDirty(false);
     }
-  }, [thresholds, institutionId]);
+  }, [thresholds, scope]);
 
   const setCell = (rankKey, platformKey, value) => {
     const numeric = value === '' ? 0 : Math.max(0, Math.floor(Number(value) || 0));
@@ -86,7 +88,7 @@ const RankManagement = () => {
   const handleSave = async () => {
     try {
       await updateMutation.mutateAsync({ institutionId, thresholds: flattenGrid(grid) });
-      toast.success('Rank thresholds saved');
+      toast.success(isGlobal ? 'Global rank defaults saved' : 'Rank thresholds saved');
       setDirty(false);
     } catch (e) {
       toast.error(e.message || 'Could not save rank thresholds');
@@ -117,29 +119,37 @@ const RankManagement = () => {
             awarded as soon as <strong>any one</strong> platform you set a value above zero for is
             met — a student doesn't need all of them. Leave a platform at 0 to ignore it for that
             tier. Every student starts at <strong>Starter</strong> — nothing to configure there.
+            <br />
+            <strong>All institutions</strong> sets the base default everyone inherits; picking one
+            college overrides that default for its own students only.
           </p>
         </div>
 
-        {isSuperAdmin && (
-          <select
-            value={pickedInstitutionId}
-            onChange={(e) => setPickedInstitutionId(e.target.value)}
-            className="rounded-xl border border-edge bg-surface px-3 py-2 text-sm font-medium text-fg shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-          >
-            {institutions.map((inst) => (
-              <option key={inst.id} value={inst.id}>
-                {inst.name}
-              </option>
-            ))}
-          </select>
-        )}
+        <select
+          value={scope}
+          onChange={(e) => setScope(e.target.value)}
+          className="rounded-xl border border-edge bg-surface px-3 py-2 text-sm font-medium text-fg shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+        >
+          <option value={GLOBAL_SCOPE}>🌐 All institutions (global default)</option>
+          {institutions.map((inst) => (
+            <option key={inst.id} value={inst.id}>
+              {inst.name}
+            </option>
+          ))}
+        </select>
       </div>
 
-      {!institutionId ? (
-        <div className="rounded-2xl border border-edge bg-surface p-8 text-center text-sm text-fg-subtle">
-          {isSuperAdmin ? 'Pick an institution to configure its rank tiers.' : 'No institution found.'}
+      {isGlobal && (
+        <div className="flex items-start gap-2 rounded-xl border border-brand-200 bg-tint-brand px-4 py-3 text-xs text-on-brand">
+          <Globe2 size={15} className="mt-0.5 shrink-0" />
+          <span>
+            Editing the <strong>global default</strong>. These values apply to every institution
+            that hasn't set its own value for a given rank + platform.
+          </span>
         </div>
-      ) : isLoading ? (
+      )}
+
+      {isLoading ? (
         <div className="rounded-2xl border border-edge bg-surface p-8 text-center text-sm text-fg-subtle">
           Loading rank thresholds...
         </div>
@@ -202,8 +212,8 @@ const RankManagement = () => {
 
           <div className="flex items-center justify-between">
             <p className="text-xs text-fg-subtle">
-              {configuredCount} of {CONFIGURABLE_RANKS.length} tiers have at least one threshold set.
-              An unconfigured tier can't be earned yet.
+              {configuredCount} of {CONFIGURABLE_RANKS.length} tiers have at least one threshold set
+              in this scope. {isGlobal ? '' : "An institution cell left at 0 inherits the global default."}
             </p>
             <div className="flex items-center gap-2">
               <button

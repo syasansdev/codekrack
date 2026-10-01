@@ -185,7 +185,7 @@ function App() {
             <Route path="add-student" element={<AdminUserCreation />} />
             <Route path="scraping-status" element={<ScrapingStatus />} />
             <Route path="leaderboard" element={<AdminLeaderboard />} />
-            <Route path="ranks" element={<RankManagement />} />
+            <Route path="ranks" element={<SuperAdminRoute><RankManagement /></SuperAdminRoute>} />
           </Route>
           
           {/* Legacy alias for /admin/dashboard.

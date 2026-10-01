@@ -239,12 +239,30 @@ export const dashboardApi = {
 // Rank tiers
 // =============================================================================
 export const ranksApi = {
-  /** Any signed-in user. Scoped to the caller's institution by the server. */
+  /**
+   * Any signed-in user. EFFECTIVE thresholds for one institution — the
+   * super-admin's global defaults with that institution's own overrides
+   * layered on top. This is what renders a rank badge.
+   */
   thresholds: ({ institutionId, signal } = {}) =>
     get('/api/ranks/thresholds', { params: { institutionId }, signal }).then((r) => r.thresholds),
 
-  /** Admin only. Replaces the full threshold grid for one institution. */
-  updateThresholds: async ({ institutionId, thresholds }) =>
+  /**
+   * Super-admin only. The RAW, unmerged rows for exactly one scope — pass
+   * institutionId for one college, or global: true for the "All institutions"
+   * defaults. This is what the Rank Tiers editor loads.
+   */
+  rawThresholds: ({ institutionId, global, signal } = {}) =>
+    get('/api/ranks/thresholds', {
+      params: { mode: 'raw', institutionId, global: global ? 'true' : undefined },
+      signal,
+    }).then((r) => r.thresholds),
+
+  /**
+   * Super-admin only. Replaces the full raw threshold grid for one scope.
+   * Pass institutionId: null to write the global/All-institutions defaults.
+   */
+  updateThresholds: async ({ institutionId = null, thresholds }) =>
     (await request('PUT', '/api/ranks/thresholds', { body: { institutionId, thresholds } })).thresholds,
 };
 

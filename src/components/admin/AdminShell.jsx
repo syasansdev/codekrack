@@ -58,7 +58,7 @@ const NAV = [
     items: [
       { to: '/admin/leaderboard', label: 'Leaderboard', icon: Trophy },
       { to: '/admin/scraping-status', label: 'Scraping', icon: Radar },
-      { to: '/admin/ranks', label: 'Rank Tiers', icon: Sparkles },
+      { to: '/admin/ranks', label: 'Rank Tiers', icon: Sparkles, superOnly: true },
     ],
   },
   {
