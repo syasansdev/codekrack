@@ -114,9 +114,9 @@ const RankManagement = () => {
           </h2>
           <p className="mt-1 text-sm text-fg-subtle max-w-2xl">
             Set the minimum score a student needs on each platform to earn a tier. A tier is
-            awarded once every platform you give a value above zero is met. Leave a platform at 0
-            to ignore it for that tier. Every student starts at <strong>Starter</strong> — nothing
-            to configure there.
+            awarded as soon as <strong>any one</strong> platform you set a value above zero for is
+            met — a student doesn't need all of them. Leave a platform at 0 to ignore it for that
+            tier. Every student starts at <strong>Starter</strong> — nothing to configure there.
           </p>
         </div>
 

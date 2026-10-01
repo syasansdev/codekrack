@@ -2,7 +2,9 @@
 //
 // Admin-configurable rank tiers (Contender/Climber/Challenger/Master/
 // Grandmaster). An institution admin sets a minimum score per platform for
-// each tier; "starter" is the implicit floor everyone has and is never
+// each tier; a student earns the tier by meeting ANY ONE of the platform
+// minimums configured for it (see src/utils/rank.js computeRank — the exact
+// mirror of this). "starter" is the implicit floor everyone has and is never
 // stored. Thresholds are read by both students (to render their own badge)
 // and admins (to edit them), so GET is behind verifyToken, not verifyAdmin.
 import express from 'express';

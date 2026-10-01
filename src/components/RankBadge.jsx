@@ -82,10 +82,13 @@ export const RankBanner = ({ rankKey, scores, thresholds = [] }) => {
                 className="h-full rounded-full bg-white/90"
               />
             </div>
-            <ul className={`mt-2 space-y-0.5 text-[11px] ${rank.text} opacity-85`}>
-              {progress.gaps.filter((g) => g.remaining > 0).slice(0, 2).map((g) => (
+            <p className={`mt-2 text-[10px] font-semibold uppercase tracking-wide ${rank.text} opacity-70`}>
+              Reach any one:
+            </p>
+            <ul className={`mt-0.5 space-y-0.5 text-[11px] ${rank.text} opacity-85`}>
+              {progress.gaps.slice(0, 2).map((g) => (
                 <li key={g.platform} className="capitalize">
-                  {g.remaining} more on {g.platform}
+                  {g.remaining > 0 ? `${g.remaining} more on ${g.platform}` : `${g.platform} — done!`}
                 </li>
               ))}
             </ul>

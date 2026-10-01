@@ -5,9 +5,10 @@
 -- the implicit floor every student has from day one and is never stored here
 -- (there is nothing to configure: it requires 0 on every platform).
 --
--- A tier is earned by meeting EVERY platform threshold the admin has actually
--- configured for it (min_score > 0). A tier with no configured platforms is
--- simply not attainable yet, rather than trivially true for everyone.
+-- A tier is earned by meeting ANY ONE platform threshold the admin has
+-- actually configured for it (min_score > 0) — not all of them. A tier with
+-- no configured platforms is simply not attainable yet, rather than
+-- trivially true for everyone.
 create table if not exists public.rank_tier_thresholds (
   id uuid primary key default gen_random_uuid(),
   institution_id uuid not null references public.institutions(id) on delete cascade,
