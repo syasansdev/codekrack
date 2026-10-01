@@ -126,6 +126,7 @@ export const sanitizeStudentData = (studentData) => {
 
   return {
     id: studentData.id || '',
+    institutionId: studentData.institutionId || null,
     name: studentData.name || 'Unknown Student',
     email: studentData.email || '',
     phoneNumber: studentData.phoneNumber || '',
